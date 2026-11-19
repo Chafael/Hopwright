@@ -1,0 +1,81 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: hopwright-postgres
+    environment:
+      POSTGRES_DB: ${PG_DATABASE}
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+    ports:
+      - "${PG_PORT}:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      # init.sh corre los .sql de schema/ y luego los de data/, en orden alfabético,
+      # solo la primera vez que se crea el volumen
+      - ./database/relational:/hopwright/relational:ro
+      - ./database/relational/init.sh:/docker-entrypoint-initdb.d/init.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER} -d ${PG_DATABASE}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mongo:
+    image: mongo:7
+    container_name: hopwright-mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE}
+    ports:
+      - "${MONGO_PORT}:27017"
+    volumes:
+      - mongo_data:/data/db
+      # Los .js se ejecutan la primera vez que se crea el volumen
+      - ./database/document/init:/docker-entrypoint-initdb.d:ro
+      - ./database/document/validators:/hopwright/validators:ro
+      - ./database/document/data:/hopwright/data:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  neo4j:
+    image: neo4j:5
+    container_name: hopwright-neo4j
+    environment:
+      NEO4J_AUTH: ${NEO4J_USER}/${NEO4J_PASSWORD}
+      # APOC trae apoc.algo.dijkstra para la ruta más corta con pesos
+      NEO4J_PLUGINS: '["apoc"]'
+    ports:
+      - "7474:7474"
+      - "${NEO4J_BOLT_PORT}:7687"
+    volumes:
+      - neo4j_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "cypher-shell -u ${NEO4J_USER} -p ${NEO4J_PASSWORD} 'RETURN 1'"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+
+  # Neo4j no tiene carpeta de inicio como Postgres o Mongo.
+  # Este contenedor espera a que Neo4j esté listo, corre los scripts .cypher en orden y termina.
+  neo4j-init:
+    image: neo4j:5
+    container_name: hopwright-neo4j-init
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    environment:
+      NEO4J_USER: ${NEO4J_USER}
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD}
+    volumes:
+      - ./database/graph:/hopwright/graph:ro
+    entrypoint: ["/bin/bash", "/hopwright/graph/load.sh"]
+    restart: "no"
+
+volumes:
+  pg_data:
+  mongo_data:
+  neo4j_data:
