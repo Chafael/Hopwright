@@ -63,6 +63,9 @@ export async function rutaCarretera(params: {
   evitarTerraceria: boolean;
   tiempoMaxMin: number | null;
   candidatas: number;
+  // Para la consulta C5: calcular la ruta como si un incidente no existiera, o rodeando un punto aunque no esté bloqueado
+  ignorarIncidentes?: string[];
+  evitarPuntos?: string[];
 }): Promise<RutaCarretera | null> {
   const filas = await leer<RutaCarretera>(
     `MATCH (o) WHERE (o:Ciudad AND o.idCiudad = $origen) OR (o:Interseccion AND o.idInterseccion = $origen)
@@ -71,8 +74,9 @@ export async function rutaCarretera(params: {
      WITH path, weight
      WHERE all(r IN relationships(path) WHERE coalesce(r.abierto, true)
                 AND NOT ($evitarTerraceria AND r.tipoVia = 'Terracería'))
-       AND none(n IN nodes(path) WHERE EXISTS {
-             MATCH (n)<-[:BLOQUEA]-(i:Incidente) WHERE i.activo AND i.gravedad = 'Alta' })
+       AND none(n IN nodes(path) WHERE coalesce(n.idCiudad, n.idInterseccion) IN $evitarPuntos OR EXISTS {
+             MATCH (n)<-[:BLOQUEA]-(i:Incidente)
+             WHERE i.activo AND i.gravedad = 'Alta' AND NOT i.idIncidente IN $ignorarIncidentes })
      WITH path, weight,
           reduce(s = 0, r IN relationships(path) | s + r.tiempoMin) AS minutos
      WHERE $tiempoMaxMin IS NULL OR minutos <= $tiempoMaxMin
@@ -100,6 +104,8 @@ export async function rutaCarretera(params: {
       evitarTerraceria: params.evitarTerraceria,
       tiempoMaxMin: params.tiempoMaxMin,
       candidatas: entero(params.candidatas),
+      ignorarIncidentes: params.ignorarIncidentes ?? [],
+      evitarPuntos: params.evitarPuntos ?? [],
     },
   );
   return filas[0] ?? null;
