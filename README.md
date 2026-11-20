@@ -52,10 +52,19 @@ Desde `backend/`:
 ```bash
 npm run test:unit         # no necesitan bases de datos
 npm run test:integration  # necesitan los contenedores arriba (docker compose up -d)
-npm test                  # todas
+npm test                  # unitarias e integración
+npm run test:consistencia # apaga y enciende Neo4j; tarda alrededor de un minuto
 ```
 
-Las pruebas de integración usan los datos de ejemplo. Si los modificaste a mano, regresa al estado inicial con `docker compose down -v` y `docker compose up -d`.
+Las pruebas de integración usan los datos de ejemplo. Si los modificaste a mano, regresa al estado inicial con `docker compose down -v`, `docker compose up -d` y `docker compose up neo4j-init`.
+
+Los scripts de MongoDB y PostgreSQL solo corren la primera vez que se crea su volumen. Si agregas una colección, un validador o datos nuevos, hay que borrar el volumen de esa base para que se vuelvan a cargar. Para MongoDB:
+
+```bash
+docker compose rm -sf mongo
+docker volume rm hopwright_mongo_data
+docker compose up -d mongo
+```
 
 ## Estructura
 
