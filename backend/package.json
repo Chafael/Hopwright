@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:unit": "vitest run unit",
-    "test:integration": "vitest run integration"
+    "test:integration": "vitest run integration",
+    "test:consistencia": "vitest run -c vitest.consistencia.config.ts"
   },
   "engines": {
     "node": ">=22"

@@ -8,6 +8,7 @@ import { rutasRed } from "./controllers/red.controller.js";
 import { rutasRutas } from "./controllers/rutas.controller.js";
 import { rutasUbicacion } from "./controllers/ubicacion.controller.js";
 import { rutasIncidentes } from "./controllers/incidentes.controller.js";
+import { rutasAdmin } from "./controllers/admin.controller.js";
 import { cerrarPostgres } from "./db/postgres.js";
 import { cerrarMongo } from "./db/mongo.js";
 import { cerrarNeo4j } from "./db/neo4j.js";
@@ -79,6 +80,7 @@ export async function construirApp(): Promise<FastifyInstance> {
   await app.register(rutasRutas);
   await app.register(rutasUbicacion);
   await app.register(rutasIncidentes);
+  await app.register(rutasAdmin);
 
   app.addHook("onClose", async () => {
     await Promise.allSettled([cerrarPostgres(), cerrarMongo(), cerrarNeo4j()]);

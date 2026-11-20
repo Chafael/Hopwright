@@ -37,3 +37,25 @@ export async function leerIncidenteEnGrafo(idIncidente: string): Promise<Inciden
   );
   return filas[0] ?? null;
 }
+
+// Todos los incidentes del grafo, para compararlos contra MongoDB al reconciliar
+export async function listarIncidentesEnGrafo(): Promise<IncidenteEnGrafo[]> {
+  return leer<IncidenteEnGrafo>(
+    `MATCH (i:Incidente)
+     OPTIONAL MATCH (i)-[:BLOQUEA]->(p)
+     RETURN i.idIncidente AS idIncidente, i.gravedad AS gravedad, i.activo AS activo,
+            coalesce(p.idCiudad, p.idInterseccion) AS idPunto`,
+  );
+}
+
+// Borra del grafo incidentes que ya no existen en MongoDB
+export async function borrarIncidentesDelGrafo(ids: string[]): Promise<number> {
+  if (ids.length === 0) return 0;
+  const filas = await escribir<{ borrados: number }>(
+    `MATCH (i:Incidente) WHERE i.idIncidente IN $ids
+     DETACH DELETE i
+     RETURN count(*) AS borrados`,
+    { ids },
+  );
+  return filas[0]?.borrados ?? 0;
+}

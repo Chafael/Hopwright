@@ -81,3 +81,10 @@ export async function agregarEvidencia(idIncidente: string, evidencia: Evidencia
     { returnDocument: "after", ...sinId },
   );
 }
+
+// Todos los reportes con solo lo que se replica en el grafo (para reconciliar)
+export async function listarParaReconciliar(): Promise<Pick<ReporteIncidente, "idIncidente" | "gravedad" | "activo" | "idPunto" | "sincronizado">[]> {
+  return (await coleccion())
+    .find({}, { projection: { _id: 0, idIncidente: 1, gravedad: 1, activo: 1, idPunto: 1, sincronizado: 1 } })
+    .toArray();
+}
