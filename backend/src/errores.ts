@@ -40,3 +40,20 @@ export class ServicioNoDisponible extends ErrorApp {
     super(503, "Servicio no disponible", mensaje);
   }
 }
+
+// Reconoce los errores de conexión de los tres drivers: PostgreSQL (ECONNREFUSED, timeout),
+// Neo4j (ServiceUnavailable) y MongoDB (MongoServerSelectionError).
+// Lo usa el manejador global para responder 503, y los servicios que deben seguir aunque una base esté caída
+// (por ejemplo, guardar un incidente en MongoDB aunque Neo4j no responda).
+export function esBaseCaida(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const codigo = (error as { code?: unknown }).code;
+  return (
+    codigo === "ECONNREFUSED" ||
+    codigo === "ServiceUnavailable" ||
+    codigo === "SessionExpired" ||
+    error.name === "MongoServerSelectionError" ||
+    error.name === "MongoNetworkError" ||
+    /Connection terminated|timeout exceeded when trying to connect/i.test(error.message)
+  );
+}
