@@ -6,6 +6,7 @@ import { ErrorApp } from "./errores.js";
 import { rutasSalud } from "./controllers/salud.controller.js";
 import { rutasRed } from "./controllers/red.controller.js";
 import { rutasRutas } from "./controllers/rutas.controller.js";
+import { rutasUbicacion } from "./controllers/ubicacion.controller.js";
 import { cerrarPostgres } from "./db/postgres.js";
 import { cerrarMongo } from "./db/mongo.js";
 import { cerrarNeo4j } from "./db/neo4j.js";
@@ -74,6 +75,7 @@ export async function construirApp(): Promise<FastifyInstance> {
   await app.register(rutasSalud);
   await app.register(rutasRed);
   await app.register(rutasRutas);
+  await app.register(rutasUbicacion);
 
   app.addHook("onClose", async () => {
     await Promise.allSettled([cerrarPostgres(), cerrarMongo(), cerrarNeo4j()]);

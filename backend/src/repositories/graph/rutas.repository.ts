@@ -32,7 +32,7 @@ export type RutaCarretera = {
 };
 
 // Proyección que se repite en varias consultas: convierte un nodo en { idPunto, nombre, tipo }
-const proyeccionPunto = (n: string) =>
+export const proyeccionPunto = (n: string) =>
   `{ idPunto: coalesce(${n}.idCiudad, ${n}.idInterseccion, ${n}.idEstacion), nombre: ${n}.nombre, tipo: labels(${n})[0] }`;
 
 // Busca un punto de la red por su id, sea ciudad, intersección o estación
