@@ -6,6 +6,8 @@ export default defineConfig({
   test: {
     dir: "../tests",
     include: ["**/*.test.ts"],
+    // La prueba de consistencia apaga Neo4j; se corre aparte con npm run test:consistencia
+    exclude: ["**/node_modules/**", "consistencia/**"],
     environment: "node",
     globals: true,
     env: { NODE_ENV: "test" },
