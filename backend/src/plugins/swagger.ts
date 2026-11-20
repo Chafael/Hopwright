@@ -17,6 +17,7 @@ export async function registrarSwagger(app: FastifyInstance): Promise<void> {
         { name: "Red", description: "Puntos y tramos de la red de carreteras y tren (Neo4j)" },
         { name: "Rutas", description: "Cálculo de rutas sobre la red (Neo4j)" },
         { name: "Vehículos", description: "Vehículos de la flota y su ubicación en la red" },
+        { name: "Incidentes", description: "Reportes de incidente (MongoDB) y su réplica en la red (Neo4j)" },
       ],
     },
   });

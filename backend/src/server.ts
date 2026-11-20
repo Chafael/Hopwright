@@ -2,27 +2,15 @@ import Fastify, { type FastifyInstance } from "fastify";
 import cors from "@fastify/cors";
 import { env } from "./config/env.js";
 import { registrarSwagger } from "./plugins/swagger.js";
-import { ErrorApp } from "./errores.js";
+import { ErrorApp, esBaseCaida } from "./errores.js";
 import { rutasSalud } from "./controllers/salud.controller.js";
 import { rutasRed } from "./controllers/red.controller.js";
 import { rutasRutas } from "./controllers/rutas.controller.js";
 import { rutasUbicacion } from "./controllers/ubicacion.controller.js";
+import { rutasIncidentes } from "./controllers/incidentes.controller.js";
 import { cerrarPostgres } from "./db/postgres.js";
 import { cerrarMongo } from "./db/mongo.js";
 import { cerrarNeo4j } from "./db/neo4j.js";
-
-// Reconoce los errores de conexión de los tres drivers: PostgreSQL (ECONNREFUSED, timeout),
-// Neo4j (ServiceUnavailable) y MongoDB (MongoServerSelectionError).
-function esBaseCaida(error: Error & { code?: string }): boolean {
-  return (
-    error.code === "ECONNREFUSED" ||
-    error.code === "ServiceUnavailable" ||
-    error.code === "SessionExpired" ||
-    error.name === "MongoServerSelectionError" ||
-    error.name === "MongoNetworkError" ||
-    /Connection terminated|timeout exceeded when trying to connect/i.test(error.message)
-  );
-}
 
 // Construye la aplicación sin ponerla a escuchar. Las pruebas usan esta función con app.inject().
 export async function construirApp(): Promise<FastifyInstance> {
@@ -55,6 +43,20 @@ export async function construirApp(): Promise<FastifyInstance> {
         statusCode: 503,
       });
     }
+    // El validador de una colección de MongoDB rechazó el documento (código 121) o se repitió una llave única (11000).
+    // El servicio valida antes, así que esto es la última barrera.
+    const codigoMongo = (error as { code?: unknown }).code;
+    if (error.name === "MongoServerError" && codigoMongo === 121) {
+      return reply.code(400).send({
+        error: "Datos inválidos",
+        mensaje: "El documento no cumple el esquema de la colección",
+        statusCode: 400,
+        detalles: (error as { errInfo?: unknown }).errInfo,
+      });
+    }
+    if (error.name === "MongoServerError" && codigoMongo === 11000) {
+      return reply.code(409).send({ error: "Conflicto", mensaje: "Ya existe un documento con ese identificador", statusCode: 409 });
+    }
     if (error.validation) {
       // Error de validación del esquema de la ruta (tipo equivocado, campo faltante, etc.)
       return reply.code(400).send({ error: "Datos inválidos", mensaje: error.message, statusCode: 400 });
@@ -76,6 +78,7 @@ export async function construirApp(): Promise<FastifyInstance> {
   await app.register(rutasRed);
   await app.register(rutasRutas);
   await app.register(rutasUbicacion);
+  await app.register(rutasIncidentes);
 
   app.addHook("onClose", async () => {
     await Promise.allSettled([cerrarPostgres(), cerrarMongo(), cerrarNeo4j()]);
