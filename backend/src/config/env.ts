@@ -26,6 +26,15 @@ export const env = {
   port: numero("PORT", 3000),
   host: process.env.HOST ?? "0.0.0.0",
   nodeEnv: process.env.NODE_ENV ?? "development",
+  // Orígenes que pueden llamar a la API desde el navegador. "*" permite cualquiera (solo para desarrollo).
+  corsOrigin: process.env.CORS_ORIGIN ?? "*",
+  rutas: {
+    // Costo de operar un camión por kilómetro (combustible, desgaste, conductor), en pesos.
+    // Es un supuesto del proyecto para comparar camión contra tren; se puede cambiar en el .env.
+    costoKmCamion: numero("COSTO_KM_CAMION", 25),
+    // Cuántas rutas alternativas pide Neo4j antes de filtrar las que no cumplen restricciones
+    candidatas: numero("RUTAS_CANDIDATAS", 10),
+  },
   postgres: {
     host: requerida("PG_HOST"),
     port: numero("PG_PORT", 5432),

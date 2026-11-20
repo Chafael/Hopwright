@@ -45,7 +45,17 @@ La propuesta completa, la matriz de responsabilidades y la fuente de verdad de c
 
 Para empezar desde cero (borra todos los datos): `docker compose down -v` y luego `docker compose up -d`.
 
-Si ya tienes PostgreSQL o MongoDB instalados en tu computadora, ocupan los puertos 5432 y 27017. Por eso el `.env.example` usa el puerto 5433 para el PostgreSQL de Docker. Si MongoDB también choca, cambia `MONGO_PORT` en tu `.env` (por ejemplo a 27018) y vuelve a correr `docker compose up -d`.
+## Pruebas
+
+Desde `backend/`:
+
+```bash
+npm run test:unit         # no necesitan bases de datos
+npm run test:integration  # necesitan los contenedores arriba (docker compose up -d)
+npm test                  # todas
+```
+
+Las pruebas de integración usan los datos de ejemplo. Si los modificaste a mano, regresa al estado inicial con `docker compose down -v` y `docker compose up -d`.
 
 ## Estructura
 
