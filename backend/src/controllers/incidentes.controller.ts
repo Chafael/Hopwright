@@ -8,6 +8,7 @@ import {
   type NuevoIncidente,
   type ResultadoEscritura,
 } from "../services/incidentes.service.js";
+import { enviosAfectados } from "../services/envios-afectados.service.js";
 import { GRAVEDADES, TIPOS_INCIDENTE, type Gravedad, type TipoIncidente } from "../services/incidentes.reglas.js";
 import { respuestasError } from "../schemas/comunes.js";
 
@@ -179,5 +180,62 @@ export async function rutasIncidentes(app: FastifyInstance): Promise<void> {
       },
     },
     async (req, reply) => reply.code(201).send(await nuevaEvidencia(req.params.id, req.body)),
+  );
+
+  const resumenRuta = {
+    type: "object",
+    properties: { minutos: { type: "number" }, kilometros: { type: "number" }, ruta: { type: "array", items: { type: "string" } } },
+  } as const;
+
+  app.get<{ Params: { id: string } }>(
+    "/incidentes/:id/envios-afectados",
+    {
+      schema: {
+        tags: ["Incidentes"],
+        summary: "Envíos en camino que pasan por el punto del incidente y cuánto se retrasan si lo rodean (consulta C5)",
+        description:
+          "Toma el incidente de MongoDB, los envíos en camino de PostgreSQL y calcula en Neo4j, desde donde está cada vehículo, " +
+          "la ruta sin el incidente y la que rodea el punto. Los urgentes van primero.",
+        params: paramsId,
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              incidente: {
+                type: "object",
+                properties: {
+                  idIncidente: { type: "string" },
+                  tipo: { type: "string" },
+                  gravedad: { type: "string" },
+                  activo: { type: "boolean" },
+                  idPunto: { type: "string" },
+                  punto: { type: ["string", "null"] },
+                },
+              },
+              revisados: { type: "integer" },
+              afectados: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    idEnvio: { type: "string" },
+                    placa: { type: ["string", "null"] },
+                    prioridad: { type: "string" },
+                    partida: { type: "string" },
+                    destino: { type: "string" },
+                    rutaSinIncidente: resumenRuta,
+                    desvio: { ...resumenRuta, type: ["object", "null"] },
+                    minutosExtra: { type: ["number", "null"] },
+                  },
+                },
+              },
+              avisos: { type: "array", items: { type: "string" } },
+            },
+          },
+          ...respuestasError(400, 404, 503),
+        },
+      },
+    },
+    async (req) => enviosAfectados(req.params.id),
   );
 }
