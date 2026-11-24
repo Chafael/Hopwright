@@ -8,33 +8,35 @@
 // bajar tarda distinto, el tramo trae minVuelta.
 // El script usa MERGE, así que correrlo dos veces no duplica nada.
 
-// ---------- Ciudades (réplica de PostgreSQL: solo idCiudad y nombre) ----------
+// ---------- Ciudades ----------
+// idCiudad y nombre son réplica de PostgreSQL. latitud y longitud son del grafo: la ubicación en el
+// mapa es geometría de la red, igual que en las intersecciones y estaciones.
 UNWIND [
-  {id: '07101', nombre: 'Tuxtla Gutiérrez'},
-  {id: '07027', nombre: 'Chiapa de Corzo'},
-  {id: '07078', nombre: 'San Cristóbal de las Casas'},
-  {id: '07019', nombre: 'Comitán de Domínguez'},
-  {id: '07094', nombre: 'Teopisca'},
-  {id: '07059', nombre: 'Ocosingo'},
-  {id: '07065', nombre: 'Palenque'},
-  {id: '07012', nombre: 'Berriozábal'},
-  {id: '07061', nombre: 'Ocozocoautla de Espinosa'},
-  {id: '07046', nombre: 'Jiquipilas'},
-  {id: '07017', nombre: 'Cintalapa'},
-  {id: '07009', nombre: 'Arriaga'},
-  {id: '07097', nombre: 'Tonalá'},
-  {id: '07069', nombre: 'Pijijiapan'},
-  {id: '07051', nombre: 'Mapastepec'},
-  {id: '07040', nombre: 'Huixtla'},
-  {id: '07089', nombre: 'Tapachula'},
-  {id: '07086', nombre: 'Suchiapa'},
-  {id: '07108', nombre: 'Villaflores'},
-  {id: '07099', nombre: 'La Trinitaria'},
-  {id: '07057', nombre: 'Motozintla'},
-  {id: '07068', nombre: 'Pichucalco'}
+  {id: '07101', nombre: 'Tuxtla Gutiérrez', lat: 16.7521, lon: -93.1167},
+  {id: '07027', nombre: 'Chiapa de Corzo', lat: 16.7072, lon: -93.0136},
+  {id: '07078', nombre: 'San Cristóbal de las Casas', lat: 16.7370, lon: -92.6376},
+  {id: '07019', nombre: 'Comitán de Domínguez', lat: 16.2511, lon: -92.1342},
+  {id: '07094', nombre: 'Teopisca', lat: 16.5401, lon: -92.4737},
+  {id: '07059', nombre: 'Ocosingo', lat: 16.9068, lon: -92.0936},
+  {id: '07065', nombre: 'Palenque', lat: 17.5097, lon: -91.9822},
+  {id: '07012', nombre: 'Berriozábal', lat: 16.7999, lon: -93.2735},
+  {id: '07061', nombre: 'Ocozocoautla de Espinosa', lat: 16.7618, lon: -93.3753},
+  {id: '07046', nombre: 'Jiquipilas', lat: 16.6667, lon: -93.6431},
+  {id: '07017', nombre: 'Cintalapa', lat: 16.6974, lon: -93.7203},
+  {id: '07009', nombre: 'Arriaga', lat: 16.2362, lon: -93.8984},
+  {id: '07097', nombre: 'Tonalá', lat: 16.0889, lon: -93.7544},
+  {id: '07069', nombre: 'Pijijiapan', lat: 15.6864, lon: -93.2112},
+  {id: '07051', nombre: 'Mapastepec', lat: 15.4346, lon: -92.8994},
+  {id: '07040', nombre: 'Huixtla', lat: 15.1385, lon: -92.4643},
+  {id: '07089', nombre: 'Tapachula', lat: 14.9030, lon: -92.2575},
+  {id: '07086', nombre: 'Suchiapa', lat: 16.6269, lon: -93.0972},
+  {id: '07108', nombre: 'Villaflores', lat: 16.2333, lon: -93.2667},
+  {id: '07099', nombre: 'La Trinitaria', lat: 16.1196, lon: -92.0517},
+  {id: '07057', nombre: 'Motozintla', lat: 15.3667, lon: -92.2500},
+  {id: '07068', nombre: 'Pichucalco', lat: 17.5114, lon: -93.1167}
 ] AS c
 MERGE (n:Ciudad {idCiudad: c.id})
-SET n.nombre = c.nombre;
+SET n.nombre = c.nombre, n.latitud = c.lat, n.longitud = c.lon;
 
 // ---------- Intersecciones ----------
 UNWIND [
@@ -53,14 +55,14 @@ SET n.nombre = i.nombre, n.tipo = i.tipo, n.latitud = i.lat, n.longitud = i.lon;
 
 // ---------- Estaciones de tren (línea de la costa) y la ciudad donde está cada una ----------
 UNWIND [
-  {id: 'EST-ARR', nombre: 'Estación Arriaga',    servicio: 'Carga general y contenedores', ciudad: '07009', cambio: 90},
-  {id: 'EST-TON', nombre: 'Estación Tonalá',     servicio: 'Carga general',                ciudad: '07097', cambio: 90},
-  {id: 'EST-PIJ', nombre: 'Estación Pijijiapan', servicio: 'Carga general',                ciudad: '07069', cambio: 90},
-  {id: 'EST-HUI', nombre: 'Estación Huixtla',    servicio: 'Carga general',                ciudad: '07040', cambio: 90},
-  {id: 'EST-TAP', nombre: 'Estación Tapachula',  servicio: 'Carga general y contenedores', ciudad: '07089', cambio: 60}
+  {id: 'EST-ARR', nombre: 'Estación Arriaga',    servicio: 'Carga general y contenedores', ciudad: '07009', cambio: 90, lat: 16.2330, lon: -93.9060},
+  {id: 'EST-TON', nombre: 'Estación Tonalá',     servicio: 'Carga general',                ciudad: '07097', cambio: 90, lat: 16.0930, lon: -93.7580},
+  {id: 'EST-PIJ', nombre: 'Estación Pijijiapan', servicio: 'Carga general',                ciudad: '07069', cambio: 90, lat: 15.6900, lon: -93.2160},
+  {id: 'EST-HUI', nombre: 'Estación Huixtla',    servicio: 'Carga general',                ciudad: '07040', cambio: 90, lat: 15.1420, lon: -92.4690},
+  {id: 'EST-TAP', nombre: 'Estación Tapachula',  servicio: 'Carga general y contenedores', ciudad: '07089', cambio: 60, lat: 14.9080, lon: -92.2630}
 ] AS e
 MERGE (s:Estacion {idEstacion: e.id})
-SET s.nombre = e.nombre, s.tipoServicio = e.servicio
+SET s.nombre = e.nombre, s.tipoServicio = e.servicio, s.latitud = e.lat, s.longitud = e.lon
 WITH s, e
 MATCH (c:Ciudad {idCiudad: e.ciudad})
 MERGE (s)-[u:UBICADA_EN]->(c)
