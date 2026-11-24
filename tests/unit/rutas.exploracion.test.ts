@@ -51,7 +51,7 @@ describe("dijkstra paso a paso", () => {
 function redDeChiapas(bloqueados: string[] = []): RedExploracion {
   const cypher = readFileSync(fileURLToPath(new URL("../../database/graph/data/01_red_chiapas.cypher", import.meta.url)), "utf-8");
   const aristas: AristaRed[] = [];
-  const patron = /\{a: '([\w-]+)',\s*b: '([\w-]+)',\s*km: (\d+),\s*min: (\d+),(?:\s*minVuelta: (\d+),)?\s*caseta: (\d+),\s*via: '([^']+)'\}/g;
+  const patron = /\{a: '([\w-]+)',\s*b: '([\w-]+)',\s*km: ([\d.]+),\s*min: (\d+),(?:\s*minVuelta: (\d+),)?\s*caseta: (\d+),\s*via: '([^']+)'\}/g;
   for (const m of cypher.matchAll(patron)) {
     const [, a, b, km, min, minVuelta, caseta, via] = m;
     const base = { distanciaKm: Number(km), costoCaseta: Number(caseta), tipoVia: via, abierto: true };
