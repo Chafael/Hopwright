@@ -93,6 +93,44 @@
     return div;
   }
 
+  // Pin con forma de gota (la punta marca el lugar) y una etiqueta con el nombre
+  function pin(color: string, rotulo: string, nombre: string) {
+    return `<div style="display:flex;align-items:flex-end;gap:4px;pointer-events:none">
+      <svg width="28" height="38" viewBox="0 0 28 38" aria-hidden="true" style="filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))">
+        <path d="M14 37C14 37 2 22.5 2 13.5a12 12 0 0 1 24 0C26 22.5 14 37 14 37Z" fill="${color}" stroke="#fff" stroke-width="2.5"/>
+        <circle cx="14" cy="13.5" r="4.5" fill="#fff"/>
+      </svg>
+      <span style="margin-bottom:22px;background:#fff;border:2px solid ${color};border-radius:6px;padding:2px 7px;font:600 11px/1.25 Overpass,sans-serif;color:${ASFALTO};white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.2)">
+        <span style="display:block;font-weight:600;color:#5c6670">${rotulo}</span><span style="font-weight:800;font-size:13px">${nombre}</span>
+      </span>
+    </div>`;
+  }
+
+  // Indicador de sentido: círculo verde con filete blanco y una flecha blanca adentro.
+  // Se dibuja en un canvas porque el estilo sin conexión no trae íconos.
+  function flecha(): ImageData {
+    const t = 44;
+    const lienzo = document.createElement("canvas");
+    lienzo.width = lienzo.height = t;
+    const ctx = lienzo.getContext("2d")!;
+    ctx.beginPath();
+    ctx.arc(t / 2, t / 2, t / 2 - 3, 0, Math.PI * 2);
+    ctx.fillStyle = VERDE;
+    ctx.fill();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "#fff";
+    ctx.stroke();
+    ctx.lineWidth = 5.5;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.beginPath();
+    ctx.moveTo(17, 12);
+    ctx.lineTo(28, 22);
+    ctx.lineTo(17, 32);
+    ctx.stroke();
+    return ctx.getImageData(0, 0, t, t);
+  }
+
   function dibujarRed() {
     if (!mapaGl || !listo) return;
     fuente("tramos")?.setData(
@@ -144,16 +182,24 @@
     fuente("ruta")?.setData(coleccion(principal.length > 1 ? [lineaGeo(principal)] : []));
     fuente("ruta-secundaria")?.setData(coleccion(secundaria.length > 1 ? [lineaGeo(secundaria)] : []));
 
-    const extremos: Feature[] = [];
-    const inicio = ruta[0] ? coordenadas.get(ruta[0]) : undefined;
-    const fin = ruta.at(-1) ? coordenadas.get(ruta.at(-1)!) : undefined;
-    if (inicio && ruta.length > 1) extremos.push(puntoGeo(inicio, { extremo: "inicio" }));
-    if (fin && ruta.length > 1) extremos.push(puntoGeo(fin, { extremo: "fin" }));
-    fuente("extremos")?.setData(coleccion(extremos));
     fuente("aisladas")?.setData(coleccion(aisladas.flatMap((id) => (coordenadas.get(id) ? [puntoGeo(coordenadas.get(id)!)] : []))));
 
     for (const m of marcadoresResaltado) m.remove();
     marcadoresResaltado = [];
+
+    // Pines de salida y llegada, con el nombre del lugar a un lado
+    if (ruta.length > 1) {
+      for (const [id, rotulo, color] of [
+        [ruta[0], "Sale de", VERDE],
+        [ruta.at(-1)!, "Llega a", ASFALTO],
+      ] as const) {
+        const c = coordenadas.get(id);
+        if (!c) continue;
+        const nombre = mapa.puntos.find((p) => p.idPunto === id)?.nombre ?? id;
+        marcadoresResaltado.push(new maplibregl.Marker({ element: elemento(pin(color, rotulo, nombre)), anchor: "bottom-left", offset: [-14, 2] }).setLngLat(c).addTo(mapaGl));
+      }
+    }
+
     const cCerrado = cerrado ? coordenadas.get(cerrado) : undefined;
     if (cCerrado) {
       const html = `<div style="width:24px;height:24px;border-radius:50%;background:${ROJO};border:3px solid #fff;box-shadow:0 0 0 1px ${ROJO};display:grid;place-items:center"><div style="width:12px;height:3px;background:#fff"></div></div>`;
@@ -169,7 +215,7 @@
 
   function agregarCapas(m: maplibregl.Map) {
     const vacia = coleccion([]);
-    for (const id of ["tramos", "puntos", "ruta", "ruta-secundaria", "extremos", "aisladas"]) m.addSource(id, { type: "geojson", data: vacia });
+    for (const id of ["tramos", "puntos", "ruta", "ruta-secundaria", "aisladas"]) m.addSource(id, { type: "geojson", data: vacia });
 
     m.addLayer({
       id: "tramos",
@@ -191,6 +237,22 @@
     m.addLayer({ id: "ruta-secundaria", type: "line", source: "ruta-secundaria", layout: { "line-join": "round" }, paint: { "line-color": "#5c6670", "line-width": 5, "line-dasharray": [2, 1.5] } });
     m.addLayer({ id: "ruta-borde", type: "line", source: "ruta", layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": "#fff", "line-width": 11 } });
     m.addLayer({ id: "ruta", type: "line", source: "ruta", layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": VERDE, "line-width": 6 } });
+    // Flechas a lo largo de la ruta: MapLibre las gira solas según el sentido de la línea
+    m.addImage("flecha", flecha(), { pixelRatio: 2 });
+    m.addLayer({
+      id: "ruta-flechas",
+      type: "symbol",
+      source: "ruta",
+      layout: {
+        "symbol-placement": "line",
+        "symbol-spacing": 140,
+        "icon-image": "flecha",
+        "icon-size": 1,
+        "icon-allow-overlap": true,
+        "icon-ignore-placement": true,
+        "icon-rotation-alignment": "map",
+      },
+    });
 
     m.addLayer({ id: "aisladas", type: "circle", source: "aisladas", paint: { "circle-radius": 13, "circle-color": ROJO, "circle-opacity": 0.2, "circle-stroke-color": ROJO, "circle-stroke-width": 3 } });
     m.addLayer({
@@ -203,12 +265,6 @@
         "circle-stroke-color": ["match", ["get", "tipo"], "Ciudad", VERDE, "Estacion", "#ffffff", "#59636c"],
         "circle-stroke-width": 2,
       },
-    });
-    m.addLayer({
-      id: "extremos",
-      type: "circle",
-      source: "extremos",
-      paint: { "circle-radius": 8, "circle-color": ["match", ["get", "extremo"], "inicio", VERDE, ASFALTO], "circle-stroke-color": "#fff", "circle-stroke-width": 3 },
     });
 
     // Al pasar el cursor por un punto o un tramo se ve qué es
