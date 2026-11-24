@@ -68,6 +68,8 @@ Neo4j Community solo impone unicidad, así que las demás reglas las revisa el b
 
 `apoc.algo.dijkstra` encuentra caminos sumando una propiedad de las aristas (`tiempoMin`, `distanciaKm` o `costoCaseta`, según el criterio), pero no sabe saltarse tramos ni puntos. Por eso le pedimos las 10 rutas más cortas y en la misma consulta descartamos las que pasan por un tramo cerrado, por terracería cuando la carga no lo permite, o por un punto con un incidente Alta activo. Nos quedamos con la primera que cumple. En una red de este tamaño 10 candidatas alcanzan; si la red creciera mucho habría que subir `RUTAS_CANDIDATAS` o cambiar de estrategia.
 
+Para que se vea cómo funciona, `GET /rutas/exploracion` repite Dijkstra en el backend (`backend/src/services/rutas.exploracion.ts`) sobre la misma red que lee de Neo4j y con las mismas restricciones, pero guardando en orden cada punto que resuelve y cada tramo que revisa. También tiene la versión bidireccional, que busca desde la salida y desde la llegada a la vez. La interfaz anima esos pasos y al final dibuja la ruta que dio Neo4j; la respuesta trae `coincide` para comprobar que los dos llegaron al mismo costo. Las pruebas unitarias corren el algoritmo sobre la red de ejemplo, leída del mismo `.cypher`, y verifican los mismos resultados que se esperan de Neo4j.
+
 Las ciudades aisladas (C4) se calculan con `apoc.path.subgraphNodes` desde el destino, recorriendo las carreteras al revés y sin pasar por el punto cerrado. Las ciudades que no aparecen en ese subgrafo son las que se quedan sin camino.
 
 ## Cómo se mantienen las réplicas

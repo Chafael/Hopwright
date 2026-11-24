@@ -168,3 +168,23 @@ export async function ubicacionesDeVehiculos(placas: string[]): Promise<{ placa:
     { placas },
   );
 }
+
+// Toda la red de carreteras y los puntos bloqueados, para repetir Dijkstra paso a paso (rutas.exploracion.ts)
+export async function redDeCarreteras(): Promise<{
+  aristas: { desde: string; hasta: string; tiempoMin: number; distanciaKm: number; costoCaseta: number; tipoVia: string; abierto: boolean }[];
+  bloqueados: string[];
+}> {
+  const [aristas, bloqueados] = await Promise.all([
+    leer<{ desde: string; hasta: string; tiempoMin: number; distanciaKm: number; costoCaseta: number; tipoVia: string; abierto: boolean }>(
+      `MATCH (a)-[r:CARRETERA]->(b)
+       RETURN coalesce(a.idCiudad, a.idInterseccion) AS desde, coalesce(b.idCiudad, b.idInterseccion) AS hasta,
+              r.tiempoMin AS tiempoMin, r.distanciaKm AS distanciaKm, coalesce(r.costoCaseta, 0.0) AS costoCaseta,
+              r.tipoVia AS tipoVia, coalesce(r.abierto, true) AS abierto`,
+    ),
+    leer<{ idPunto: string }>(
+      `MATCH (i:Incidente {activo: true, gravedad: 'Alta'})-[:BLOQUEA]->(p)
+       RETURN DISTINCT coalesce(p.idCiudad, p.idInterseccion) AS idPunto`,
+    ),
+  ]);
+  return { aristas, bloqueados: bloqueados.map((b) => b.idPunto) };
+}

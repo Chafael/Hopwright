@@ -1,0 +1,603 @@
+<script lang="ts">
+  import maplibregl, { type GeoJSONSource, type StyleSpecification } from "maplibre-gl";
+  import { onMount } from "svelte";
+  import type { Feature, FeatureCollection } from "geojson";
+  import type { Exploracion, Mapa, PuntoMapa } from "./api";
+  import { lineaDeTiempo } from "./lineaTiempo";
+  import { Reproductor } from "./reproductor.svelte";
+
+  // Dibuja la red de Chiapas con MapLibre sobre un mapa vectorial (estilo Positron de OpenFreeMap).
+  // Los tramos siguen el trazo real de la carretera si existe static/geometria-tramos.json
+  // (se genera con npm run geometria); si no, se dibujan rectos.
+  let {
+    mapa,
+    ruta = [],
+    rutaSecundaria = [],
+    cerrado = null,
+    aisladas = [],
+    mostrarVehiculos = false,
+    alElegirPunto,
+    exploracion = null,
+    reproductor = new Reproductor(),
+    alAvanzar,
+    margen = 0,
+    colorSecundaria = "#5c6670",
+  }: {
+    mapa: Mapa;
+    ruta?: string[]; // ids de los puntos en orden
+    rutaSecundaria?: string[]; // otra ruta para comparar (por ejemplo, la que llevaba antes del desvío)
+    cerrado?: string | null;
+    aisladas?: string[];
+    mostrarVehiculos?: boolean;
+    alElegirPunto?: (p: PuntoMapa) => void;
+    // Búsqueda paso a paso que se anima antes de mostrar la ruta (GET /rutas/exploracion)
+    exploracion?: Exploracion | null;
+    reproductor?: Reproductor; // tiempo, pausa y velocidad de la animación (lo mueven los controles)
+    alAvanzar?: (estado: { explorados: number; terminado: boolean }) => void;
+    margen?: number; // pixeles que tapa la tarjeta flotante a la izquierda, para encuadrar bien
+    colorSecundaria?: string;
+  } = $props();
+
+  const ESTILO = "https://tiles.openfreemap.org/styles/positron";
+  // Si no hay internet, un fondo liso: la red se sigue viendo
+  const ESTILO_SIN_CONEXION: StyleSpecification = {
+    version: 8,
+    sources: {},
+    layers: [{ id: "fondo", type: "background", paint: { "background-color": "#e4e8e2" } }],
+  };
+
+  const VERDE = "#00674a";
+  const AZUL = "#1f5fa8";
+  const ROJO = "#c8102e";
+  const AMARILLO = "#f5b800";
+  const ASFALTO = "#2b2f33";
+
+  type Lnglat = [number, number];
+  let contenedor: HTMLDivElement;
+  // En celular la tarjeta va debajo del mapa, así que no hay que dejarle espacio a la izquierda
+  function relleno(abajo: number) {
+    const ancho = contenedor?.clientWidth ?? 1024;
+    // Con la animación hay controles abajo y el marcador arriba: se deja lugar para que no tapen la ruta
+    const conControles = !!exploracion;
+    if (ancho < 768) return { top: conControles ? 90 : 60, bottom: conControles ? 150 : abajo, left: 30, right: 40 };
+    return { top: 90, bottom: conControles ? 150 : abajo, left: 60 + margen, right: conControles ? 240 : 170 };
+  }
+
+  let mapaGl: maplibregl.Map | undefined;
+  let listo = $state(false);
+  let geometrias = $state<Record<string, Lnglat[]>>({});
+  let marcadores: maplibregl.Marker[] = [];
+  let marcadoresResaltado: maplibregl.Marker[] = [];
+
+  const coordenadas = $derived(
+    new Map(mapa.puntos.filter((p) => p.latitud !== null && p.longitud !== null).map((p) => [p.idPunto, [p.longitud!, p.latitud!] as Lnglat])),
+  );
+
+  // Trazo de un tramo: la geometría real en cualquiera de los dos sentidos, o una recta
+  function trazo(a: string, b: string): Lnglat[] | null {
+    const directo = geometrias[`${a}|${b}`];
+    if (directo) return directo;
+    const inverso = geometrias[`${b}|${a}`];
+    if (inverso) return [...inverso].reverse();
+    const ca = coordenadas.get(a);
+    const cb = coordenadas.get(b);
+    return ca && cb ? [ca, cb] : null;
+  }
+
+  function lineaDeRuta(ids: string[]): Lnglat[] {
+    const linea: Lnglat[] = [];
+    for (let i = 0; i < ids.length - 1; i++) {
+      const t = trazo(ids[i], ids[i + 1]);
+      if (t) linea.push(...(linea.length ? t.slice(1) : t));
+    }
+    return linea;
+  }
+
+  const coleccion = (features: Feature[]): FeatureCollection => ({ type: "FeatureCollection", features });
+  const lineaGeo = (coords: Lnglat[], props: Record<string, unknown> = {}): Feature => ({
+    type: "Feature",
+    properties: props,
+    geometry: { type: "LineString", coordinates: coords },
+  });
+  const puntoGeo = (c: Lnglat, props: Record<string, unknown> = {}): Feature => ({ type: "Feature", properties: props, geometry: { type: "Point", coordinates: c } });
+
+  function fuente(id: string) {
+    return mapaGl?.getSource(id) as GeoJSONSource | undefined;
+  }
+
+  // Marcadores HTML: rombo de señal preventiva para incidentes, etiqueta para vehículos, señal de cerrado.
+  // Se regresa el contenedor y no el dibujo: MapLibre usa transform del elemento para colocarlo,
+  // y si fuera el mismo elemento se perdería la rotación del rombo.
+  function elemento(html: string, titulo?: string) {
+    const div = document.createElement("div");
+    div.innerHTML = html;
+    if (titulo) div.title = titulo;
+    return div;
+  }
+
+  // Pin con forma de gota (la punta marca el lugar) y una etiqueta con el nombre
+  function pin(color: string, rotulo: string, nombre: string) {
+    return `<div style="display:flex;align-items:flex-end;gap:4px;pointer-events:none">
+      <svg width="28" height="38" viewBox="0 0 28 38" aria-hidden="true" style="filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))">
+        <path d="M14 37C14 37 2 22.5 2 13.5a12 12 0 0 1 24 0C26 22.5 14 37 14 37Z" fill="${color}" stroke="#fff" stroke-width="2.5"/>
+        <circle cx="14" cy="13.5" r="4.5" fill="#fff"/>
+      </svg>
+      <span style="margin-bottom:22px;background:#fff;border:2px solid ${color};border-radius:6px;padding:2px 7px;font:600 11px/1.25 Overpass,sans-serif;color:${ASFALTO};white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.2)">
+        <span style="display:block;font-weight:600;color:#5c6670">${rotulo}</span><span style="font-weight:800;font-size:13px">${nombre}</span>
+      </span>
+    </div>`;
+  }
+
+  // Indicador de sentido: círculo verde con filete blanco y una flecha blanca adentro.
+  // Se dibuja en un canvas porque el estilo sin conexión no trae íconos.
+  function flecha(): ImageData {
+    const t = 44;
+    const lienzo = document.createElement("canvas");
+    lienzo.width = lienzo.height = t;
+    const ctx = lienzo.getContext("2d")!;
+    ctx.beginPath();
+    ctx.arc(t / 2, t / 2, t / 2 - 3, 0, Math.PI * 2);
+    ctx.fillStyle = VERDE;
+    ctx.fill();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "#fff";
+    ctx.stroke();
+    ctx.lineWidth = 5.5;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.beginPath();
+    ctx.moveTo(17, 12);
+    ctx.lineTo(28, 22);
+    ctx.lineTo(17, 32);
+    ctx.stroke();
+    return ctx.getImageData(0, 0, t, t);
+  }
+
+  function dibujarRed() {
+    if (!mapaGl || !listo) return;
+    fuente("tramos")?.setData(
+      coleccion(
+        mapa.tramos.flatMap((t) => {
+          const c = trazo(t.desde, t.hasta);
+          if (!c) return [];
+          const estilo = t.tipo === "VIA_FERREA" ? "tren" : !t.abierto ? "cerrado" : t.tipoVia === "Terracería" ? "terraceria" : t.tipoVia === "Autopista" ? "autopista" : "normal";
+          const texto = `${t.tipo === "VIA_FERREA" ? "Vía férrea" : t.tipoVia}: ${t.distanciaKm} km, ${t.tiempoMin} min${t.costoCaseta ? `, caseta $${t.costoCaseta}` : ""}`;
+          return [lineaGeo(c, { estilo, texto })];
+        }),
+      ),
+    );
+    fuente("puntos")?.setData(
+      coleccion(
+        mapa.puntos.flatMap((p) => {
+          const c = coordenadas.get(p.idPunto);
+          return c ? [puntoGeo(c, { id: p.idPunto, nombre: p.nombre, tipo: p.tipo })] : [];
+        }),
+      ),
+    );
+
+    for (const m of marcadores) m.remove();
+    marcadores = [];
+    for (const i of mapa.incidentes) {
+      const c = coordenadas.get(i.idPunto);
+      if (!c) continue;
+      const fondo = i.gravedad === "Alta" ? ROJO : AMARILLO;
+      const letra = i.gravedad === "Alta" ? "#fff" : ASFALTO;
+      const html = `<div style="width:16px;height:16px;transform:rotate(45deg);background:${fondo};border:2px solid ${ASFALTO};border-radius:2px;display:grid;place-items:center"><span style="transform:rotate(-45deg);font:800 11px Overpass,sans-serif;color:${letra}">!</span></div>`;
+      marcadores.push(new maplibregl.Marker({ element: elemento(html, `${i.idIncidente}: gravedad ${i.gravedad}`) }).setLngLat(c).addTo(mapaGl));
+    }
+    if (mostrarVehiculos) {
+      const porPunto = new Map<string, string[]>();
+      for (const v of mapa.vehiculos) porPunto.set(v.idPunto, [...(porPunto.get(v.idPunto) ?? []), v.placa]);
+      for (const [idPunto, placas] of porPunto) {
+        const c = coordenadas.get(idPunto);
+        if (!c) continue;
+        const html = `<span style="font:700 10px Overpass,sans-serif;background:#fff;color:${ASFALTO};border:1px solid ${ASFALTO};border-radius:3px;padding:1px 4px;white-space:nowrap">${placas.join(", ")}</span>`;
+        marcadores.push(new maplibregl.Marker({ element: elemento(html), anchor: "left", offset: [9, 0] }).setLngLat(c).addTo(mapaGl));
+      }
+    }
+  }
+
+  function dibujarResaltado() {
+    if (!mapaGl || !listo || animando) return;
+    const principal = lineaDeRuta(ruta);
+    const secundaria = lineaDeRuta(rutaSecundaria);
+    fuente("ruta")?.setData(coleccion(principal.length > 1 ? [lineaGeo(principal)] : []));
+    fuente("ruta-secundaria")?.setData(coleccion(secundaria.length > 1 ? [lineaGeo(secundaria)] : []));
+
+    fuente("aisladas")?.setData(coleccion(aisladas.flatMap((id) => (coordenadas.get(id) ? [puntoGeo(coordenadas.get(id)!)] : []))));
+
+    for (const m of marcadoresResaltado) m.remove();
+    marcadoresResaltado = [];
+
+    // Pines de salida y llegada, con el nombre del lugar a un lado
+    if (ruta.length > 1) {
+      for (const [id, rotulo, color] of [
+        [ruta[0], "Sale de", VERDE],
+        [ruta.at(-1)!, "Llega a", ASFALTO],
+      ] as const) {
+        const c = coordenadas.get(id);
+        if (!c) continue;
+        const nombre = mapa.puntos.find((p) => p.idPunto === id)?.nombre ?? id;
+        marcadoresResaltado.push(new maplibregl.Marker({ element: elemento(pin(color, rotulo, nombre)), anchor: "bottom-left", offset: [-14, 2] }).setLngLat(c).addTo(mapaGl));
+      }
+    }
+
+    const cCerrado = cerrado ? coordenadas.get(cerrado) : undefined;
+    if (cCerrado) {
+      const html = `<div style="width:24px;height:24px;border-radius:50%;background:${ROJO};border:3px solid #fff;box-shadow:0 0 0 1px ${ROJO};display:grid;place-items:center"><div style="width:12px;height:3px;background:#fff"></div></div>`;
+      marcadoresResaltado.push(new maplibregl.Marker({ element: elemento(html, "Punto cerrado") }).setLngLat(cCerrado).addTo(mapaGl));
+    }
+
+    const enfoque = [...principal, ...secundaria, ...aisladas.map((id) => coordenadas.get(id)).filter((c): c is Lnglat => !!c), ...(cCerrado ? [cCerrado] : [])];
+    // Después de una animación la cámara se queda donde estaba, para que no brinque al terminar
+    if (enfoque.length > 1 && !exploracion) {
+      const limites = enfoque.reduce((b, c) => b.extend(c), new maplibregl.LngLatBounds(enfoque[0], enfoque[0]));
+      mapaGl.fitBounds(limites, { padding: relleno(60), maxZoom: 8, duration: 600 });
+    }
+  }
+
+  function agregarCapas(m: maplibregl.Map) {
+    const vacia = coleccion([]);
+    for (const id of ["tramos", "puntos", "ruta", "ruta-secundaria", "aisladas", "busqueda", "visitados"]) m.addSource(id, { type: "geojson", data: vacia });
+
+    // Velo oscuro sobre el mapa base mientras se anima la búsqueda (es transparente el resto del tiempo)
+    m.addLayer({ id: "velo", type: "background", paint: { "background-color": "#0e1726", "background-opacity": 0, "background-opacity-transition": { duration: 600 } } });
+
+    m.addLayer({
+      id: "tramos",
+      type: "line",
+      source: "tramos",
+      layout: { "line-cap": "round", "line-join": "round" },
+      paint: {
+        "line-color": ["match", ["get", "estilo"], "tren", AZUL, "cerrado", ROJO, "terraceria", "#8a6d3b", "autopista", "#59636c", "#8b949c"],
+        "line-width": ["interpolate", ["linear"], ["zoom"], 6, ["match", ["get", "estilo"], "autopista", 2.5, 1.6], 10, ["match", ["get", "estilo"], "autopista", 5, 3]],
+      },
+      filter: ["!", ["in", ["get", "estilo"], ["literal", ["tren", "cerrado", "terraceria"]]]],
+    });
+    // Las líneas punteadas van aparte porque line-dasharray no acepta expresiones por elemento
+    m.addLayer({ id: "tramos-tren", type: "line", source: "tramos", filter: ["==", ["get", "estilo"], "tren"], paint: { "line-color": AZUL, "line-width": 3, "line-dasharray": [1, 2] } });
+    m.addLayer({ id: "tramos-terraceria", type: "line", source: "tramos", filter: ["==", ["get", "estilo"], "terraceria"], paint: { "line-color": "#8a6d3b", "line-width": 2, "line-dasharray": [2, 2] } });
+    m.addLayer({ id: "tramos-cerrados", type: "line", source: "tramos", filter: ["==", ["get", "estilo"], "cerrado"], paint: { "line-color": ROJO, "line-width": 3, "line-dasharray": [2, 2] } });
+
+    // Ramas de la búsqueda: un halo difuso debajo y la línea encima, azul desde el origen y cian desde el destino
+    m.addLayer({
+      id: "busqueda-halo",
+      type: "line",
+      source: "busqueda",
+      layout: { "line-cap": "round", "line-join": "round" },
+      paint: { "line-color": ["match", ["get", "lado"], "destino", CIAN_BUSQUEDA, AZUL_BUSQUEDA], "line-width": 9, "line-blur": 6, "line-opacity": 0.45 },
+    });
+    m.addLayer({
+      id: "busqueda",
+      type: "line",
+      source: "busqueda",
+      layout: { "line-cap": "round", "line-join": "round" },
+      paint: {
+        "line-color": ["match", ["get", "lado"], "destino", CIAN_BUSQUEDA, AZUL_BUSQUEDA],
+        "line-width": ["case", ["get", "mejora"], 3, 1.6],
+        "line-opacity": ["case", ["get", "mejora"], 1, 0.6],
+      },
+    });
+    // Resplandor del lugar que se está resolviendo en este momento
+    m.addLayer({
+      id: "visitados-halo",
+      type: "circle",
+      source: "visitados",
+      filter: ["==", ["get", "actual"], true],
+      paint: { "circle-radius": 20, "circle-color": ["match", ["get", "lado"], "destino", CIAN_BUSQUEDA, AZUL_BUSQUEDA], "circle-blur": 0.8, "circle-opacity": 0.6 },
+    });
+    m.addLayer({
+      id: "visitados",
+      type: "circle",
+      source: "visitados",
+      paint: {
+        "circle-radius": ["case", ["get", "actual"], 8, 5],
+        "circle-color": ["case", ["get", "actual"], "#ffffff", ["match", ["get", "lado"], "destino", CIAN_BUSQUEDA, AZUL_BUSQUEDA]],
+        "circle-stroke-color": ["case", ["get", "actual"], ["match", ["get", "lado"], "destino", CIAN_BUSQUEDA, AZUL_BUSQUEDA], "#ffffff"],
+        "circle-stroke-width": ["case", ["get", "actual"], 3, 1.5],
+      },
+    });
+
+    m.addLayer({ id: "ruta-secundaria-borde", type: "line", source: "ruta-secundaria", layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": "#fff", "line-width": 9 } });
+    m.addLayer({ id: "ruta-secundaria", type: "line", source: "ruta-secundaria", layout: { "line-join": "round" }, paint: { "line-color": "#5c6670", "line-width": 5, "line-dasharray": [2, 1.5] } });
+    m.setPaintProperty("ruta-secundaria", "line-color", colorSecundaria);
+    m.addLayer({ id: "ruta-borde", type: "line", source: "ruta", layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": "#fff", "line-width": 11 } });
+    m.addLayer({ id: "ruta", type: "line", source: "ruta", layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": VERDE, "line-width": 6 } });
+    // Flechas a lo largo de la ruta: MapLibre las gira solas según el sentido de la línea
+    m.addImage("flecha", flecha(), { pixelRatio: 2 });
+    m.addLayer({
+      id: "ruta-flechas",
+      type: "symbol",
+      source: "ruta",
+      layout: {
+        "symbol-placement": "line",
+        "symbol-spacing": 140,
+        "icon-image": "flecha",
+        "icon-size": 1,
+        "icon-allow-overlap": true,
+        "icon-ignore-placement": true,
+        "icon-rotation-alignment": "map",
+      },
+    });
+
+    m.addLayer({ id: "aisladas", type: "circle", source: "aisladas", paint: { "circle-radius": 13, "circle-color": ROJO, "circle-opacity": 0.2, "circle-stroke-color": ROJO, "circle-stroke-width": 3 } });
+    m.addLayer({
+      id: "puntos",
+      type: "circle",
+      source: "puntos",
+      paint: {
+        "circle-radius": ["match", ["get", "tipo"], "Ciudad", 5.5, "Estacion", 5, 3.5],
+        "circle-color": ["match", ["get", "tipo"], "Estacion", AZUL, "#ffffff"],
+        "circle-stroke-color": ["match", ["get", "tipo"], "Ciudad", VERDE, "Estacion", "#ffffff", "#59636c"],
+        "circle-stroke-width": 2,
+      },
+    });
+
+    // Los puntos normales van debajo de la búsqueda, para que se vea cuáles ya se exploraron
+    m.moveLayer("puntos", "busqueda-halo");
+
+    // Al pasar el cursor por un punto o un tramo se ve qué es
+    const globo = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 10, className: "globo-red" });
+    for (const capa of ["puntos", "tramos", "tramos-tren", "tramos-terraceria", "tramos-cerrados"]) {
+      m.on("mousemove", capa, (e) => {
+        const f = e.features?.[0];
+        if (!f) return;
+        m.getCanvas().style.cursor = capa === "puntos" && alElegirPunto ? "pointer" : "";
+        const p = f.properties as Record<string, string>;
+        globo.setLngLat(e.lngLat).setText(capa === "puntos" ? `${p.nombre} (${p.id})` : p.texto).addTo(m);
+      });
+      m.on("mouseleave", capa, () => {
+        m.getCanvas().style.cursor = "";
+        globo.remove();
+      });
+    }
+    m.on("click", "puntos", (e) => {
+      const id = e.features?.[0]?.properties?.id as string | undefined;
+      const p = mapa.puntos.find((x) => x.idPunto === id);
+      if (p) alElegirPunto?.(p);
+    });
+  }
+
+
+  // ---------- Animación de la búsqueda ----------
+  // Cada punto resuelto se enciende en su turno y los tramos que revisó desde ahí crecen sobre la carretera.
+  // El momento de cada cosa sale de lineaDeTiempo; aquí solo se dibuja lo que corresponde al tiempo
+  // del reproductor, así que se puede pausar, cambiar la velocidad o moverse hacia atrás y adelante.
+  const AZUL_BUSQUEDA = "#4f9bff";
+  const CIAN_BUSQUEDA = "#3dd6f5";
+  const VERDE_RUTA = "#3ee07a";
+  const PAUSA_ANTES_DE_RUTA = 700;
+  const DIBUJO_DE_RUTA = 2600;
+  let animando = false;
+  let cuadro = 0;
+
+  type Rama = { coords: Lnglat[]; largos: number[]; total: number; inicio: number; fin: number; lado: string; mejora: boolean };
+  type Escena = {
+    ramas: Rama[];
+    encendidos: { c: Lnglat; t: number; lado: string }[];
+    final: { coords: Lnglat[]; largos: number[]; total: number };
+    finBusqueda: number;
+  };
+  let escena: Escena | null = null;
+  let pintado = -1;
+  let resuelto = false;
+  let ultimoConteo = -1;
+
+  function preparar(coords: Lnglat[]) {
+    const largos = [0];
+    for (let i = 1; i < coords.length; i++) largos.push(largos[i - 1] + Math.hypot(coords[i][0] - coords[i - 1][0], coords[i][1] - coords[i - 1][1]));
+    return { largos, total: largos.at(-1) ?? 0 };
+  }
+
+  // La parte de la línea que ya se recorrió, de 0 (nada) a 1 (completa)
+  function recorte(r: { coords: Lnglat[]; largos: number[]; total: number }, f: number): Lnglat[] {
+    if (f >= 1) return r.coords;
+    const meta = r.total * Math.max(f, 0);
+    const fuera: Lnglat[] = [r.coords[0]];
+    for (let i = 1; i < r.coords.length; i++) {
+      if (r.largos[i] <= meta) {
+        fuera.push(r.coords[i]);
+        continue;
+      }
+      const t = (meta - r.largos[i - 1]) / (r.largos[i] - r.largos[i - 1] || 1);
+      const [a, b] = [r.coords[i - 1], r.coords[i]];
+      fuera.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
+      break;
+    }
+    return fuera;
+  }
+
+  function oscurecer(si: boolean) {
+    if (!mapaGl) return;
+    mapaGl.setPaintProperty("velo", "background-opacity", si ? 0.84 : 0);
+    mapaGl.setPaintProperty("tramos", "line-opacity", si ? 0.35 : 1);
+    for (const capa of ["tramos-tren", "tramos-terraceria", "tramos-cerrados"]) mapaGl.setPaintProperty(capa, "line-opacity", si ? 0.35 : 1);
+    mapaGl.setPaintProperty("ruta", "line-color", si ? VERDE_RUTA : VERDE);
+    mapaGl.setPaintProperty("ruta-borde", "line-color", si ? "#0e1726" : "#fff");
+  }
+
+  function limpiarBusqueda() {
+    cancelAnimationFrame(cuadro);
+    animando = false;
+    escena = null;
+    fuente("busqueda")?.setData(coleccion([]));
+    fuente("visitados")?.setData(coleccion([]));
+  }
+
+  function quitarResaltado() {
+    for (const m of marcadoresResaltado) m.remove();
+    marcadoresResaltado = [];
+    fuente("ruta")?.setData(coleccion([]));
+    fuente("ruta-secundaria")?.setData(coleccion([]));
+  }
+
+  function animar(e: Exploracion) {
+    if (!mapaGl || !listo) return;
+    limpiarBusqueda();
+    oscurecer(true);
+    animando = true;
+    quitarResaltado();
+
+    const linea = lineaDeTiempo(e.pasos);
+    const ramas: Rama[] = [];
+    for (const t of linea.tramos) {
+      const coords = trazo(t.desde, t.hasta);
+      if (coords) ramas.push({ coords, ...preparar(coords), inicio: t.inicio, fin: t.fin, lado: t.lado, mejora: t.mejora });
+    }
+    const encendidos = linea.visitas.flatMap((v) => {
+      const c = coordenadas.get(v.punto);
+      return c ? [{ c, t: v.t, lado: v.lado }] : [];
+    });
+    const lineaFinal = lineaDeRuta(ruta.length > 1 ? ruta : e.ruta);
+    escena = { ramas, encendidos, final: { coords: lineaFinal, ...preparar(lineaFinal) }, finBusqueda: linea.fin };
+
+    // Encuadre: todo lo que va a explorar
+    const todos = encendidos.map((x) => x.c);
+    if (todos.length > 1) {
+      const limites = todos.reduce((b, c) => b.extend(c), new maplibregl.LngLatBounds(todos[0], todos[0]));
+      mapaGl.fitBounds(limites, { padding: relleno(50), maxZoom: 8.5, duration: 700 });
+    }
+
+    reproductor.marcas = linea.visitas.map((v) => v.t);
+    reproductor.duracion = linea.fin + PAUSA_ANTES_DE_RUTA + DIBUJO_DE_RUTA;
+    reproductor.tiempo = 0;
+    reproductor.pausado = false;
+    pintado = -1;
+    resuelto = false;
+    ultimoConteo = -1;
+
+    // El reloj arranca cuando termina el encuadre
+    const espera = performance.now() + 750;
+    let previo = performance.now();
+    const latido = (ahora: number) => {
+      const dt = Math.min(ahora - previo, 100);
+      previo = ahora;
+      if (ahora > espera && !reproductor.pausado && reproductor.tiempo < reproductor.duracion) {
+        reproductor.tiempo = Math.min(reproductor.duracion, reproductor.tiempo + dt * reproductor.velocidad);
+      }
+      if (reproductor.tiempo !== pintado) {
+        pintado = reproductor.tiempo;
+        pintar(pintado);
+      }
+      cuadro = requestAnimationFrame(latido);
+    };
+    cuadro = requestAnimationFrame(latido);
+  }
+
+  function pintar(reloj: number) {
+    if (!escena) return;
+    const { ramas, encendidos, final, finBusqueda } = escena;
+    fuente("busqueda")?.setData(
+      coleccion(ramas.filter((r) => reloj >= r.inicio).map((r) => lineaGeo(recorte(r, (reloj - r.inicio) / (r.fin - r.inicio || 1)), { lado: r.lado, mejora: r.mejora }))),
+    );
+    const vistos = encendidos.filter((x) => reloj >= x.t);
+    // El último lugar resuelto se marca más grande: es donde va la búsqueda en este momento
+    const buscando = reloj < finBusqueda;
+    fuente("visitados")?.setData(coleccion(vistos.map((x, i) => puntoGeo(x.c, { lado: x.lado, actual: buscando && i === vistos.length - 1 }))));
+
+    const terminado = reloj >= reproductor.duracion;
+    if (vistos.length !== ultimoConteo || terminado !== resuelto) {
+      ultimoConteo = vistos.length;
+      alAvanzar?.({ explorados: vistos.length, terminado });
+    }
+
+    // Al terminar la búsqueda, la ruta elegida se dibuja de punta a punta
+    const f = (reloj - finBusqueda - PAUSA_ANTES_DE_RUTA) / DIBUJO_DE_RUTA;
+    if (terminado) {
+      if (!resuelto) {
+        resuelto = true;
+        animando = false;
+        dibujarResaltado();
+      }
+      return;
+    }
+    if (resuelto) {
+      // Se regresó la animación desde el final: se quitan los pines y la ruta completa
+      resuelto = false;
+      animando = true;
+      quitarResaltado();
+    }
+    fuente("ruta")?.setData(coleccion(f > 0 && final.coords.length > 1 ? [lineaGeo(recorte(final, f))] : []));
+  }
+
+  onMount(() => {
+    let cancelado = false;
+    (async () => {
+      // Estilo base y geometría de los tramos; ninguno de los dos es indispensable
+      const [estilo, geo] = await Promise.all([
+        fetch(ESTILO, { signal: AbortSignal.timeout(5000) })
+          .then((r) => (r.ok ? (r.json() as Promise<StyleSpecification>) : ESTILO_SIN_CONEXION))
+          .catch(() => ESTILO_SIN_CONEXION),
+        fetch("/geometria-tramos.json")
+          .then((r) => (r.ok ? r.json() : {}))
+          .catch(() => ({})),
+      ]);
+      if (cancelado) return;
+      geometrias = geo;
+
+      const todos = [...coordenadas.values()];
+      const m = new maplibregl.Map({
+        container: contenedor,
+        style: estilo,
+        bounds: todos.length > 1 ? todos.reduce((b, c) => b.extend(c), new maplibregl.LngLatBounds(todos[0], todos[0])) : undefined,
+        fitBoundsOptions: { padding: contenedor.clientWidth < 768 ? 20 : { top: 30, bottom: 30, right: 30, left: 30 + margen } },
+        attributionControl: { compact: true },
+        cooperativeGestures: false,
+      });
+      m.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
+      m.on("load", () => {
+        agregarCapas(m);
+        listo = true;
+      });
+      mapaGl = m;
+    })();
+
+    const observador = new ResizeObserver(() => mapaGl?.resize());
+    observador.observe(contenedor);
+    return () => {
+      cancelado = true;
+      cancelAnimationFrame(cuadro);
+      observador.disconnect();
+      mapaGl?.remove();
+    };
+  });
+
+  $effect(() => {
+    void mapa;
+    void mostrarVehiculos;
+    void geometrias;
+    if (listo) dibujarRed();
+  });
+
+  $effect(() => {
+    const e = exploracion;
+    if (!listo) return;
+    if (e) {
+      animar(e);
+    } else if (animando || mapaGl?.getPaintProperty("velo", "background-opacity")) {
+      limpiarBusqueda();
+      oscurecer(false);
+      dibujarResaltado();
+    }
+  });
+
+  $effect(() => {
+    void ruta;
+    void rutaSecundaria;
+    void cerrado;
+    void aisladas;
+    void geometrias;
+    if (listo) dibujarResaltado();
+  });
+</script>
+
+<div bind:this={contenedor} class="h-full w-full" role="region" aria-label="Mapa de la red de transporte de Chiapas"></div>
+
+<style>
+  :global(.globo-red .maplibregl-popup-content) {
+    font: 600 13px var(--font-sans);
+    color: var(--color-asfalto);
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+</style>

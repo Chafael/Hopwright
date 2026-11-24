@@ -5,6 +5,7 @@ import {
   ciudadesAisladas,
   estacionesConCiudad,
   rutaCarretera,
+  redDeCarreteras,
   rutaTren,
   ubicacionesDeVehiculos,
   type Criterio,
@@ -12,6 +13,7 @@ import {
   type RutaCarretera,
 } from "../repositories/graph/rutas.repository.js";
 import { costoCamion, costoTren, elegirMejores, redondear } from "./rutas.calculos.js";
+import { explorar, type Algoritmo } from "./rutas.exploracion.js";
 
 export type ResultadoRuta = {
   encontrada: boolean;
@@ -229,6 +231,53 @@ export async function calcularRutaConRestricciones(entrada: {
     kilometros: ruta.kilometros,
     costo: ruta.costoCasetas,
     vehiculoSugerido,
+    avisos,
+  };
+}
+
+// Exploración paso a paso para la interfaz: repite Dijkstra sobre la misma red de Neo4j guardando el orden
+// en que revisa cada punto y tramo, y lo compara con la ruta que calcula Neo4j.
+export async function explorarRuta(params: {
+  origen: string;
+  destino: string;
+  criterio: Criterio;
+  evitarTerraceria: boolean;
+  tiempoMaxMin: number | null;
+  algoritmo: Algoritmo;
+}) {
+  const [neo4j, red] = await Promise.all([calcularRuta(params), redDeCarreteras()]);
+  const exploracion = explorar(
+    { aristas: red.aristas, bloqueados: new Set(red.bloqueados) },
+    { origen: params.origen, destino: params.destino, criterio: params.criterio, evitarTerraceria: params.evitarTerraceria, algoritmo: params.algoritmo },
+  );
+
+  const costoNeo4j = !neo4j.encontrada
+    ? null
+    : params.criterio === "tiempo"
+      ? neo4j.minutos
+      : params.criterio === "distancia"
+        ? neo4j.kilometros
+        : neo4j.costoCasetas;
+  const avisos: string[] = [];
+  let coincide: boolean;
+  if (!neo4j.encontrada || !exploracion.encontrada) {
+    coincide = neo4j.encontrada === exploracion.encontrada;
+  } else {
+    coincide = Math.abs(exploracion.costo - costoNeo4j!) < 0.01;
+  }
+  // El tiempo máximo no es parte de Dijkstra: Neo4j filtra después entre sus rutas candidatas
+  if (params.tiempoMaxMin !== null && exploracion.encontrada && exploracion.minutos > params.tiempoMaxMin) {
+    avisos.push(
+      `La ruta más ${params.criterio === "tiempo" ? "rápida" : params.criterio === "distancia" ? "corta" : "barata"} tarda ${exploracion.minutos} min, más que el máximo de ${params.tiempoMaxMin}. ` +
+        (neo4j.encontrada ? "Neo4j eligió la siguiente que sí cumple." : "Ninguna otra cumple."),
+    );
+  }
+
+  return {
+    ...exploracion,
+    criterio: params.criterio,
+    neo4j: { encontrada: neo4j.encontrada, ruta: neo4j.ruta.map((p) => p.idPunto), costo: costoNeo4j, minutos: neo4j.minutos, kilometros: neo4j.kilometros },
+    coincide,
     avisos,
   };
 }

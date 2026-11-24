@@ -18,6 +18,8 @@ Las bases se abrevian así: PG es PostgreSQL, MG es MongoDB y N4 es Neo4j. "Lee"
 
 `GET /rutas` (C1). Lee N4. Ruta por tiempo, distancia o costo con restricciones de terracería y tiempo máximo. Si ninguna ruta cumple, responde 200 con `encontrada: false` y el motivo.
 
+`GET /rutas/exploracion`. Lee N4 (la red completa y los puntos bloqueados) y calcula la ruta con Neo4j. Repite Dijkstra, normal o bidireccional, paso a paso con las mismas restricciones, regresa en orden cada punto resuelto y cada tramo revisado, y dice si llegó al mismo costo que Neo4j. Es lo que anima la interfaz.
+
 `GET /rutas/camion-tren` (C2). Lee N4. Compara mandar la carga solo en camión contra combinar camión y tren.
 
 `GET /red/ciudades-aisladas` (C4). Lee N4. Ciudades que se quedan sin camino si se cierra un punto.
