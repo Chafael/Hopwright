@@ -1,0 +1,994 @@
+[
+ {
+  "id": "07001",
+  "municipio": "Acacoyagua",
+  "cabecera": "Acacoyagua",
+  "lat": 15.340965,
+  "lon": -92.674617,
+  "pob": 7515
+ },
+ {
+  "id": "07002",
+  "municipio": "Acala",
+  "cabecera": "Acala",
+  "lat": 16.551674,
+  "lon": -92.807508,
+  "pob": 13889
+ },
+ {
+  "id": "07003",
+  "municipio": "Acapetahua",
+  "cabecera": "Acapetahua",
+  "lat": 15.282838,
+  "lon": -92.689132,
+  "pob": 6194
+ },
+ {
+  "id": "07004",
+  "municipio": "Altamirano",
+  "cabecera": "Altamirano",
+  "lat": 16.73592,
+  "lon": -92.038594,
+  "pob": 9200
+ },
+ {
+  "id": "07005",
+  "municipio": "Amatán",
+  "cabecera": "Amatán",
+  "lat": 17.372848,
+  "lon": -92.819123,
+  "pob": 3947
+ },
+ {
+  "id": "07006",
+  "municipio": "Amatenango de la Frontera",
+  "cabecera": "Amatenango de la Frontera",
+  "lat": 15.435011,
+  "lon": -92.115158,
+  "pob": 781
+ },
+ {
+  "id": "07007",
+  "municipio": "Amatenango del Valle",
+  "cabecera": "Amatenango del Valle",
+  "lat": 16.528501,
+  "lon": -92.435491,
+  "pob": 4661
+ },
+ {
+  "id": "07008",
+  "municipio": "Ángel Albino Corzo",
+  "cabecera": "Jaltenango de la Paz (Ángel Albino Corzo)",
+  "lat": 15.872644,
+  "lon": -92.72508,
+  "pob": 10427
+ },
+ {
+  "id": "07009",
+  "municipio": "Arriaga",
+  "cabecera": "Arriaga",
+  "lat": 16.236065,
+  "lon": -93.899473,
+  "pob": 24447
+ },
+ {
+  "id": "07010",
+  "municipio": "Bejucal de Ocampo",
+  "cabecera": "Bejucal de Ocampo",
+  "lat": 15.455393,
+  "lon": -92.158407,
+  "pob": 315
+ },
+ {
+  "id": "07011",
+  "municipio": "Bella Vista",
+  "cabecera": "Bella Vista",
+  "lat": 15.582998,
+  "lon": -92.244846,
+  "pob": 1672
+ },
+ {
+  "id": "07012",
+  "municipio": "Berriozábal",
+  "cabecera": "Berriozábal",
+  "lat": 16.800321,
+  "lon": -93.273271,
+  "pob": 28128
+ },
+ {
+  "id": "07013",
+  "municipio": "Bochil",
+  "cabecera": "Bochil",
+  "lat": 16.996383,
+  "lon": -92.890219,
+  "pob": 12404
+ },
+ {
+  "id": "07014",
+  "municipio": "El Bosque",
+  "cabecera": "El Bosque",
+  "lat": 17.06221,
+  "lon": -92.721409,
+  "pob": 5155
+ },
+ {
+  "id": "07015",
+  "municipio": "Cacahoatán",
+  "cabecera": "Cacahoatán",
+  "lat": 14.989789,
+  "lon": -92.16811,
+  "pob": 16572
+ },
+ {
+  "id": "07016",
+  "municipio": "Catazajá",
+  "cabecera": "Catazajá",
+  "lat": 17.728321,
+  "lon": -92.016366,
+  "pob": 2973
+ },
+ {
+  "id": "07017",
+  "municipio": "Cintalapa",
+  "cabecera": "Cintalapa de Figueroa",
+  "lat": 16.698682,
+  "lon": -93.720428,
+  "pob": 42467
+ },
+ {
+  "id": "07018",
+  "municipio": "Coapilla",
+  "cabecera": "Coapilla",
+  "lat": 17.130791,
+  "lon": -93.159022,
+  "pob": 3187
+ },
+ {
+  "id": "07019",
+  "municipio": "Comitán de Domínguez",
+  "cabecera": "Comitán de Domínguez",
+  "lat": 16.252461,
+  "lon": -92.135835,
+  "pob": 97537
+ },
+ {
+  "id": "07020",
+  "municipio": "La Concordia",
+  "cabecera": "La Concordia",
+  "lat": 16.116716,
+  "lon": -92.687934,
+  "pob": 7641
+ },
+ {
+  "id": "07021",
+  "municipio": "Copainalá",
+  "cabecera": "Copainalá",
+  "lat": 17.093611,
+  "lon": -93.210556,
+  "pob": 6550
+ },
+ {
+  "id": "07022",
+  "municipio": "Chalchihuitán",
+  "cabecera": "Chalchihuitán",
+  "lat": 16.963405,
+  "lon": -92.618395,
+  "pob": 1054
+ },
+ {
+  "id": "07023",
+  "municipio": "Chamula",
+  "cabecera": "Chamula",
+  "lat": 16.7875,
+  "lon": -92.689167,
+  "pob": 3329
+ },
+ {
+  "id": "07024",
+  "municipio": "Chanal",
+  "cabecera": "Chanal",
+  "lat": 16.660062,
+  "lon": -92.259942,
+  "pob": 7008
+ },
+ {
+  "id": "07025",
+  "municipio": "Chapultenango",
+  "cabecera": "Chapultenango",
+  "lat": 17.340401,
+  "lon": -93.130078,
+  "pob": 3129
+ },
+ {
+  "id": "07026",
+  "municipio": "Chenalhó",
+  "cabecera": "Chenalhó",
+  "lat": 16.894277,
+  "lon": -92.626148,
+  "pob": 3143
+ },
+ {
+  "id": "07027",
+  "municipio": "Chiapa de Corzo",
+  "cabecera": "Chiapa de Corzo",
+  "lat": 16.707958,
+  "lon": -93.015959,
+  "pob": 45077
+ },
+ {
+  "id": "07028",
+  "municipio": "Chiapilla",
+  "cabecera": "Chiapilla",
+  "lat": 16.570493,
+  "lon": -92.720025,
+  "pob": 3809
+ },
+ {
+  "id": "07029",
+  "municipio": "Chicoasén",
+  "cabecera": "Chicoasén",
+  "lat": 16.967255,
+  "lon": -93.105235,
+  "pob": 3343
+ },
+ {
+  "id": "07030",
+  "municipio": "Chicomuselo",
+  "cabecera": "Chicomuselo",
+  "lat": 15.744936,
+  "lon": -92.283287,
+  "pob": 5938
+ },
+ {
+  "id": "07031",
+  "municipio": "Chilón",
+  "cabecera": "Chilón",
+  "lat": 17.105491,
+  "lon": -92.271528,
+  "pob": 7368
+ },
+ {
+  "id": "07032",
+  "municipio": "Escuintla",
+  "cabecera": "Escuintla",
+  "lat": 15.319269,
+  "lon": -92.658558,
+  "pob": 9570
+ },
+ {
+  "id": "07033",
+  "municipio": "Francisco León",
+  "cabecera": "Rivera el Viejo Carmen",
+  "lat": 17.285925,
+  "lon": -93.272891,
+  "pob": 663
+ },
+ {
+  "id": "07034",
+  "municipio": "Frontera Comalapa",
+  "cabecera": "Frontera Comalapa",
+  "lat": 15.660164,
+  "lon": -92.14105,
+  "pob": 18704
+ },
+ {
+  "id": "07035",
+  "municipio": "Frontera Hidalgo",
+  "cabecera": "Frontera Hidalgo",
+  "lat": 14.777838,
+  "lon": -92.175983,
+  "pob": 3519
+ },
+ {
+  "id": "07036",
+  "municipio": "La Grandeza",
+  "cabecera": "La Grandeza",
+  "lat": 15.51013,
+  "lon": -92.22588,
+  "pob": 1044
+ },
+ {
+  "id": "07037",
+  "municipio": "Huehuetán",
+  "cabecera": "Huehuetán",
+  "lat": 15.01852,
+  "lon": -92.384181,
+  "pob": 7755
+ },
+ {
+  "id": "07038",
+  "municipio": "Huixtán",
+  "cabecera": "Huixtán",
+  "lat": 16.712151,
+  "lon": -92.454597,
+  "pob": 1716
+ },
+ {
+  "id": "07039",
+  "municipio": "Huitiupán",
+  "cabecera": "Huitiupán",
+  "lat": 17.173232,
+  "lon": -92.685932,
+  "pob": 2857
+ },
+ {
+  "id": "07040",
+  "municipio": "Huixtla",
+  "cabecera": "Huixtla",
+  "lat": 15.138289,
+  "lon": -92.465818,
+  "pob": 32033
+ },
+ {
+  "id": "07041",
+  "municipio": "La Independencia",
+  "cabecera": "La Independencia",
+  "lat": 16.254152,
+  "lon": -92.023841,
+  "pob": 3041
+ },
+ {
+  "id": "07042",
+  "municipio": "Ixhuatán",
+  "cabecera": "Ixhuatán",
+  "lat": 17.293271,
+  "lon": -93.008382,
+  "pob": 3621
+ },
+ {
+  "id": "07043",
+  "municipio": "Ixtacomitán",
+  "cabecera": "Ixtacomitán",
+  "lat": 17.430795,
+  "lon": -93.096573,
+  "pob": 4835
+ },
+ {
+  "id": "07044",
+  "municipio": "Ixtapa",
+  "cabecera": "Ixtapa",
+  "lat": 16.803525,
+  "lon": -92.905903,
+  "pob": 6086
+ },
+ {
+  "id": "07045",
+  "municipio": "Ixtapangajoya",
+  "cabecera": "Ixtapangajoya",
+  "lat": 17.497539,
+  "lon": -93.001666,
+  "pob": 1272
+ },
+ {
+  "id": "07046",
+  "municipio": "Jiquipilas",
+  "cabecera": "Jiquipilas",
+  "lat": 16.667721,
+  "lon": -93.650475,
+  "pob": 9894
+ },
+ {
+  "id": "07047",
+  "municipio": "Jitotol",
+  "cabecera": "Jitotol",
+  "lat": 17.067968,
+  "lon": -92.862336,
+  "pob": 4427
+ },
+ {
+  "id": "07048",
+  "municipio": "Juárez",
+  "cabecera": "Juárez",
+  "lat": 17.608151,
+  "lon": -93.193331,
+  "pob": 7286
+ },
+ {
+  "id": "07049",
+  "municipio": "Larráinzar",
+  "cabecera": "Larráinzar",
+  "lat": 16.884446,
+  "lon": -92.713258,
+  "pob": 2364
+ },
+ {
+  "id": "07050",
+  "municipio": "La Libertad",
+  "cabecera": "La Libertad",
+  "lat": 17.690136,
+  "lon": -91.719062,
+  "pob": 2032
+ },
+ {
+  "id": "07051",
+  "municipio": "Mapastepec",
+  "cabecera": "Mapastepec",
+  "lat": 15.441134,
+  "lon": -92.891606,
+  "pob": 17931
+ },
+ {
+  "id": "07052",
+  "municipio": "Las Margaritas",
+  "cabecera": "Las Margaritas",
+  "lat": 16.315947,
+  "lon": -91.981568,
+  "pob": 20786
+ },
+ {
+  "id": "07053",
+  "municipio": "Mazapa de Madero",
+  "cabecera": "Mazapa de Madero",
+  "lat": 15.387966,
+  "lon": -92.187735,
+  "pob": 1580
+ },
+ {
+  "id": "07054",
+  "municipio": "Mazatán",
+  "cabecera": "Mazatán",
+  "lat": 14.863025,
+  "lon": -92.449471,
+  "pob": 6838
+ },
+ {
+  "id": "07055",
+  "municipio": "Metapa",
+  "cabecera": "Metapa de Domínguez",
+  "lat": 14.837314,
+  "lon": -92.190945,
+  "pob": 2610
+ },
+ {
+  "id": "07056",
+  "municipio": "Mitontic",
+  "cabecera": "Mitontic",
+  "lat": 16.864471,
+  "lon": -92.629651,
+  "pob": 770
+ },
+ {
+  "id": "07057",
+  "municipio": "Motozintla",
+  "cabecera": "Motozintla de Mendoza",
+  "lat": 15.363167,
+  "lon": -92.247744,
+  "pob": 23755
+ },
+ {
+  "id": "07058",
+  "municipio": "Nicolás Ruíz",
+  "cabecera": "Nicolás Ruíz",
+  "lat": 16.437073,
+  "lon": -92.585347,
+  "pob": 4277
+ },
+ {
+  "id": "07059",
+  "municipio": "Ocosingo",
+  "cabecera": "Ocosingo",
+  "lat": 16.908038,
+  "lon": -92.095827,
+  "pob": 41878
+ },
+ {
+  "id": "07060",
+  "municipio": "Ocotepec",
+  "cabecera": "Ocotepec",
+  "lat": 17.225029,
+  "lon": -93.164405,
+  "pob": 4663
+ },
+ {
+  "id": "07061",
+  "municipio": "Ocozocoautla de Espinosa",
+  "cabecera": "Ocozocoautla de Espinosa",
+  "lat": 16.761462,
+  "lon": -93.375653,
+  "pob": 39180
+ },
+ {
+  "id": "07062",
+  "municipio": "Ostuacán",
+  "cabecera": "Ostuacán",
+  "lat": 17.405591,
+  "lon": -93.337136,
+  "pob": 2979
+ },
+ {
+  "id": "07063",
+  "municipio": "Osumacinta",
+  "cabecera": "Osumacinta",
+  "lat": 16.935467,
+  "lon": -93.091337,
+  "pob": 2023
+ },
+ {
+  "id": "07064",
+  "municipio": "Oxchuc",
+  "cabecera": "Oxchuc",
+  "lat": 16.786119,
+  "lon": -92.334917,
+  "pob": 6675
+ },
+ {
+  "id": "07065",
+  "municipio": "Palenque",
+  "cabecera": "Palenque",
+  "lat": 17.509133,
+  "lon": -91.981033,
+  "pob": 42947
+ },
+ {
+  "id": "07066",
+  "municipio": "Pantelhó",
+  "cabecera": "Pantelhó",
+  "lat": 17.006659,
+  "lon": -92.46958,
+  "pob": 6888
+ },
+ {
+  "id": "07067",
+  "municipio": "Pantepec",
+  "cabecera": "Pantepec",
+  "lat": 17.188092,
+  "lon": -93.049546,
+  "pob": 1820
+ },
+ {
+  "id": "07068",
+  "municipio": "Pichucalco",
+  "cabecera": "Pichucalco",
+  "lat": 17.508551,
+  "lon": -93.117768,
+  "pob": 14212
+ },
+ {
+  "id": "07069",
+  "municipio": "Pijijiapan",
+  "cabecera": "Pijijiapan",
+  "lat": 15.691674,
+  "lon": -93.209317,
+  "pob": 16917
+ },
+ {
+  "id": "07070",
+  "municipio": "El Porvenir",
+  "cabecera": "El Porvenir de Velasco Suárez",
+  "lat": 15.456367,
+  "lon": -92.27964,
+  "pob": 1436
+ },
+ {
+  "id": "07071",
+  "municipio": "Villa Comaltitlán",
+  "cabecera": "Villa Comaltitlán",
+  "lat": 15.211938,
+  "lon": -92.576024,
+  "pob": 7201
+ },
+ {
+  "id": "07072",
+  "municipio": "Pueblo Nuevo Solistahuacán",
+  "cabecera": "Pueblo Nuevo Solistahuacán",
+  "lat": 17.157568,
+  "lon": -92.897322,
+  "pob": 10043
+ },
+ {
+  "id": "07073",
+  "municipio": "Rayón",
+  "cabecera": "Rayón",
+  "lat": 17.200503,
+  "lon": -93.011217,
+  "pob": 5895
+ },
+ {
+  "id": "07074",
+  "municipio": "Reforma",
+  "cabecera": "Reforma",
+  "lat": 17.865812,
+  "lon": -93.147108,
+  "pob": 26257
+ },
+ {
+  "id": "07075",
+  "municipio": "Las Rosas",
+  "cabecera": "Las Rosas",
+  "lat": 16.364132,
+  "lon": -92.369581,
+  "pob": 18817
+ },
+ {
+  "id": "07076",
+  "municipio": "Sabanilla",
+  "cabecera": "Sabanilla",
+  "lat": 17.283484,
+  "lon": -92.55172,
+  "pob": 3052
+ },
+ {
+  "id": "07077",
+  "municipio": "Salto de Agua",
+  "cabecera": "Salto de Agua",
+  "lat": 17.557021,
+  "lon": -92.333422,
+  "pob": 5199
+ },
+ {
+  "id": "07078",
+  "municipio": "San Cristóbal de las Casas",
+  "cabecera": "San Cristóbal de las Casas",
+  "lat": 16.737022,
+  "lon": -92.637564,
+  "pob": 158027
+ },
+ {
+  "id": "07079",
+  "municipio": "San Fernando",
+  "cabecera": "San Fernando",
+  "lat": 16.871712,
+  "lon": -93.206285,
+  "pob": 9651
+ },
+ {
+  "id": "07080",
+  "municipio": "Siltepec",
+  "cabecera": "Siltepec",
+  "lat": 15.557185,
+  "lon": -92.32286,
+  "pob": 3400
+ },
+ {
+  "id": "07081",
+  "municipio": "Simojovel",
+  "cabecera": "Simojovel de Allende",
+  "lat": 17.140826,
+  "lon": -92.715208,
+  "pob": 10762
+ },
+ {
+  "id": "07082",
+  "municipio": "Sitalá",
+  "cabecera": "Sitalá",
+  "lat": 17.025051,
+  "lon": -92.307743,
+  "pob": 1738
+ },
+ {
+  "id": "07083",
+  "municipio": "Socoltenango",
+  "cabecera": "Socoltenango",
+  "lat": 16.242949,
+  "lon": -92.350316,
+  "pob": 4863
+ },
+ {
+  "id": "07084",
+  "municipio": "Solosuchiapa",
+  "cabecera": "Solosuchiapa",
+  "lat": 17.428656,
+  "lon": -93.031179,
+  "pob": 2035
+ },
+ {
+  "id": "07085",
+  "municipio": "Soyaló",
+  "cabecera": "Soyaló",
+  "lat": 16.890993,
+  "lon": -92.92529,
+  "pob": 4014
+ },
+ {
+  "id": "07086",
+  "municipio": "Suchiapa",
+  "cabecera": "Suchiapa",
+  "lat": 16.621958,
+  "lon": -93.104794,
+  "pob": 16637
+ },
+ {
+  "id": "07087",
+  "municipio": "Suchiate",
+  "cabecera": "Ciudad Hidalgo",
+  "lat": 14.679452,
+  "lon": -92.150942,
+  "pob": 14606
+ },
+ {
+  "id": "07088",
+  "municipio": "Sunuapa",
+  "cabecera": "Sunuapa",
+  "lat": 17.489378,
+  "lon": -93.243169,
+  "pob": 807
+ },
+ {
+  "id": "07089",
+  "municipio": "Tapachula",
+  "cabecera": "Tapachula de Córdova y Ordóñez",
+  "lat": 14.911071,
+  "lon": -92.26432,
+  "pob": 202672
+ },
+ {
+  "id": "07090",
+  "municipio": "Tapalapa",
+  "cabecera": "Tapalapa",
+  "lat": 17.190048,
+  "lon": -93.104605,
+  "pob": 1940
+ },
+ {
+  "id": "07091",
+  "municipio": "Tapilula",
+  "cabecera": "Tapilula",
+  "lat": 17.248403,
+  "lon": -93.016258,
+  "pob": 7441
+ },
+ {
+  "id": "07092",
+  "municipio": "Tecpatán",
+  "cabecera": "Tecpatán",
+  "lat": 17.136995,
+  "lon": -93.311468,
+  "pob": 4530
+ },
+ {
+  "id": "07093",
+  "municipio": "Tenejapa",
+  "cabecera": "Tenejapa",
+  "lat": 16.819017,
+  "lon": -92.506492,
+  "pob": 1998
+ },
+ {
+  "id": "07094",
+  "municipio": "Teopisca",
+  "cabecera": "Teopisca",
+  "lat": 16.541514,
+  "lon": -92.472597,
+  "pob": 16240
+ },
+ {
+  "id": "07096",
+  "municipio": "Tila",
+  "cabecera": "Tila",
+  "lat": 17.300635,
+  "lon": -92.425865,
+  "pob": 7164
+ },
+ {
+  "id": "07097",
+  "municipio": "Tonalá",
+  "cabecera": "Tonalá",
+  "lat": 16.091356,
+  "lon": -93.751783,
+  "pob": 35322
+ },
+ {
+  "id": "07098",
+  "municipio": "Totolapa",
+  "cabecera": "Totolapa",
+  "lat": 16.544733,
+  "lon": -92.680376,
+  "pob": 4596
+ },
+ {
+  "id": "07099",
+  "municipio": "La Trinitaria",
+  "cabecera": "La Trinitaria",
+  "lat": 16.119059,
+  "lon": -92.050469,
+  "pob": 9042
+ },
+ {
+  "id": "07100",
+  "municipio": "Tumbalá",
+  "cabecera": "Tumbalá",
+  "lat": 17.278463,
+  "lon": -92.315988,
+  "pob": 3227
+ },
+ {
+  "id": "07101",
+  "municipio": "Tuxtla Gutiérrez",
+  "cabecera": "Tuxtla Gutiérrez",
+  "lat": 16.753972,
+  "lon": -93.115192,
+  "pob": 537102
+ },
+ {
+  "id": "07102",
+  "municipio": "Tuxtla Chico",
+  "cabecera": "Tuxtla Chico",
+  "lat": 14.94019,
+  "lon": -92.16897,
+  "pob": 7026
+ },
+ {
+  "id": "07103",
+  "municipio": "Tuzantán",
+  "cabecera": "Tuzantán",
+  "lat": 15.146063,
+  "lon": -92.421621,
+  "pob": 2863
+ },
+ {
+  "id": "07104",
+  "municipio": "Tzimol",
+  "cabecera": "Tzimol",
+  "lat": 16.184231,
+  "lon": -92.187937,
+  "pob": 5112
+ },
+ {
+  "id": "07105",
+  "municipio": "Unión Juárez",
+  "cabecera": "Unión Juárez",
+  "lat": 15.060707,
+  "lon": -92.081958,
+  "pob": 2635
+ },
+ {
+  "id": "07106",
+  "municipio": "Venustiano Carranza",
+  "cabecera": "Venustiano Carranza",
+  "lat": 16.339617,
+  "lon": -92.565135,
+  "pob": 15496
+ },
+ {
+  "id": "07107",
+  "municipio": "Villa Corzo",
+  "cabecera": "Villa Corzo",
+  "lat": 16.184751,
+  "lon": -93.267684,
+  "pob": 10841
+ },
+ {
+  "id": "07108",
+  "municipio": "Villaflores",
+  "cabecera": "Villaflores",
+  "lat": 16.235486,
+  "lon": -93.267708,
+  "pob": 37237
+ },
+ {
+  "id": "07109",
+  "municipio": "Yajalón",
+  "cabecera": "Yajalón",
+  "lat": 17.17391,
+  "lon": -92.333944,
+  "pob": 16622
+ },
+ {
+  "id": "07110",
+  "municipio": "San Lucas",
+  "cabecera": "San Lucas",
+  "lat": 16.611637,
+  "lon": -92.719342,
+  "pob": 4716
+ },
+ {
+  "id": "07111",
+  "municipio": "Zinacantán",
+  "cabecera": "Zinacantán",
+  "lat": 16.760119,
+  "lon": -92.723581,
+  "pob": 3876
+ },
+ {
+  "id": "07112",
+  "municipio": "San Juan Cancuc",
+  "cabecera": "San Juan Cancuc",
+  "lat": 16.892243,
+  "lon": -92.371953,
+  "pob": 6327
+ },
+ {
+  "id": "07113",
+  "municipio": "Aldama",
+  "cabecera": "Aldama",
+  "lat": 16.917818,
+  "lon": -92.688192,
+  "pob": 1273
+ },
+ {
+  "id": "07114",
+  "municipio": "Benemérito de las Américas",
+  "cabecera": "Benemérito de las Américas",
+  "lat": 16.515828,
+  "lon": -90.653302,
+  "pob": 7259
+ },
+ {
+  "id": "07115",
+  "municipio": "Maravilla Tenejapa",
+  "cabecera": "Maravilla Tenejapa",
+  "lat": 16.140397,
+  "lon": -91.295104,
+  "pob": 1477
+ },
+ {
+  "id": "07116",
+  "municipio": "Marqués de Comillas",
+  "cabecera": "Zamora Pico de Oro",
+  "lat": 16.333133,
+  "lon": -90.765283,
+  "pob": 1734
+ },
+ {
+  "id": "07117",
+  "municipio": "Montecristo de Guerrero",
+  "cabecera": "Montecristo de Guerrero",
+  "lat": 15.693918,
+  "lon": -92.61926,
+  "pob": 2546
+ },
+ {
+  "id": "07118",
+  "municipio": "San Andrés Duraznal",
+  "cabecera": "San Andrés Duraznal",
+  "lat": 17.131998,
+  "lon": -92.804988,
+  "pob": 2987
+ },
+ {
+  "id": "07119",
+  "municipio": "Santiago el Pinar",
+  "cabecera": "Santiago el Pinar",
+  "lat": 16.941438,
+  "lon": -92.714596,
+  "pob": 1072
+ },
+ {
+  "id": "07120",
+  "municipio": "Capitán Luis Ángel Vidal",
+  "cabecera": "Capitán Luis Ángel Vidal",
+  "lat": 15.601128,
+  "lon": -92.629098,
+  "pob": 563
+ },
+ {
+  "id": "07121",
+  "municipio": "Rincón Chamula San Pedro",
+  "cabecera": "Rincón Chamula",
+  "lat": 17.209471,
+  "lon": -92.93757,
+  "pob": 5592
+ },
+ {
+  "id": "07122",
+  "municipio": "El Parral",
+  "cabecera": "El Parral",
+  "lat": 16.366228,
+  "lon": -93.006711,
+  "pob": 10865
+ },
+ {
+  "id": "07123",
+  "municipio": "Emiliano Zapata",
+  "cabecera": "20 de Noviembre",
+  "lat": 16.539172,
+  "lon": -92.896724,
+  "pob": 4636
+ },
+ {
+  "id": "07124",
+  "municipio": "Mezcalapa",
+  "cabecera": "Raudales Malpaso",
+  "lat": 17.189223,
+  "lon": -93.604773,
+  "pob": 6817
+ },
+ {
+  "id": "07125",
+  "municipio": "Honduras de la Sierra",
+  "cabecera": "Honduras de la Sierra",
+  "lat": 15.589663,
+  "lon": -92.476058,
+  "pob": 507
+ }
+]
