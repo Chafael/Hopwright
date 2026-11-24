@@ -10,11 +10,15 @@ Las bases se abrevian así: PG es PostgreSQL, MG es MongoDB y N4 es Neo4j. "Lee"
 
 `GET /red/puntos`. Lee N4. Lista ciudades, intersecciones y estaciones.
 
+`GET /red/mapa`. Lee N4 con cuatro consultas en paralelo: puntos con coordenadas, tramos (una línea por par de puntos), incidentes activos y ubicación de los vehículos. Es lo que usa la interfaz para dibujar la red.
+
 `POST /red/intersecciones`, `POST /red/estaciones`, `DELETE /red/intersecciones/{id}`. Escriben N4. El borrado se niega (409) si la intersección tiene incidentes activos o si algún vecino se quedaría sin tramos.
 
 `POST /red/tramos`, `PATCH /red/tramos`, `DELETE /red/tramos`. Escriben N4. Validan R2, R4, R5, R12, R14 y R15 antes de escribir.
 
 `GET /rutas` (C1). Lee N4. Ruta por tiempo, distancia o costo con restricciones de terracería y tiempo máximo. Si ninguna ruta cumple, responde 200 con `encontrada: false` y el motivo.
+
+`GET /rutas/exploracion`. Lee N4 (la red completa y los puntos bloqueados) y calcula la ruta con Neo4j. Repite Dijkstra, normal o bidireccional, paso a paso con las mismas restricciones, regresa en orden cada punto resuelto y cada tramo revisado, y dice si llegó al mismo costo que Neo4j. Es lo que anima la interfaz.
 
 `GET /rutas/camion-tren` (C2). Lee N4. Compara mandar la carga solo en camión contra combinar camión y tren.
 
