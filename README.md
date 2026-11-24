@@ -47,7 +47,7 @@ Para empezar desde cero (borra todos los datos): `docker compose down -v` y lueg
 
 ## Interfaz web
 
-La interfaz está en `frontend/` (SvelteKit en modo estático, Tailwind, Flowbite y Leaflet). Solo habla con la API, nunca con las bases. Con el backend corriendo en otra terminal:
+La interfaz está en `frontend/` (SvelteKit en modo estático, Tailwind, Flowbite y MapLibre con el mapa Positron de OpenFreeMap). Solo habla con la API, nunca con las bases. Con el backend corriendo en otra terminal:
 
 ```bash
 cd frontend
@@ -57,7 +57,16 @@ npm run dev
 
 Se abre en http://localhost:5173. Si la API no está en `http://localhost:3000`, copia `frontend/.env.example` como `frontend/.env` y cambia `VITE_API_URL`.
 
-Pantallas: rutas (C1), camión o tren (C2), red y cierres (C4 y ubicación de vehículos), incidentes (alta, cierre, evidencias y envíos afectados, C5) y mantenimiento (reconciliación). El mapa necesita internet para el fondo; la red se dibuja aunque no cargue.
+Pantallas: rutas (C1), camión o tren (C2), red y cierres (C4 y ubicación de vehículos), incidentes (alta, cierre, evidencias y envíos afectados, C5) y mantenimiento (reconciliación). El mapa necesita internet para el fondo; sin conexión cae a un fondo liso y la red se sigue viendo.
+
+Para que los tramos sigan el trazo real de la carretera y no se dibujen rectos, con el backend corriendo:
+
+```bash
+cd frontend
+npm run geometria
+```
+
+Pide a OSRM (el ruteador público de OpenStreetMap) el camino de cada tramo, una petición por segundo, y lo guarda en `frontend/static/geometria-tramos.json`. Se corre una vez y el archivo se sube al repositorio; solo hay que repetirlo si se agregan tramos.
 
 ## Pruebas
 
