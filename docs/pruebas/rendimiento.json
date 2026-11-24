@@ -1,0 +1,228 @@
+{
+  "fecha": "2026-11-24T06:25:30.671Z",
+  "peticiones": 200,
+  "concurrencia": 10,
+  "equipo": {
+    "Procesador": "AMD Ryzen 5 7535HS with Radeon Graphics (12 hilos)",
+    "Memoria": "15 GB",
+    "Sistema operativo": "win32 10.0.26200 (x64)",
+    "Node.js": "v26.13.1"
+  },
+  "datos": {
+    "neo4j": {
+      "nodos": [
+        {
+          "etiqueta": "Ciudad",
+          "total": 22
+        },
+        {
+          "etiqueta": "Estacion",
+          "total": 5
+        },
+        {
+          "etiqueta": "Incidente",
+          "total": 2
+        },
+        {
+          "etiqueta": "Interseccion",
+          "total": 9
+        },
+        {
+          "etiqueta": "Vehiculo",
+          "total": 7
+        }
+      ],
+      "aristas": [
+        {
+          "tipo": "BLOQUEA",
+          "total": 2
+        },
+        {
+          "tipo": "CARRETERA",
+          "total": 66
+        },
+        {
+          "tipo": "SE_ENCUENTRA_EN",
+          "total": 7
+        },
+        {
+          "tipo": "UBICADA_EN",
+          "total": 5
+        },
+        {
+          "tipo": "VIA_FERREA",
+          "total": 8
+        }
+      ]
+    },
+    "mongo": {
+      "contadores": 1,
+      "reportes_incidente": 2
+    },
+    "postgres": {}
+  },
+  "resultados": [
+    {
+      "nombre": "GET /health",
+      "bases": "PostgreSQL, MongoDB y Neo4j (ping)",
+      "peticiones": 200,
+      "errores": 0,
+      "codigos": {
+        "200": 200
+      },
+      "porSegundo": 366.7,
+      "ms": {
+        "min": 5.1,
+        "p50": 22.1,
+        "p95": 71,
+        "p99": 131.6,
+        "max": 142.7,
+        "promedio": 27.1
+      }
+    },
+    {
+      "nombre": "GET /rutas (C1, por tiempo)",
+      "bases": "Neo4j",
+      "peticiones": 200,
+      "errores": 0,
+      "codigos": {
+        "200": 200
+      },
+      "porSegundo": 135.5,
+      "ms": {
+        "min": 56,
+        "p50": 69.8,
+        "p95": 96.1,
+        "p99": 101.5,
+        "max": 103.7,
+        "promedio": 73.3
+      }
+    },
+    {
+      "nombre": "GET /rutas (C1, con restricciones)",
+      "bases": "Neo4j",
+      "peticiones": 200,
+      "errores": 0,
+      "codigos": {
+        "200": 200
+      },
+      "porSegundo": 137.4,
+      "ms": {
+        "min": 52.9,
+        "p50": 67.9,
+        "p95": 84.7,
+        "p99": 141.5,
+        "max": 145.4,
+        "promedio": 71.3
+      }
+    },
+    {
+      "nombre": "GET /rutas/camion-tren (C2)",
+      "bases": "Neo4j",
+      "peticiones": 200,
+      "errores": 0,
+      "codigos": {
+        "200": 200
+      },
+      "porSegundo": 18.5,
+      "ms": {
+        "min": 472.1,
+        "p50": 526.4,
+        "p95": 609.2,
+        "p99": 631,
+        "max": 655.8,
+        "promedio": 536
+      }
+    },
+    {
+      "nombre": "GET /red/ciudades-aisladas (C4)",
+      "bases": "Neo4j",
+      "peticiones": 200,
+      "errores": 0,
+      "codigos": {
+        "200": 200
+      },
+      "porSegundo": 331.6,
+      "ms": {
+        "min": 18.4,
+        "p50": 28.8,
+        "p95": 42.1,
+        "p99": 50.1,
+        "max": 57.8,
+        "promedio": 29.8
+      }
+    },
+    {
+      "nombre": "GET /incidentes?activo=true",
+      "bases": "MongoDB",
+      "peticiones": 200,
+      "errores": 0,
+      "codigos": {
+        "200": 200
+      },
+      "porSegundo": 1038.5,
+      "ms": {
+        "min": 4.2,
+        "p50": 9.1,
+        "p95": 12.6,
+        "p99": 13.5,
+        "max": 38.6,
+        "promedio": 9.6
+      }
+    },
+    {
+      "nombre": "POST /incidentes",
+      "bases": "MongoDB y Neo4j (escritura en las dos)",
+      "peticiones": 200,
+      "errores": 0,
+      "codigos": {
+        "201": 200
+      },
+      "porSegundo": 146.2,
+      "ms": {
+        "min": 15.5,
+        "p50": 49.5,
+        "p95": 171.8,
+        "p99": 245.4,
+        "max": 271.1,
+        "promedio": 67.3
+      }
+    },
+    {
+      "nombre": "GET /incidentes/{id}/envios-afectados (C5)",
+      "bases": "MongoDB, PostgreSQL y Neo4j",
+      "peticiones": 200,
+      "errores": 0,
+      "codigos": {
+        "200": 200
+      },
+      "porSegundo": 259.1,
+      "ms": {
+        "min": 18.1,
+        "p50": 37.6,
+        "p95": 47.9,
+        "p99": 56.5,
+        "max": 61.3,
+        "promedio": 38
+      }
+    },
+    {
+      "nombre": "PATCH /vehiculos/{placa}/ubicacion",
+      "bases": "PostgreSQL (lectura) y Neo4j (escritura)",
+      "peticiones": 200,
+      "errores": 0,
+      "codigos": {
+        "200": 200
+      },
+      "porSegundo": 132.3,
+      "ms": {
+        "min": 32.3,
+        "p50": 70.8,
+        "p95": 106.5,
+        "p99": 152.9,
+        "max": 180.1,
+        "promedio": 74.4
+      }
+    }
+  ]
+}
