@@ -62,8 +62,8 @@ function redDeChiapas(bloqueados: string[] = []): RedExploracion {
 }
 
 describe("sobre la red de Chiapas (mismos resultados que espera Neo4j en las pruebas de integración)", () => {
-  it("lee los 33 tramos de carretera", () => {
-    expect(redDeChiapas().aristas).toHaveLength(66);
+  it("lee los 65 tramos de carretera", () => {
+    expect(redDeChiapas().aristas).toHaveLength(130);
   });
 
   it("Tuxtla a San Cristóbal: 72 minutos por tiempo y sin casetas por costo", () => {

@@ -118,9 +118,23 @@ describe("GET /rutas/camion-tren (C2)", () => {
 });
 
 describe("GET /red/ciudades-aisladas (C4)", () => {
-  it("si se cierra el entronque de Oxchuc, Ocosingo y Palenque se quedan sin camino a Tuxtla", async () => {
+  it("si se cierra el entronque de Oxchuc, toda la Selva se queda sin camino a Tuxtla", async () => {
     const r = (await app.inject({ url: "/red/ciudades-aisladas?punto=INT-OXC" })).json();
-    expect(r.aisladas.map((c: { nombre: string }) => c.nombre)).toEqual(["Ocosingo", "Palenque"]);
+    expect(r.aisladas.map((c: { nombre: string }) => c.nombre)).toEqual([
+      "Altamirano",
+      "Catazajá",
+      "Chilón",
+      "Ocosingo",
+      "Palenque",
+      "Salto de Agua",
+      "Tila",
+      "Yajalón",
+    ]);
+  });
+
+  it("si se cierra el entronque de Bochil, se quedan sin camino las ciudades del norte", async () => {
+    const r = (await app.inject({ url: "/red/ciudades-aisladas?punto=INT-BOC" })).json();
+    expect(r.aisladas.map((c: { nombre: string }) => c.nombre)).toEqual(["Pichucalco", "Reforma", "Simojovel"]);
   });
 
   it("si se cierra Las Cruces nadie queda aislado, porque hay caminos alternos", async () => {
@@ -168,12 +182,12 @@ describe("GET /rutas/exploracion", () => {
 });
 
 describe("GET /red/mapa", () => {
-  it("regresa los 36 puntos con coordenadas, una línea por tramo, incidentes activos y vehículos", async () => {
+  it("regresa los 64 puntos con coordenadas, una línea por tramo, incidentes activos y vehículos", async () => {
     const mapa = (await app.inject({ url: "/red/mapa" })).json();
-    expect(mapa.puntos).toHaveLength(36);
+    expect(mapa.puntos).toHaveLength(64);
     expect(mapa.puntos.every((p: { latitud: number | null }) => typeof p.latitud === "number")).toBe(true);
-    // 33 tramos de carretera y 4 de vía férrea, cada uno una sola vez
-    expect(mapa.tramos.filter((t: { tipo: string }) => t.tipo === "CARRETERA")).toHaveLength(33);
+    // 65 tramos de carretera y 4 de vía férrea, cada uno una sola vez
+    expect(mapa.tramos.filter((t: { tipo: string }) => t.tipo === "CARRETERA")).toHaveLength(65);
     expect(mapa.tramos.filter((t: { tipo: string }) => t.tipo === "VIA_FERREA")).toHaveLength(4);
     expect(mapa.incidentes.map((i: { idIncidente: string }) => i.idIncidente)).toContain("INC-0001");
     expect(mapa.vehiculos.length).toBeGreaterThanOrEqual(7);
@@ -181,8 +195,8 @@ describe("GET /red/mapa", () => {
 });
 
 describe("GET /red/puntos", () => {
-  it("lista los 36 puntos de la red de ejemplo", async () => {
+  it("lista los 64 puntos de la red de ejemplo", async () => {
     const puntos = (await app.inject({ url: "/red/puntos" })).json();
-    expect(puntos).toHaveLength(36);
+    expect(puntos).toHaveLength(64);
   });
 });
