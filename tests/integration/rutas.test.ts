@@ -134,6 +134,19 @@ describe("GET /red/ciudades-aisladas (C4)", () => {
   });
 });
 
+describe("GET /red/mapa", () => {
+  it("regresa los 36 puntos con coordenadas, una línea por tramo, incidentes activos y vehículos", async () => {
+    const mapa = (await app.inject({ url: "/red/mapa" })).json();
+    expect(mapa.puntos).toHaveLength(36);
+    expect(mapa.puntos.every((p: { latitud: number | null }) => typeof p.latitud === "number")).toBe(true);
+    // 33 tramos de carretera y 4 de vía férrea, cada uno una sola vez
+    expect(mapa.tramos.filter((t: { tipo: string }) => t.tipo === "CARRETERA")).toHaveLength(33);
+    expect(mapa.tramos.filter((t: { tipo: string }) => t.tipo === "VIA_FERREA")).toHaveLength(4);
+    expect(mapa.incidentes.map((i: { idIncidente: string }) => i.idIncidente)).toContain("INC-0001");
+    expect(mapa.vehiculos.length).toBeGreaterThanOrEqual(7);
+  });
+});
+
 describe("GET /red/puntos", () => {
   it("lista los 36 puntos de la red de ejemplo", async () => {
     const puntos = (await app.inject({ url: "/red/puntos" })).json();

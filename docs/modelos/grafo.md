@@ -11,6 +11,7 @@ Scripts: `database/graph/schema/` (restricciones e índices), `database/graph/da
 `Ciudad`. Un municipio de Chiapas. Réplica de la tabla `ciudad` de PostgreSQL.
 - `idCiudad`: clave de municipio del INEGI en texto, por ejemplo `"07101"` para Tuxtla Gutiérrez. Única.
 - `nombre`.
+- `latitud`, `longitud`: estas dos no vienen de PostgreSQL, son del grafo. La posición en el mapa es geometría de la red, igual que en intersecciones y estaciones. Una ciudad nueva que llega por el procesador de eventos no trae coordenadas hasta que se le ponen.
 
 `Interseccion`. Un punto de la carretera que no es ciudad: un cruce, una glorieta o una caseta. Existe solo en el grafo.
 - `idInterseccion`: texto con prefijo, por ejemplo `INT-CRU`. Única.
@@ -18,7 +19,7 @@ Scripts: `database/graph/schema/` (restricciones e índices), `database/graph/da
 
 `Estacion`. Una estación del tren de carga. Existe solo en el grafo.
 - `idEstacion`: texto con prefijo, por ejemplo `EST-ARR`. Única, igual que `nombre`.
-- `tipoServicio`.
+- `tipoServicio`, `latitud`, `longitud`.
 
 `Incidente`. Réplica mínima de un reporte de `reportes_incidente` en MongoDB.
 - `idIncidente` (único), `gravedad` (`Baja`, `Media` o `Alta`), `activo`.
