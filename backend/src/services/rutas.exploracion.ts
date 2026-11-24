@@ -29,7 +29,8 @@ export type RedExploracion = { aristas: AristaRed[]; bloqueados: Set<string> };
 //        se recorre al revés, así que la carretera real va de hasta a desde.
 export type Paso =
   | { tipo: "visita"; punto: string; lado: "origen" | "destino"; costo: number }
-  | { tipo: "tramo"; desde: string; hasta: string; lado: "origen" | "destino"; mejora: boolean };
+  // costo: lo que costaría llegar a "hasta" pasando por este tramo (sirve para animar la búsqueda a su ritmo real)
+  | { tipo: "tramo"; desde: string; hasta: string; lado: "origen" | "destino"; mejora: boolean; costo: number };
 
 export type ResultadoExploracion = {
   algoritmo: Algoritmo;
@@ -150,7 +151,7 @@ export function dijkstra(red: RedExploracion, origen: string, destino: string, c
       if (resueltos.has(a.hasta)) continue;
       const nuevo = c + peso(a, criterio);
       const mejora = nuevo < (costo.get(a.hasta) ?? Number.POSITIVE_INFINITY);
-      pasos.push({ tipo: "tramo", desde: punto, hasta: a.hasta, lado: "origen", mejora });
+      pasos.push({ tipo: "tramo", desde: punto, hasta: a.hasta, lado: "origen", mejora, costo: nuevo });
       if (mejora) {
         costo.set(a.hasta, nuevo);
         llegada.set(a.hasta, a);
@@ -213,7 +214,7 @@ export function dijkstraBidireccional(
       if (lado.resueltos.has(vecino)) continue;
       const nuevo = c + peso(a, criterio);
       const mejora = nuevo < (lado.costo.get(vecino) ?? Number.POSITIVE_INFINITY);
-      pasos.push({ tipo: "tramo", desde: punto, hasta: vecino, lado: nombre, mejora });
+      pasos.push({ tipo: "tramo", desde: punto, hasta: vecino, lado: nombre, mejora, costo: nuevo });
       if (mejora) {
         lado.costo.set(vecino, nuevo);
         lado.via.set(vecino, a);

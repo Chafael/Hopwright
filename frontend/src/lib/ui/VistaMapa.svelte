@@ -7,7 +7,7 @@
 </script>
 
 <div class="relative flex min-h-full flex-col md:block md:h-full">
-  <div class="relative h-[55vh] shrink-0 md:absolute md:inset-0 md:h-auto">
+  <div class="relative h-[62vh] shrink-0 md:absolute md:inset-0 md:h-auto">
     {@render mapa()}
     {#if encima}{@render encima()}{/if}
   </div>

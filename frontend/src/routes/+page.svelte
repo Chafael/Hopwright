@@ -11,6 +11,7 @@
   import SalidaLlegada from "$lib/ui/SalidaLlegada.svelte";
   import { tick } from "svelte";
   import { api, duracion, km, pesos, type Algoritmo, type Criterio, type Exploracion, type Mapa, type Ruta } from "$lib/api";
+  import { Reproductor } from "$lib/reproductor.svelte";
   import { cargarRed, opciones } from "$lib/red.svelte";
 
   // Planear una ruta (C1, GET /rutas) y ver cómo se encontró (GET /rutas/exploracion)
@@ -28,8 +29,8 @@
   let errorBusqueda = $state("");
   let error = $state("");
   let calculando = $state(false);
-  let reproduccion = $state(0);
   let progreso = $state({ explorados: 0, terminado: false });
+  const reproductor = new Reproductor();
   let zonaResultado = $state<HTMLElement>();
 
   const ciudades = $derived(mapaRed ? opciones(mapaRed.puntos, ["Ciudad"]) : []);
@@ -69,7 +70,9 @@
     exploracion = e.status === "fulfilled" ? e.value : null;
     if (e.status === "rejected") errorBusqueda = (e.reason as Error).message;
     await tick();
-    zonaResultado?.scrollIntoView({ behavior: "smooth", block: "start" });
+    // En celular el mapa queda arriba: se sube para ver la animación; en escritorio se muestra el resultado en la tarjeta
+    if (window.innerWidth < 768) window.scrollTo({ top: 0, behavior: "smooth" });
+    else zonaResultado?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
 
@@ -99,7 +102,7 @@
         margen={420}
         ruta={resultado?.encontrada ? resultado.ruta.map((p) => p.idPunto) : []}
         {exploracion}
-        {reproduccion}
+        {reproductor}
         alAvanzar={(e) => (progreso = e)}
       />
     {:else}
@@ -112,6 +115,7 @@
       <Busqueda
         {exploracion}
         {progreso}
+        {reproductor}
         total={totalLugares}
         distancia={resultado?.encontrada ? km(resultado.kilometros) : "Sin ruta"}
         tiempo={resultado?.encontrada ? duracion(resultado.minutos) : "Sin ruta"}
@@ -158,8 +162,7 @@
               <button
                 type="button"
                 class="flex items-center gap-1.5 rounded-lg bg-white/10 px-2.5 py-1.5 text-xs font-bold hover:bg-white/20 disabled:opacity-40"
-                onclick={() => (reproduccion += 1)}
-                disabled={!progreso.terminado}><RotateCcw class="h-3.5 w-3.5" />Repetir</button
+                onclick={() => reproductor.reiniciar()}><RotateCcw class="h-3.5 w-3.5" />Ver otra vez</button
               >
             </div>
             <p class="mt-2 text-sm">
@@ -172,7 +175,7 @@
             <p class="mt-3 flex items-center gap-2 text-sm font-bold {exploracion.coincide ? 'text-[#3ee07a]' : 'text-preventivo'}">
               <ShieldCheck class="h-4 w-4" />{exploracion.coincide ? "Neo4j llegó a la misma ruta" : "El resultado no coincide con Neo4j"}
             </p>
-            {#each exploracion.avisos as a, i (i)}<p class="mt-1 text-sm text-white/85">{a}</p>{/each}
+            {#each exploracion.avisos as a, i (i)}<p class="mt-1 text-sm text-white">{a}</p>{/each}
           </section>
         {:else if errorBusqueda}
           <Aviso tono="azul">La ruta está lista, pero no se pudo mostrar cómo se buscó: {errorBusqueda}</Aviso>

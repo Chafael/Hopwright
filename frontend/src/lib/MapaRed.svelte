@@ -3,6 +3,8 @@
   import { onMount } from "svelte";
   import type { Feature, FeatureCollection } from "geojson";
   import type { Exploracion, Mapa, PuntoMapa } from "./api";
+  import { lineaDeTiempo } from "./lineaTiempo";
+  import { Reproductor } from "./reproductor.svelte";
 
   // Dibuja la red de Chiapas con MapLibre sobre un mapa vectorial (estilo Positron de OpenFreeMap).
   // Los tramos siguen el trazo real de la carretera si existe static/geometria-tramos.json
@@ -16,7 +18,7 @@
     mostrarVehiculos = false,
     alElegirPunto,
     exploracion = null,
-    reproduccion = 0,
+    reproductor = new Reproductor(),
     alAvanzar,
     margen = 0,
     colorSecundaria = "#5c6670",
@@ -30,7 +32,7 @@
     alElegirPunto?: (p: PuntoMapa) => void;
     // Búsqueda paso a paso que se anima antes de mostrar la ruta (GET /rutas/exploracion)
     exploracion?: Exploracion | null;
-    reproduccion?: number; // al cambiar, la animación vuelve a empezar
+    reproductor?: Reproductor; // tiempo, pausa y velocidad de la animación (lo mueven los controles)
     alAvanzar?: (estado: { explorados: number; terminado: boolean }) => void;
     margen?: number; // pixeles que tapa la tarjeta flotante a la izquierda, para encuadrar bien
     colorSecundaria?: string;
@@ -55,8 +57,10 @@
   // En celular la tarjeta va debajo del mapa, así que no hay que dejarle espacio a la izquierda
   function relleno(abajo: number) {
     const ancho = contenedor?.clientWidth ?? 1024;
-    if (ancho < 768) return { top: 140, bottom: abajo + 50, left: 40, right: 90 };
-    return { top: 90, bottom: abajo, left: 60 + margen, right: 170 };
+    // Con la animación hay controles abajo y el marcador arriba: se deja lugar para que no tapen la ruta
+    const conControles = !!exploracion;
+    if (ancho < 768) return { top: conControles ? 90 : 60, bottom: conControles ? 150 : abajo, left: 30, right: 40 };
+    return { top: 90, bottom: conControles ? 150 : abajo, left: 60 + margen, right: conControles ? 240 : 170 };
   }
 
   let mapaGl: maplibregl.Map | undefined;
@@ -225,7 +229,8 @@
     }
 
     const enfoque = [...principal, ...secundaria, ...aisladas.map((id) => coordenadas.get(id)).filter((c): c is Lnglat => !!c), ...(cCerrado ? [cCerrado] : [])];
-    if (enfoque.length > 1) {
+    // Después de una animación la cámara se queda donde estaba, para que no brinque al terminar
+    if (enfoque.length > 1 && !exploracion) {
       const limites = enfoque.reduce((b, c) => b.extend(c), new maplibregl.LngLatBounds(enfoque[0], enfoque[0]));
       mapaGl.fitBounds(limites, { padding: relleno(60), maxZoom: 8, duration: 600 });
     }
@@ -273,16 +278,23 @@
         "line-opacity": ["case", ["get", "mejora"], 1, 0.6],
       },
     });
+    // Resplandor del lugar que se está resolviendo en este momento
+    m.addLayer({
+      id: "visitados-halo",
+      type: "circle",
+      source: "visitados",
+      filter: ["==", ["get", "actual"], true],
+      paint: { "circle-radius": 20, "circle-color": ["match", ["get", "lado"], "destino", CIAN_BUSQUEDA, AZUL_BUSQUEDA], "circle-blur": 0.8, "circle-opacity": 0.6 },
+    });
     m.addLayer({
       id: "visitados",
       type: "circle",
       source: "visitados",
       paint: {
-        "circle-radius": 5,
-        "circle-color": ["match", ["get", "lado"], "destino", CIAN_BUSQUEDA, AZUL_BUSQUEDA],
-        "circle-blur": 0.4,
-        "circle-stroke-color": "#ffffff",
-        "circle-stroke-width": 1.5,
+        "circle-radius": ["case", ["get", "actual"], 8, 5],
+        "circle-color": ["case", ["get", "actual"], "#ffffff", ["match", ["get", "lado"], "destino", CIAN_BUSQUEDA, AZUL_BUSQUEDA]],
+        "circle-stroke-color": ["case", ["get", "actual"], ["match", ["get", "lado"], "destino", CIAN_BUSQUEDA, AZUL_BUSQUEDA], "#ffffff"],
+        "circle-stroke-width": ["case", ["get", "actual"], 3, 1.5],
       },
     });
 
@@ -349,14 +361,27 @@
 
   // ---------- Animación de la búsqueda ----------
   // Cada punto resuelto se enciende en su turno y los tramos que revisó desde ahí crecen sobre la carretera.
-  // El orden es el de la búsqueda real; el ritmo se ajusta para que toda la animación dure unos 5 segundos.
+  // El momento de cada cosa sale de lineaDeTiempo; aquí solo se dibuja lo que corresponde al tiempo
+  // del reproductor, así que se puede pausar, cambiar la velocidad o moverse hacia atrás y adelante.
   const AZUL_BUSQUEDA = "#4f9bff";
   const CIAN_BUSQUEDA = "#3dd6f5";
   const VERDE_RUTA = "#3ee07a";
+  const PAUSA_ANTES_DE_RUTA = 700;
+  const DIBUJO_DE_RUTA = 2600;
   let animando = false;
   let cuadro = 0;
 
-  type Rama = { coords: Lnglat[]; largos: number[]; total: number; inicio: number; duracion: number; lado: string; mejora: boolean };
+  type Rama = { coords: Lnglat[]; largos: number[]; total: number; inicio: number; fin: number; lado: string; mejora: boolean };
+  type Escena = {
+    ramas: Rama[];
+    encendidos: { c: Lnglat; t: number; lado: string }[];
+    final: { coords: Lnglat[]; largos: number[]; total: number };
+    finBusqueda: number;
+  };
+  let escena: Escena | null = null;
+  let pintado = -1;
+  let resuelto = false;
+  let ultimoConteo = -1;
 
   function preparar(coords: Lnglat[]) {
     const largos = [0];
@@ -367,7 +392,7 @@
   // La parte de la línea que ya se recorrió, de 0 (nada) a 1 (completa)
   function recorte(r: { coords: Lnglat[]; largos: number[]; total: number }, f: number): Lnglat[] {
     if (f >= 1) return r.coords;
-    const meta = r.total * f;
+    const meta = r.total * Math.max(f, 0);
     const fuera: Lnglat[] = [r.coords[0]];
     for (let i = 1; i < r.coords.length; i++) {
       if (r.largos[i] <= meta) {
@@ -394,8 +419,16 @@
   function limpiarBusqueda() {
     cancelAnimationFrame(cuadro);
     animando = false;
+    escena = null;
     fuente("busqueda")?.setData(coleccion([]));
     fuente("visitados")?.setData(coleccion([]));
+  }
+
+  function quitarResaltado() {
+    for (const m of marcadoresResaltado) m.remove();
+    marcadoresResaltado = [];
+    fuente("ruta")?.setData(coleccion([]));
+    fuente("ruta-secundaria")?.setData(coleccion([]));
   }
 
   function animar(e: Exploracion) {
@@ -403,31 +436,20 @@
     limpiarBusqueda();
     oscurecer(true);
     animando = true;
-    for (const m of marcadoresResaltado) m.remove();
-    marcadoresResaltado = [];
-    fuente("ruta")?.setData(coleccion([]));
-    fuente("ruta-secundaria")?.setData(coleccion([]));
+    quitarResaltado();
 
-    const visitas = e.pasos.filter((p) => p.tipo === "visita").length;
-    const paso = Math.min(420, Math.max(110, 5200 / Math.max(visitas, 1)));
+    const linea = lineaDeTiempo(e.pasos);
     const ramas: Rama[] = [];
-    const encendidos: { c: Lnglat; t: number; lado: string }[] = [];
-    let t = 0;
-    let enTurno = 0;
-    for (const p of e.pasos) {
-      if (p.tipo === "visita") {
-        t = encendidos.length * paso;
-        enTurno = 0;
-        const c = coordenadas.get(p.punto);
-        if (c) encendidos.push({ c, t, lado: p.lado });
-      } else {
-        const coords = trazo(p.desde, p.hasta);
-        if (!coords) continue;
-        ramas.push({ coords, ...preparar(coords), inicio: t + enTurno * 35, duracion: paso * 2.2, lado: p.lado, mejora: p.mejora });
-        enTurno++;
-      }
+    for (const t of linea.tramos) {
+      const coords = trazo(t.desde, t.hasta);
+      if (coords) ramas.push({ coords, ...preparar(coords), inicio: t.inicio, fin: t.fin, lado: t.lado, mejora: t.mejora });
     }
-    const fin = Math.max(t, ...ramas.map((r) => r.inicio + r.duracion));
+    const encendidos = linea.visitas.flatMap((v) => {
+      const c = coordenadas.get(v.punto);
+      return c ? [{ c, t: v.t, lado: v.lado }] : [];
+    });
+    const lineaFinal = lineaDeRuta(ruta.length > 1 ? ruta : e.ruta);
+    escena = { ramas, encendidos, final: { coords: lineaFinal, ...preparar(lineaFinal) }, finBusqueda: linea.fin };
 
     // Encuadre: todo lo que va a explorar
     const todos = encendidos.map((x) => x.c);
@@ -436,40 +458,66 @@
       mapaGl.fitBounds(limites, { padding: relleno(50), maxZoom: 8.5, duration: 700 });
     }
 
-    const lineaFinal = lineaDeRuta(ruta.length > 1 ? ruta : e.ruta);
-    const final = { coords: lineaFinal, ...preparar(lineaFinal) };
-    const reducido = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const arranque = performance.now() + (reducido ? -1e9 : 700); // espera a que termine el encuadre
-    let ultimoConteo = -1;
+    reproductor.marcas = linea.visitas.map((v) => v.t);
+    reproductor.duracion = linea.fin + PAUSA_ANTES_DE_RUTA + DIBUJO_DE_RUTA;
+    reproductor.tiempo = 0;
+    reproductor.pausado = false;
+    pintado = -1;
+    resuelto = false;
+    ultimoConteo = -1;
 
-    const pintar = (ahora: number) => {
-      const reloj = ahora - arranque;
-      fuente("busqueda")?.setData(
-        coleccion(
-          ramas
-            .filter((r) => reloj >= r.inicio)
-            .map((r) => lineaGeo(recorte(r, (reloj - r.inicio) / r.duracion), { lado: r.lado, mejora: r.mejora })),
-        ),
-      );
-      const vistos = encendidos.filter((x) => reloj >= x.t);
-      fuente("visitados")?.setData(coleccion(vistos.map((x) => puntoGeo(x.c, { lado: x.lado }))));
-      if (vistos.length !== ultimoConteo) {
-        ultimoConteo = vistos.length;
-        alAvanzar?.({ explorados: vistos.length, terminado: false });
+    // El reloj arranca cuando termina el encuadre
+    const espera = performance.now() + 750;
+    let previo = performance.now();
+    const latido = (ahora: number) => {
+      const dt = Math.min(ahora - previo, 100);
+      previo = ahora;
+      if (ahora > espera && !reproductor.pausado && reproductor.tiempo < reproductor.duracion) {
+        reproductor.tiempo = Math.min(reproductor.duracion, reproductor.tiempo + dt * reproductor.velocidad);
       }
-
-      // Al terminar la búsqueda, la ruta elegida se dibuja de punta a punta en un segundo
-      const f = (reloj - fin) / 1000;
-      if (f > 0 && final.coords.length > 1) fuente("ruta")?.setData(coleccion([lineaGeo(recorte(final, Math.min(f, 1)))]));
-      if (f >= 1 || reducido) {
-        animando = false;
-        alAvanzar?.({ explorados: encendidos.length, terminado: true });
-        dibujarResaltado();
-        return;
+      if (reproductor.tiempo !== pintado) {
+        pintado = reproductor.tiempo;
+        pintar(pintado);
       }
-      cuadro = requestAnimationFrame(pintar);
+      cuadro = requestAnimationFrame(latido);
     };
-    cuadro = requestAnimationFrame(pintar);
+    cuadro = requestAnimationFrame(latido);
+  }
+
+  function pintar(reloj: number) {
+    if (!escena) return;
+    const { ramas, encendidos, final, finBusqueda } = escena;
+    fuente("busqueda")?.setData(
+      coleccion(ramas.filter((r) => reloj >= r.inicio).map((r) => lineaGeo(recorte(r, (reloj - r.inicio) / (r.fin - r.inicio || 1)), { lado: r.lado, mejora: r.mejora }))),
+    );
+    const vistos = encendidos.filter((x) => reloj >= x.t);
+    // El último lugar resuelto se marca más grande: es donde va la búsqueda en este momento
+    const buscando = reloj < finBusqueda;
+    fuente("visitados")?.setData(coleccion(vistos.map((x, i) => puntoGeo(x.c, { lado: x.lado, actual: buscando && i === vistos.length - 1 }))));
+
+    const terminado = reloj >= reproductor.duracion;
+    if (vistos.length !== ultimoConteo || terminado !== resuelto) {
+      ultimoConteo = vistos.length;
+      alAvanzar?.({ explorados: vistos.length, terminado });
+    }
+
+    // Al terminar la búsqueda, la ruta elegida se dibuja de punta a punta
+    const f = (reloj - finBusqueda - PAUSA_ANTES_DE_RUTA) / DIBUJO_DE_RUTA;
+    if (terminado) {
+      if (!resuelto) {
+        resuelto = true;
+        animando = false;
+        dibujarResaltado();
+      }
+      return;
+    }
+    if (resuelto) {
+      // Se regresó la animación desde el final: se quitan los pines y la ruta completa
+      resuelto = false;
+      animando = true;
+      quitarResaltado();
+    }
+    fuente("ruta")?.setData(coleccion(f > 0 && final.coords.length > 1 ? [lineaGeo(recorte(final, f))] : []));
   }
 
   onMount(() => {
@@ -522,7 +570,6 @@
   });
 
   $effect(() => {
-    void reproduccion;
     const e = exploracion;
     if (!listo) return;
     if (e) {

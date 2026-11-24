@@ -115,7 +115,7 @@ export type ComparacionCamionTren = {
 
 export type PasoExploracion =
   | { tipo: "visita"; punto: string; lado: "origen" | "destino"; costo: number }
-  | { tipo: "tramo"; desde: string; hasta: string; lado: "origen" | "destino"; mejora: boolean };
+  | { tipo: "tramo"; desde: string; hasta: string; lado: "origen" | "destino"; mejora: boolean; costo?: number };
 export type Algoritmo = "dijkstra" | "bidireccional";
 export type Exploracion = {
   algoritmo: Algoritmo;

@@ -8,6 +8,7 @@
   import Busqueda from "$lib/ui/Busqueda.svelte";
   import Aviso from "$lib/ui/Aviso.svelte";
   import { api, duracion, km, pesos, type ComparacionCamionTren, type Exploracion, type Mapa, type OpcionTransporte } from "$lib/api";
+  import { Reproductor } from "$lib/reproductor.svelte";
   import { cargarRed, nombreDe, opciones } from "$lib/red.svelte";
 
   // C2: todo en camión o combinar camión y tren (GET /rutas/camion-tren).
@@ -19,6 +20,7 @@
   let resultado = $state<ComparacionCamionTren>();
   let exploracion = $state<Exploracion | null>(null);
   let progreso = $state({ explorados: 0, terminado: false });
+  const reproductor = new Reproductor();
   let error = $state("");
   let calculando = $state(false);
   let zonaResultado = $state<HTMLElement>();
@@ -53,7 +55,9 @@
     resultado = c.value;
     exploracion = e.status === "fulfilled" ? e.value : null;
     await tick();
-    zonaResultado?.scrollIntoView({ behavior: "smooth", block: "start" });
+    // En celular el mapa queda arriba: se sube para ver la animación; en escritorio se muestra el resultado en la tarjeta
+    if (window.innerWidth < 768) window.scrollTo({ top: 0, behavior: "smooth" });
+    else zonaResultado?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   // Estaciones por las que pasa el tren entre la de subida y la de bajada (camino en la vía férrea)
@@ -104,6 +108,7 @@
         rutaSecundaria={progreso.terminado ? recorridoTren : []}
         colorSecundaria="#1f5fa8"
         {exploracion}
+        {reproductor}
         alAvanzar={(e) => (progreso = e)}
       />
     {:else}
@@ -116,6 +121,7 @@
       <Busqueda
         {exploracion}
         {progreso}
+        {reproductor}
         total={totalLugares}
         distancia={km(resultado.soloCamion.kilometros)}
         tiempo={duracion(resultado.soloCamion.minutos)}
