@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { respuestasError } from "../schemas/comunes.js";
+import { respuestasError, conToken } from "../schemas/comunes.js";
 import { modificarCliente, obtenerCliente, obtenerClientes, registrarCliente } from "../services/clientes.service.js";
 
 const esquemaCliente = {
@@ -29,7 +29,7 @@ export async function rutasClientes(app: FastifyInstance): Promise<void> {
   app.get("/clientes", { schema: { tags: ["Clientes"], summary: "Lista clientes", response: { 200: { type: "array", items: esquemaCliente } } } }, async () => obtenerClientes());
 
   app.post<{ Body: { razonSocial: string; rfc: string; telefono?: string | null; correo?: string | null } }>("/clientes", {
-    schema: { tags: ["Clientes"], summary: "Crea un cliente", body: cuerpoCliente, response: { 201: esquemaCliente, ...respuestasError(400, 409) } },
+    preHandler: app.requiereRol("despachador", "administrador"), schema: { security: conToken, tags: ["Clientes"], summary: "Crea un cliente", body: cuerpoCliente, response: { 201: esquemaCliente, ...respuestasError(401, 403, 400, 409) } },
   }, async (req, reply) => reply.code(201).send(await registrarCliente(req.body)));
 
   app.get<{ Params: { id: string } }>("/clientes/:id", {
@@ -37,6 +37,6 @@ export async function rutasClientes(app: FastifyInstance): Promise<void> {
   }, async (req) => obtenerCliente(Number(req.params.id)));
 
   app.put<{ Params: { id: string }; Body: { razonSocial: string; rfc: string; telefono?: string | null; correo?: string | null } }>("/clientes/:id", {
-    schema: { tags: ["Clientes"], summary: "Actualiza un cliente", params: { type: "object", properties: { id: { type: "integer" } } }, body: cuerpoCliente, response: { 200: esquemaCliente, ...respuestasError(400, 404, 409) } },
+    preHandler: app.requiereRol("despachador", "administrador"), schema: { security: conToken, tags: ["Clientes"], summary: "Actualiza un cliente", params: { type: "object", properties: { id: { type: "integer" } } }, body: cuerpoCliente, response: { 200: esquemaCliente, ...respuestasError(401, 403, 400, 404, 409) } },
   }, async (req) => modificarCliente(Number(req.params.id), req.body));
 }

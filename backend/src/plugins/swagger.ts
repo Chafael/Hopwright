@@ -25,6 +25,10 @@ export async function registrarSwagger(app: FastifyInstance): Promise<void> {
         { name: "Incidentes", description: "Reportes de incidente (MongoDB) y su réplica en la red (Neo4j)" },
         { name: "Administración", description: "Tareas de mantenimiento entre las tres bases" },
       ],
+      // Botón "Authorize": se pega el token de POST /auth/login para probar las rutas protegidas
+      components: {
+        securitySchemes: { bearerAuth: { type: "http", scheme: "bearer", bearerFormat: "JWT" } },
+      },
     },
   });
   await app.register(swaggerUi, { routePrefix: "/docs" });

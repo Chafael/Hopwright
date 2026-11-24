@@ -12,7 +12,7 @@ export type Asignacion = {
 
 function mapear(fila: any): Asignacion {
   return {
-    idAsignacion: fila.id_asignacion,
+    idAsignacion: Number(fila.id_asignacion),
     idEnvio: fila.id_envio,
     placa: fila.placa,
     fechaAsignacion: new Date(fila.fecha_asignacion).toISOString(),

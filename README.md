@@ -45,6 +45,15 @@ La propuesta completa, la matriz de responsabilidades y la fuente de verdad de c
 
 Para empezar desde cero (borra todos los datos): `docker compose down -v` y luego `docker compose up -d`.
 
+### Usuarios de prueba
+
+Las operaciones que cambian datos de envíos y flota piden un token. Se obtiene con `POST /auth/login` y en Swagger se pega en el botón "Authorize".
+
+- Despachador: `despacho@hopwright.local`, contraseña `hopwright123`. Puede registrar envíos, asignarlos, marcar salida y entrega, y dar de alta clientes y conductores.
+- Administrador: `admin@hopwright.local`, contraseña `hopwright123`. Puede hacer lo mismo que el despachador y además dar de alta ciudades y vehículos y cambiar los datos de un vehículo.
+
+Son contraseñas solo para la demostración; el hash está en `database/relational/data/01_datos.sql`.
+
 ## Interfaz web
 
 La interfaz está en `frontend/` (SvelteKit en modo estático, Tailwind, Flowbite y MapLibre con el mapa Positron de OpenFreeMap). Solo habla con la API, nunca con las bases. Con el backend corriendo en otra terminal:

@@ -13,6 +13,9 @@ export const esquemaError = {
 } as const;
 
 // Devuelve { 400: esquemaError, 404: esquemaError, ... } para los códigos que se le pasen.
+// Marca en Swagger que la ruta pide token (botón "Authorize"). Va junto con preHandler: app.requiereRol(...)
+export const conToken = [{ bearerAuth: [] }];
+
 // Uso: response: { 200: miRespuesta, ...respuestasError(400, 404) }
 export function respuestasError(...codigos: number[]): Record<number, typeof esquemaError> {
   return Object.fromEntries(codigos.map((c) => [c, esquemaError]));

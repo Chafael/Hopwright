@@ -52,9 +52,10 @@ INSERT INTO ciudad (id_ciudad, nombre, estado) VALUES
   ('07077', 'Salto de Agua', 'Chiapas'),
   ('07016', 'Catazajá', 'Chiapas');
 
+-- Usuarios de prueba. La contraseña de los dos es hopwright123 (ver README).
 INSERT INTO usuario (nombre, correo, password_hash, rol, activo) VALUES
-  ('Despacho Central', 'despacho@hopwright.local', '$2b$10$U4/3E7ZtinkuCQ31YTrSpOIi34MO6F4M8jf.wqeAzbMD2EsTubwV6', 'despachador', TRUE),
-  ('Administración Hopwright', 'admin@hopwright.local', '$2b$10$U4/3E7ZtinkuCQ31YTrSpOIi34MO6F4M8jf.wqeAzbMD2EsTubwV6', 'administrador', TRUE);
+  ('Despacho Central', 'despacho@hopwright.local', '$2b$10$80IC8hlSesZi2apdKBIFs.RCC5ehJghBDejxST0GcR4evg4EN0rVa', 'despachador', TRUE),
+  ('Administración Hopwright', 'admin@hopwright.local', '$2b$10$80IC8hlSesZi2apdKBIFs.RCC5ehJghBDejxST0GcR4evg4EN0rVa', 'administrador', TRUE);
 
 INSERT INTO cliente (razon_social, rfc, telefono, correo) VALUES
   ('Alimentos del Soconusco SA de CV', 'ASO120304AB1', '9621234567', 'contacto@soconusco.mx'),

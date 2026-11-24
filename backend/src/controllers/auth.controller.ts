@@ -24,7 +24,7 @@ export async function rutasAuth(app: FastifyInstance): Promise<void> {
             required: ["token"],
             properties: { token: { type: "string" } },
           },
-          ...respuestasError(400, 404),
+          ...respuestasError(400, 401),
         },
       },
     },

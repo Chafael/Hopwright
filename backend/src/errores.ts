@@ -20,6 +20,13 @@ export class DatosInvalidos extends ErrorApp {
   }
 }
 
+// 401: no se pudo comprobar quién hace la petición (credenciales o token inválidos)
+export class NoAutorizado extends ErrorApp {
+  constructor(mensaje: string) {
+    super(401, "No autorizado", mensaje);
+  }
+}
+
 // 404: lo que se busca no existe
 export class NoEncontrado extends ErrorApp {
   constructor(mensaje: string) {

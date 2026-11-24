@@ -25,7 +25,7 @@ export type EnvioEntrada = {
 function mapear(fila: any): Envio {
   return {
     idEnvio: fila.id_envio,
-    idCliente: fila.id_cliente,
+    idCliente: Number(fila.id_cliente),
     idCiudadOrigen: fila.id_ciudad_origen,
     idCiudadDestino: fila.id_ciudad_destino,
     pesoKg: Number(fila.peso_kg),
@@ -57,6 +57,17 @@ export async function buscarEnvio(idEnvio: string, cliente?: PoolClient): Promis
   const { rows } = await db.query(
     `SELECT id_envio, id_cliente, id_ciudad_origen, id_ciudad_destino, peso_kg, prioridad, estado, fecha_salida, creado_en
      FROM envio WHERE id_envio = $1`,
+    [idEnvio],
+  );
+  return rows[0] ? mapear(rows[0]) : null;
+}
+
+// Igual que buscarEnvio pero bloquea la fila hasta que termine la transacción. Si dos peticiones cambian
+// el mismo envío a la vez, la segunda espera y después ve el estado que dejó la primera.
+export async function buscarEnvioParaActualizar(idEnvio: string, cliente: PoolClient): Promise<Envio | null> {
+  const { rows } = await cliente.query(
+    `SELECT id_envio, id_cliente, id_ciudad_origen, id_ciudad_destino, peso_kg, prioridad, estado, fecha_salida, creado_en
+     FROM envio WHERE id_envio = $1 FOR UPDATE`,
     [idEnvio],
   );
   return rows[0] ? mapear(rows[0]) : null;

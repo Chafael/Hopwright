@@ -2,7 +2,7 @@ import { Conflicto, DatosInvalidos, NoEncontrado } from "../errores.js";
 import { enTransaccion } from "../db/postgres.js";
 import { buscarCliente } from "../repositories/relational/clientes.repository.js";
 import { buscarCiudad } from "../repositories/relational/ciudades.repository.js";
-import { buscarEnvio, cambiarEstadoEnvio, crearEnvio, listarEnvios, type EnvioEntrada } from "../repositories/relational/envios.repository.js";
+import { buscarEnvio, buscarEnvioParaActualizar, cambiarEstadoEnvio, crearEnvio, listarEnvios, type EnvioEntrada } from "../repositories/relational/envios.repository.js";
 import { buscarVehiculoParaActualizar, listarVehiculosDisponiblesConCapacidad } from "../repositories/relational/vehiculos.repository.js";
 import { buscarAsignacionActivaPorEnvio, buscarAsignacionActivaPorPlaca, crearAsignacion, desactivarAsignacionActiva } from "../repositories/relational/asignaciones.repository.js";
 import { encolarEvento } from "../repositories/relational/eventos.repository.js";
@@ -40,7 +40,7 @@ export async function registrarEnvio(datos: EnvioEntrada) {
 
 export async function asignarVehiculo(idEnvio: string, placa: string) {
   return enTransaccion(async (cliente) => {
-    const envio = await buscarEnvio(idEnvio, cliente);
+    const envio = await buscarEnvioParaActualizar(idEnvio, cliente);
     if (!envio) throw new NoEncontrado(`El envío ${idEnvio} no existe`);
     if (envio.estado !== "Pendiente") throw new Conflicto("Solo se pueden asignar envíos pendientes");
 
@@ -64,7 +64,7 @@ export async function asignarVehiculo(idEnvio: string, placa: string) {
 
 export async function registrarSalida(idEnvio: string) {
   return enTransaccion(async (cliente) => {
-    const envio = await buscarEnvio(idEnvio, cliente);
+    const envio = await buscarEnvioParaActualizar(idEnvio, cliente);
     if (!envio) throw new NoEncontrado(`El envío ${idEnvio} no existe`);
     if (envio.estado !== "Asignado") throw new Conflicto("Solo se puede marcar salida de un envío asignado");
     const fecha = new Date();
@@ -76,7 +76,7 @@ export async function registrarSalida(idEnvio: string) {
 
 export async function registrarEntrega(idEnvio: string) {
   return enTransaccion(async (cliente) => {
-    const envio = await buscarEnvio(idEnvio, cliente);
+    const envio = await buscarEnvioParaActualizar(idEnvio, cliente);
     if (!envio) throw new NoEncontrado(`El envío ${idEnvio} no existe`);
     if (envio.estado !== "En camino") throw new Conflicto("Solo se puede entregar un envío en camino");
     const asignacion = await desactivarAsignacionActiva(idEnvio, cliente);

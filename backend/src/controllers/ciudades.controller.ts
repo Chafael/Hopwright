@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { respuestasError, esquemaIdCiudad } from "../schemas/comunes.js";
+import { respuestasError, esquemaIdCiudad, conToken } from "../schemas/comunes.js";
 import { obtenerCiudades, registrarCiudad } from "../services/ciudades.service.js";
 
 const esquemaCiudad = {
@@ -15,6 +15,7 @@ export async function rutasCiudades(app: FastifyInstance): Promise<void> {
     {
       preHandler: app.requiereRol("administrador"),
       schema: {
+        security: conToken,
         tags: ["Ciudades"],
         summary: "Crea una ciudad",
         body: {

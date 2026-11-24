@@ -4,7 +4,7 @@ export type Conductor = { idConductor: number; nombre: string; licencia: string;
 export type ConductorEntrada = { nombre: string; licencia: string; telefono?: string | null; activo?: boolean };
 
 function mapear(fila: any): Conductor {
-  return { idConductor: fila.id_conductor, nombre: fila.nombre, licencia: fila.licencia, telefono: fila.telefono, activo: fila.activo };
+  return { idConductor: Number(fila.id_conductor), nombre: fila.nombre, licencia: fila.licencia, telefono: fila.telefono, activo: fila.activo };
 }
 
 export async function listarConductores(): Promise<Conductor[]> {

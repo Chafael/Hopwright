@@ -4,7 +4,7 @@ export type Cliente = { idCliente: number; razonSocial: string; rfc: string; tel
 export type ClienteEntrada = { razonSocial: string; rfc: string; telefono?: string | null; correo?: string | null };
 
 function mapear(fila: any): Cliente {
-  return { idCliente: fila.id_cliente, razonSocial: fila.razon_social, rfc: fila.rfc, telefono: fila.telefono, correo: fila.correo };
+  return { idCliente: Number(fila.id_cliente), razonSocial: fila.razon_social, rfc: fila.rfc, telefono: fila.telefono, correo: fila.correo };
 }
 
 export async function listarClientes(): Promise<Cliente[]> {
