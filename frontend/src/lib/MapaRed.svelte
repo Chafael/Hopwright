@@ -18,6 +18,8 @@
     exploracion = null,
     reproduccion = 0,
     alAvanzar,
+    margen = 0,
+    colorSecundaria = "#5c6670",
   }: {
     mapa: Mapa;
     ruta?: string[]; // ids de los puntos en orden
@@ -30,6 +32,8 @@
     exploracion?: Exploracion | null;
     reproduccion?: number; // al cambiar, la animación vuelve a empezar
     alAvanzar?: (estado: { explorados: number; terminado: boolean }) => void;
+    margen?: number; // pixeles que tapa la tarjeta flotante a la izquierda, para encuadrar bien
+    colorSecundaria?: string;
   } = $props();
 
   const ESTILO = "https://tiles.openfreemap.org/styles/positron";
@@ -48,6 +52,13 @@
 
   type Lnglat = [number, number];
   let contenedor: HTMLDivElement;
+  // En celular la tarjeta va debajo del mapa, así que no hay que dejarle espacio a la izquierda
+  function relleno(abajo: number) {
+    const ancho = contenedor?.clientWidth ?? 1024;
+    if (ancho < 768) return { top: 140, bottom: abajo + 50, left: 40, right: 90 };
+    return { top: 90, bottom: abajo, left: 60 + margen, right: 170 };
+  }
+
   let mapaGl: maplibregl.Map | undefined;
   let listo = $state(false);
   let geometrias = $state<Record<string, Lnglat[]>>({});
@@ -216,7 +227,7 @@
     const enfoque = [...principal, ...secundaria, ...aisladas.map((id) => coordenadas.get(id)).filter((c): c is Lnglat => !!c), ...(cCerrado ? [cCerrado] : [])];
     if (enfoque.length > 1) {
       const limites = enfoque.reduce((b, c) => b.extend(c), new maplibregl.LngLatBounds(enfoque[0], enfoque[0]));
-      mapaGl.fitBounds(limites, { padding: { top: 90, bottom: 60, left: 70, right: 170 }, maxZoom: 8, duration: 600 });
+      mapaGl.fitBounds(limites, { padding: relleno(60), maxZoom: 8, duration: 600 });
     }
   }
 
@@ -277,6 +288,7 @@
 
     m.addLayer({ id: "ruta-secundaria-borde", type: "line", source: "ruta-secundaria", layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": "#fff", "line-width": 9 } });
     m.addLayer({ id: "ruta-secundaria", type: "line", source: "ruta-secundaria", layout: { "line-join": "round" }, paint: { "line-color": "#5c6670", "line-width": 5, "line-dasharray": [2, 1.5] } });
+    m.setPaintProperty("ruta-secundaria", "line-color", colorSecundaria);
     m.addLayer({ id: "ruta-borde", type: "line", source: "ruta", layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": "#fff", "line-width": 11 } });
     m.addLayer({ id: "ruta", type: "line", source: "ruta", layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": VERDE, "line-width": 6 } });
     // Flechas a lo largo de la ruta: MapLibre las gira solas según el sentido de la línea
@@ -421,7 +433,7 @@
     const todos = encendidos.map((x) => x.c);
     if (todos.length > 1) {
       const limites = todos.reduce((b, c) => b.extend(c), new maplibregl.LngLatBounds(todos[0], todos[0]));
-      mapaGl.fitBounds(limites, { padding: { top: 90, bottom: 50, left: 60, right: 170 }, maxZoom: 8.5, duration: 700 });
+      mapaGl.fitBounds(limites, { padding: relleno(50), maxZoom: 8.5, duration: 700 });
     }
 
     const lineaFinal = lineaDeRuta(ruta.length > 1 ? ruta : e.ruta);
@@ -480,11 +492,11 @@
         container: contenedor,
         style: estilo,
         bounds: todos.length > 1 ? todos.reduce((b, c) => b.extend(c), new maplibregl.LngLatBounds(todos[0], todos[0])) : undefined,
-        fitBoundsOptions: { padding: 30 },
+        fitBoundsOptions: { padding: contenedor.clientWidth < 768 ? 20 : { top: 30, bottom: 30, right: 30, left: 30 + margen } },
         attributionControl: { compact: true },
         cooperativeGestures: false,
       });
-      m.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-left");
+      m.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
       m.on("load", () => {
         agregarCapas(m);
         listo = true;

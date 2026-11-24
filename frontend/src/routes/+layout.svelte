@@ -2,16 +2,17 @@
   import "../app.css";
   import { page } from "$app/state";
   import { onMount } from "svelte";
+  import { Map as IconoMapa, RefreshCw, Route, Scale, TriangleAlert } from "@lucide/svelte";
   import { api, type Salud } from "$lib/api";
 
   let { children } = $props();
 
   const secciones = [
-    { href: "/", texto: "Rutas", detalle: "La mejor ruta entre dos ciudades" },
-    { href: "/camion-tren", texto: "Camión o tren", detalle: "Qué conviene según el peso" },
-    { href: "/red", texto: "Red y cierres", detalle: "Qué se aísla si se cierra un punto" },
-    { href: "/incidentes", texto: "Incidentes", detalle: "Reportes y envíos afectados" },
-    { href: "/mantenimiento", texto: "Mantenimiento", detalle: "Revisar las tres bases" },
+    { href: "/", texto: "Planear ruta", icono: Route },
+    { href: "/camion-tren", texto: "Camión o tren", icono: Scale },
+    { href: "/red", texto: "Mapa y cierres", icono: IconoMapa },
+    { href: "/incidentes", texto: "Incidentes", icono: TriangleAlert },
+    { href: "/mantenimiento", texto: "Sincronizar", icono: RefreshCw },
   ];
 
   const activa = (href: string) => (href === "/" ? page.url.pathname === "/" : page.url.pathname.startsWith(href));
@@ -34,17 +35,24 @@
   });
 
   const bases = [
-    { clave: "postgres", nombre: "PostgreSQL" },
-    { clave: "mongo", nombre: "MongoDB" },
-    { clave: "neo4j", nombre: "Neo4j" },
+    { clave: "postgres", nombre: "PostgreSQL", uso: "Envíos y flota" },
+    { clave: "mongo", nombre: "MongoDB", uso: "Reportes" },
+    { clave: "neo4j", nombre: "Neo4j", uso: "Red de carreteras" },
   ] as const;
 </script>
 
 <div class="flex min-h-full flex-col md:h-full md:flex-row">
-  <aside class="flex shrink-0 flex-col bg-senal-500 text-white md:w-64">
-    <a href="/" class="block px-5 pt-5 pb-4 outline-offset-[-4px] focus-visible:outline-2 focus-visible:outline-white">
-      <span class="block text-2xl font-extrabold tracking-tight">Hopwright</span>
-      <span class="block text-sm text-senal-100">Despacho de carga en Chiapas</span>
+  <aside class="flex shrink-0 flex-col bg-senal-500 text-white md:w-56">
+    <a href="/" class="flex items-center gap-2.5 px-5 pt-5 pb-4 outline-offset-[-4px] focus-visible:outline-2 focus-visible:outline-white">
+      <svg viewBox="0 0 32 32" class="h-9 w-9 shrink-0" aria-hidden="true">
+        <rect width="32" height="32" rx="7" fill="#fff" />
+        <path d="M9 25 L14.5 7 M23 25 L17.5 7" stroke="#00674a" stroke-width="2.6" stroke-linecap="round" />
+        <path d="M16 11v3M16 18v3" stroke="#f5b800" stroke-width="2.6" stroke-linecap="round" />
+      </svg>
+      <span>
+        <span class="block text-xl leading-none font-extrabold tracking-tight">Hopwright</span>
+        <span class="block text-xs font-semibold text-senal-100">Carga en Chiapas</span>
+      </span>
     </a>
 
     <nav aria-label="Secciones" class="flex gap-1 overflow-x-auto px-3 pb-3 md:flex-col md:overflow-visible">
@@ -52,47 +60,51 @@
         <a
           href={s.href}
           aria-current={activa(s.href) ? "page" : undefined}
-          class="shrink-0 rounded-md px-3 py-2 outline-offset-2 focus-visible:outline-2 focus-visible:outline-white
-            {activa(s.href) ? 'bg-white text-senal-700' : 'text-white hover:bg-senal-600'}"
+          class="flex shrink-0 items-center gap-3 rounded-lg px-3 py-2.5 font-bold outline-offset-2 focus-visible:outline-2 focus-visible:outline-white
+            {activa(s.href) ? 'bg-white text-senal-700 shadow' : 'text-white hover:bg-senal-600'}"
         >
-          <span class="block font-bold">{s.texto}</span>
-          <span class="hidden text-xs md:block {activa(s.href) ? 'text-senal-500' : 'text-senal-100'}">{s.detalle}</span>
+          <s.icono class="h-5 w-5" />
+          {s.texto}
         </a>
       {/each}
     </nav>
 
-    <section aria-label="Estado de las bases de datos" class="mt-auto hidden border-t border-senal-400 px-5 py-4 text-sm md:block">
-      {#if sinApi}
-        <p class="text-senal-50">No hay conexión con la API.</p>
-      {:else if salud}
-        <ul class="space-y-1">
-          {#each bases as b (b.clave)}
-            {@const estado = salud.bases[b.clave]}
-            <li class="flex items-center justify-between gap-2" title={estado.detalle ?? ""}>
-              <span class="flex items-center gap-2">
-                <span class="inline-block h-2.5 w-2.5 rounded-full {estado.estado === 'ok' ? 'bg-white' : 'bg-preventivo'}"></span>
-                {b.nombre}
-              </span>
-              <span class="cifra text-senal-100">{estado.estado === "ok" ? `${estado.ms} ms` : "sin respuesta"}</span>
-            </li>
-          {/each}
-        </ul>
-      {:else}
-        <p class="text-senal-100">Revisando las bases…</p>
-      {/if}
+    <section aria-label="Estado de las bases de datos" class="mt-auto hidden px-3 pb-4 md:block">
+      <div class="rounded-xl bg-senal-700/60 p-3">
+        <p class="mb-2 text-xs font-bold text-senal-100">Bases de datos</p>
+        {#if sinApi}
+          <p class="text-sm font-semibold">Sin conexión con la API</p>
+        {:else if salud}
+          <ul class="space-y-2">
+            {#each bases as b (b.clave)}
+              {@const estado = salud.bases[b.clave]}
+              <li class="flex items-center gap-2" title={estado.detalle ?? `${b.nombre}: ${estado.ms} ms`}>
+                <span class="h-2.5 w-2.5 shrink-0 rounded-full {estado.estado === 'ok' ? 'bg-[#3ee07a]' : 'bg-preventivo'}"></span>
+                <span class="min-w-0 flex-1 leading-tight">
+                  <span class="block text-sm font-bold">{b.nombre}</span>
+                  <span class="block text-xs text-senal-100">{estado.estado === "ok" ? b.uso : "No responde"}</span>
+                </span>
+              </li>
+            {/each}
+          </ul>
+        {:else}
+          <p class="text-sm">Revisando…</p>
+        {/if}
+      </div>
     </section>
   </aside>
 
-  <main class="min-w-0 flex-1 md:h-full md:overflow-hidden">
+  <main class="relative flex min-w-0 flex-1 flex-col md:h-full md:overflow-hidden">
     {#if sinApi || (salud && salud.estado !== "ok")}
-      <div role="status" class="bg-preventivo px-4 py-2 text-sm font-semibold text-asfalto">
+      <div role="status" class="relative z-20 flex items-center gap-2 bg-preventivo px-4 py-2 text-sm font-bold text-asfalto">
+        <TriangleAlert class="h-4 w-4" />
         {#if sinApi}
-          La API no responde. Levanta el backend con npm run dev en la carpeta backend.
+          La API no responde. Arranca el backend con npm run dev en la carpeta backend.
         {:else}
-          Una base de datos no responde; algunas pantallas pueden fallar hasta que vuelva.
+          Una base de datos no responde: algunas pantallas pueden fallar hasta que vuelva.
         {/if}
       </div>
     {/if}
-    {@render children()}
+    <div class="relative min-h-0 flex-1">{@render children()}</div>
   </main>
 </div>
