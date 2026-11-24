@@ -10,7 +10,47 @@ INSERT INTO ciudad (id_ciudad, nombre, estado) VALUES
   ('07097', 'Tonalá', 'Chiapas'),
   ('07108', 'Villaflores', 'Chiapas'),
   ('07017', 'Cintalapa', 'Chiapas'),
-  ('07009', 'Arriaga', 'Chiapas');
+  ('07009', 'Arriaga', 'Chiapas'),
+  ('07027', 'Chiapa de Corzo', 'Chiapas'),
+  ('07094', 'Teopisca', 'Chiapas'),
+  ('07012', 'Berriozábal', 'Chiapas'),
+  ('07061', 'Ocozocoautla de Espinosa', 'Chiapas'),
+  ('07046', 'Jiquipilas', 'Chiapas'),
+  ('07069', 'Pijijiapan', 'Chiapas'),
+  ('07051', 'Mapastepec', 'Chiapas'),
+  ('07040', 'Huixtla', 'Chiapas'),
+  ('07086', 'Suchiapa', 'Chiapas'),
+  ('07099', 'La Trinitaria', 'Chiapas'),
+  ('07057', 'Motozintla', 'Chiapas'),
+  ('07068', 'Pichucalco', 'Chiapas'),
+  ('07102', 'Tuxtla Chico', 'Chiapas'),
+  ('07015', 'Cacahoatán', 'Chiapas'),
+  ('07105', 'Unión Juárez', 'Chiapas'),
+  ('07035', 'Frontera Hidalgo', 'Chiapas'),
+  ('07087', 'Suchiate', 'Chiapas'),
+  ('07054', 'Mazatán', 'Chiapas'),
+  ('07052', 'Las Margaritas', 'Chiapas'),
+  ('07030', 'Chicomuselo', 'Chiapas'),
+  ('07107', 'Villa Corzo', 'Chiapas'),
+  ('07020', 'La Concordia', 'Chiapas'),
+  ('07008', 'Ángel Albino Corzo', 'Chiapas'),
+  ('07002', 'Acala', 'Chiapas'),
+  ('07106', 'Venustiano Carranza', 'Chiapas'),
+  ('07029', 'Chicoasén', 'Chiapas'),
+  ('07021', 'Copainalá', 'Chiapas'),
+  ('07092', 'Tecpatán', 'Chiapas'),
+  ('07081', 'Simojovel', 'Chiapas'),
+  ('07074', 'Reforma', 'Chiapas'),
+  ('07023', 'Chamula', 'Chiapas'),
+  ('07111', 'Zinacantán', 'Chiapas'),
+  ('07093', 'Tenejapa', 'Chiapas'),
+  ('07026', 'Chenalhó', 'Chiapas'),
+  ('07004', 'Altamirano', 'Chiapas'),
+  ('07031', 'Chilón', 'Chiapas'),
+  ('07109', 'Yajalón', 'Chiapas'),
+  ('07096', 'Tila', 'Chiapas'),
+  ('07077', 'Salto de Agua', 'Chiapas'),
+  ('07016', 'Catazajá', 'Chiapas');
 
 INSERT INTO usuario (nombre, correo, password_hash, rol, activo) VALUES
   ('Despacho Central', 'despacho@hopwright.local', '$2b$10$U4/3E7ZtinkuCQ31YTrSpOIi34MO6F4M8jf.wqeAzbMD2EsTubwV6', 'despachador', TRUE),
@@ -31,10 +71,11 @@ INSERT INTO conductor (nombre, licencia, telefono, activo) VALUES
 INSERT INTO vehiculo (placa, tipo, capacidad_kg, estado, id_conductor) VALUES
   ('CHP-1001', 'Camión', 8000.00, 'En ruta', 1),
   ('CHP-1002', 'Tráiler', 25000.00, 'Disponible', 2),
-  ('CHP-1003', 'Camión', 8000.00, 'Disponible', 3),
+  ('CHP-1003', 'Camión', 8000.00, 'En ruta', 3),
   ('CHP-1004', 'Tráiler', 25000.00, 'En taller', NULL),
   ('CHP-1005', 'Camión', 3500.00, 'En ruta', 4),
-  ('CHP-1006', 'Camión', 8000.00, 'Disponible', NULL);
+  ('CHP-1006', 'Camión', 8000.00, 'Disponible', NULL),
+  ('TREN-01', 'Tren', 60000.00, 'Disponible', NULL);
 
 INSERT INTO envio (id_envio, id_cliente, id_ciudad_origen, id_ciudad_destino, peso_kg, prioridad, estado, fecha_salida, creado_en) VALUES
   ('E-101', 1, '07101', '07078', 1200.00, 'Normal', 'Pendiente', NULL, '2026-11-20T08:00:00-06:00'),
@@ -49,5 +90,5 @@ INSERT INTO envio (id_envio, id_cliente, id_ciudad_origen, id_ciudad_destino, pe
 INSERT INTO asignacion (id_envio, placa, fecha_asignacion, fecha_fin, activa) VALUES
   ('E-102', 'CHP-1001', '2026-11-20T08:15:00-06:00', NULL, TRUE),
   ('E-107', 'CHP-1005', '2026-11-20T09:25:00-06:00', NULL, TRUE),
-  ('E-104', 'CHP-1003', '2026-11-20T08:40:00-06:00', '2026-11-20T09:00:00-06:00', FALSE),
+  ('E-104', 'CHP-1003', '2026-11-20T08:40:00-06:00', NULL, TRUE),
   ('E-105', 'CHP-1002', '2026-11-19T06:30:00-06:00', '2026-11-19T18:00:00-06:00', FALSE);

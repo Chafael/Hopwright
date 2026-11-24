@@ -25,3 +25,17 @@ export const esquemaIdCiudad = {
   description: "Clave de municipio del INEGI, 5 dígitos",
   examples: ["07101"],
 } as const;
+
+// Mismo formato que exigen la tabla envio de PostgreSQL y los validadores de manifiestos y bitacora_envio
+export const esquemaIdEnvio = {
+  type: "string",
+  pattern: "^E-[0-9]+$",
+  description: "Identificador del envío: E- seguido de dígitos",
+  examples: ["E-101"],
+} as const;
+
+export const paramsIdEnvio = {
+  type: "object",
+  required: ["id"],
+  properties: { id: esquemaIdEnvio },
+} as const;

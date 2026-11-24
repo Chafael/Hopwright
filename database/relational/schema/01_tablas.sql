@@ -42,7 +42,7 @@ CREATE TABLE vehiculo (
 );
 
 CREATE TABLE envio (
-  id_envio           TEXT PRIMARY KEY,
+  id_envio           TEXT PRIMARY KEY CHECK (id_envio ~ '^E-[0-9]+$'),
   id_cliente         BIGINT NOT NULL REFERENCES cliente(id_cliente),
   id_ciudad_origen   TEXT NOT NULL REFERENCES ciudad(id_ciudad),
   id_ciudad_destino  TEXT NOT NULL REFERENCES ciudad(id_ciudad),
