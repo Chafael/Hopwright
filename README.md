@@ -45,6 +45,20 @@ La propuesta completa, la matriz de responsabilidades y la fuente de verdad de c
 
 Para empezar desde cero (borra todos los datos): `docker compose down -v` y luego `docker compose up -d`.
 
+## Interfaz web
+
+La interfaz está en `frontend/` (SvelteKit en modo estático, Tailwind, Flowbite y Leaflet). Solo habla con la API, nunca con las bases. Con el backend corriendo en otra terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Se abre en http://localhost:5173. Si la API no está en `http://localhost:3000`, copia `frontend/.env.example` como `frontend/.env` y cambia `VITE_API_URL`.
+
+Pantallas: rutas (C1), camión o tren (C2), red y cierres (C4 y ubicación de vehículos), incidentes (alta, cierre, evidencias y envíos afectados, C5) y mantenimiento (reconciliación). El mapa necesita internet para el fondo; la red se dibuja aunque no cargue.
+
 ## Pruebas
 
 Desde `backend/`:
