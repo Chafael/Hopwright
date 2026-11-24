@@ -113,6 +113,27 @@ export type ComparacionCamionTren = {
   masRapida: string | null;
 };
 
+export type PasoExploracion =
+  | { tipo: "visita"; punto: string; lado: "origen" | "destino"; costo: number }
+  | { tipo: "tramo"; desde: string; hasta: string; lado: "origen" | "destino"; mejora: boolean };
+export type Algoritmo = "dijkstra" | "bidireccional";
+export type Exploracion = {
+  algoritmo: Algoritmo;
+  criterio: Criterio;
+  encontrada: boolean;
+  ruta: string[];
+  costo: number;
+  minutos: number;
+  kilometros: number;
+  costoCasetas: number;
+  explorados: number;
+  tramosRevisados: number;
+  pasos: PasoExploracion[];
+  neo4j: { encontrada: boolean; ruta: string[]; costo: number | null; minutos: number; kilometros: number };
+  coincide: boolean;
+  avisos: string[];
+};
+
 export type CiudadesAisladas = { puntoCerrado: Punto; destino: Punto; aisladas: { idCiudad: string; nombre: string }[] };
 
 export type Gravedad = "Baja" | "Media" | "Alta";
@@ -174,6 +195,8 @@ export const api = {
 
   ruta: (p: { origen: string; destino: string; criterio: Criterio; evitarTerraceria: boolean; tiempoMaxMin?: number | null }) =>
     get<Ruta>(`/rutas${consulta(p)}`),
+  exploracion: (p: { origen: string; destino: string; criterio: Criterio; evitarTerraceria: boolean; tiempoMaxMin?: number | null; algoritmo: Algoritmo }) =>
+    get<Exploracion>(`/rutas/exploracion${consulta(p)}`),
   camionTren: (p: { origen: string; destino: string; pesoKg: number }) => get<ComparacionCamionTren>(`/rutas/camion-tren${consulta(p)}`),
 
   incidentes: (f: { activo?: boolean; gravedad?: string; tipo?: string; sincronizado?: boolean } = {}) =>

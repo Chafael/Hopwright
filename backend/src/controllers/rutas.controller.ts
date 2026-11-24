@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
-import { calcularRuta, compararCamionTren } from "../services/rutas.service.js";
+import { calcularRuta, compararCamionTren, explorarRuta } from "../services/rutas.service.js";
+import type { Algoritmo } from "../services/rutas.exploracion.js";
 import { esquemaIdCiudad, respuestasError } from "../schemas/comunes.js";
 import type { Criterio } from "../repositories/graph/rutas.repository.js";
 
@@ -132,5 +133,87 @@ export async function rutasRutas(app: FastifyInstance): Promise<void> {
       },
     },
     async (req) => compararCamionTren(req.query),
+  );
+
+  const lista = { type: "array", items: { type: "string" } } as const;
+
+  app.get<{ Querystring: ConsultaRuta & { algoritmo?: Algoritmo } }>(
+    "/rutas/exploracion",
+    {
+      schema: {
+        tags: ["Rutas"],
+        summary: "Cómo se busca la ruta: Dijkstra paso a paso sobre la red de Neo4j",
+        description:
+          "Repite Dijkstra (normal o bidireccional) sobre la misma red de carreteras que usa Neo4j y con las mismas restricciones, " +
+          "y regresa en orden cada punto resuelto (visita) y cada tramo revisado (tramo). La interfaz lo usa para animar la búsqueda. " +
+          "También calcula la ruta con Neo4j y dice si los dos llegaron al mismo costo (coincide).",
+        querystring: {
+          type: "object",
+          required: ["origen", "destino"],
+          properties: {
+            origen: esquemaIdCiudad,
+            destino: esquemaIdCiudad,
+            criterio: { type: "string", enum: ["tiempo", "distancia", "costo"], default: "tiempo" },
+            evitarTerraceria: { type: "boolean", default: false },
+            tiempoMaxMin: { type: "integer", minimum: 1 },
+            algoritmo: { type: "string", enum: ["dijkstra", "bidireccional"], default: "dijkstra" },
+          },
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              algoritmo: { type: "string" },
+              criterio: { type: "string" },
+              encontrada: { type: "boolean" },
+              ruta: lista,
+              costo: { type: "number" },
+              minutos: { type: "number" },
+              kilometros: { type: "number" },
+              costoCasetas: { type: "number" },
+              explorados: { type: "integer", description: "Puntos resueltos por la búsqueda" },
+              tramosRevisados: { type: "integer" },
+              pasos: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    tipo: { type: "string", enum: ["visita", "tramo"] },
+                    punto: { type: "string" },
+                    desde: { type: "string" },
+                    hasta: { type: "string" },
+                    lado: { type: "string", enum: ["origen", "destino"] },
+                    costo: { type: "number" },
+                    mejora: { type: "boolean" },
+                  },
+                },
+              },
+              neo4j: {
+                type: "object",
+                properties: {
+                  encontrada: { type: "boolean" },
+                  ruta: lista,
+                  costo: { type: ["number", "null"] },
+                  minutos: { type: "number" },
+                  kilometros: { type: "number" },
+                },
+              },
+              coincide: { type: "boolean", description: "La búsqueda paso a paso y Neo4j llegaron al mismo costo" },
+              avisos: lista,
+            },
+          },
+          ...respuestasError(400, 404, 503),
+        },
+      },
+    },
+    async (req) =>
+      explorarRuta({
+        origen: req.query.origen,
+        destino: req.query.destino,
+        criterio: req.query.criterio ?? "tiempo",
+        evitarTerraceria: req.query.evitarTerraceria ?? false,
+        tiempoMaxMin: req.query.tiempoMaxMin ?? null,
+        algoritmo: req.query.algoritmo ?? "dijkstra",
+      }),
   );
 }

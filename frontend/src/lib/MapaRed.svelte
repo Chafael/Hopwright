@@ -2,7 +2,7 @@
   import maplibregl, { type GeoJSONSource, type StyleSpecification } from "maplibre-gl";
   import { onMount } from "svelte";
   import type { Feature, FeatureCollection } from "geojson";
-  import type { Mapa, PuntoMapa } from "./api";
+  import type { Exploracion, Mapa, PuntoMapa } from "./api";
 
   // Dibuja la red de Chiapas con MapLibre sobre un mapa vectorial (estilo Positron de OpenFreeMap).
   // Los tramos siguen el trazo real de la carretera si existe static/geometria-tramos.json
@@ -15,6 +15,9 @@
     aisladas = [],
     mostrarVehiculos = false,
     alElegirPunto,
+    exploracion = null,
+    reproduccion = 0,
+    alAvanzar,
   }: {
     mapa: Mapa;
     ruta?: string[]; // ids de los puntos en orden
@@ -23,6 +26,10 @@
     aisladas?: string[];
     mostrarVehiculos?: boolean;
     alElegirPunto?: (p: PuntoMapa) => void;
+    // Búsqueda paso a paso que se anima antes de mostrar la ruta (GET /rutas/exploracion)
+    exploracion?: Exploracion | null;
+    reproduccion?: number; // al cambiar, la animación vuelve a empezar
+    alAvanzar?: (estado: { explorados: number; terminado: boolean }) => void;
   } = $props();
 
   const ESTILO = "https://tiles.openfreemap.org/styles/positron";
@@ -176,7 +183,7 @@
   }
 
   function dibujarResaltado() {
-    if (!mapaGl || !listo) return;
+    if (!mapaGl || !listo || animando) return;
     const principal = lineaDeRuta(ruta);
     const secundaria = lineaDeRuta(rutaSecundaria);
     fuente("ruta")?.setData(coleccion(principal.length > 1 ? [lineaGeo(principal)] : []));
@@ -209,13 +216,16 @@
     const enfoque = [...principal, ...secundaria, ...aisladas.map((id) => coordenadas.get(id)).filter((c): c is Lnglat => !!c), ...(cCerrado ? [cCerrado] : [])];
     if (enfoque.length > 1) {
       const limites = enfoque.reduce((b, c) => b.extend(c), new maplibregl.LngLatBounds(enfoque[0], enfoque[0]));
-      mapaGl.fitBounds(limites, { padding: 80, maxZoom: 8, duration: 600 });
+      mapaGl.fitBounds(limites, { padding: { top: 90, bottom: 60, left: 70, right: 170 }, maxZoom: 8, duration: 600 });
     }
   }
 
   function agregarCapas(m: maplibregl.Map) {
     const vacia = coleccion([]);
-    for (const id of ["tramos", "puntos", "ruta", "ruta-secundaria", "aisladas"]) m.addSource(id, { type: "geojson", data: vacia });
+    for (const id of ["tramos", "puntos", "ruta", "ruta-secundaria", "aisladas", "busqueda", "visitados"]) m.addSource(id, { type: "geojson", data: vacia });
+
+    // Velo oscuro sobre el mapa base mientras se anima la búsqueda (es transparente el resto del tiempo)
+    m.addLayer({ id: "velo", type: "background", paint: { "background-color": "#0e1726", "background-opacity": 0, "background-opacity-transition": { duration: 600 } } });
 
     m.addLayer({
       id: "tramos",
@@ -232,6 +242,38 @@
     m.addLayer({ id: "tramos-tren", type: "line", source: "tramos", filter: ["==", ["get", "estilo"], "tren"], paint: { "line-color": AZUL, "line-width": 3, "line-dasharray": [1, 2] } });
     m.addLayer({ id: "tramos-terraceria", type: "line", source: "tramos", filter: ["==", ["get", "estilo"], "terraceria"], paint: { "line-color": "#8a6d3b", "line-width": 2, "line-dasharray": [2, 2] } });
     m.addLayer({ id: "tramos-cerrados", type: "line", source: "tramos", filter: ["==", ["get", "estilo"], "cerrado"], paint: { "line-color": ROJO, "line-width": 3, "line-dasharray": [2, 2] } });
+
+    // Ramas de la búsqueda: un halo difuso debajo y la línea encima, azul desde el origen y cian desde el destino
+    m.addLayer({
+      id: "busqueda-halo",
+      type: "line",
+      source: "busqueda",
+      layout: { "line-cap": "round", "line-join": "round" },
+      paint: { "line-color": ["match", ["get", "lado"], "destino", CIAN_BUSQUEDA, AZUL_BUSQUEDA], "line-width": 9, "line-blur": 6, "line-opacity": 0.45 },
+    });
+    m.addLayer({
+      id: "busqueda",
+      type: "line",
+      source: "busqueda",
+      layout: { "line-cap": "round", "line-join": "round" },
+      paint: {
+        "line-color": ["match", ["get", "lado"], "destino", CIAN_BUSQUEDA, AZUL_BUSQUEDA],
+        "line-width": ["case", ["get", "mejora"], 3, 1.6],
+        "line-opacity": ["case", ["get", "mejora"], 1, 0.6],
+      },
+    });
+    m.addLayer({
+      id: "visitados",
+      type: "circle",
+      source: "visitados",
+      paint: {
+        "circle-radius": 5,
+        "circle-color": ["match", ["get", "lado"], "destino", CIAN_BUSQUEDA, AZUL_BUSQUEDA],
+        "circle-blur": 0.4,
+        "circle-stroke-color": "#ffffff",
+        "circle-stroke-width": 1.5,
+      },
+    });
 
     m.addLayer({ id: "ruta-secundaria-borde", type: "line", source: "ruta-secundaria", layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": "#fff", "line-width": 9 } });
     m.addLayer({ id: "ruta-secundaria", type: "line", source: "ruta-secundaria", layout: { "line-join": "round" }, paint: { "line-color": "#5c6670", "line-width": 5, "line-dasharray": [2, 1.5] } });
@@ -267,6 +309,9 @@
       },
     });
 
+    // Los puntos normales van debajo de la búsqueda, para que se vea cuáles ya se exploraron
+    m.moveLayer("puntos", "busqueda-halo");
+
     // Al pasar el cursor por un punto o un tramo se ve qué es
     const globo = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 10, className: "globo-red" });
     for (const capa of ["puntos", "tramos", "tramos-tren", "tramos-terraceria", "tramos-cerrados"]) {
@@ -287,6 +332,132 @@
       const p = mapa.puntos.find((x) => x.idPunto === id);
       if (p) alElegirPunto?.(p);
     });
+  }
+
+
+  // ---------- Animación de la búsqueda ----------
+  // Cada punto resuelto se enciende en su turno y los tramos que revisó desde ahí crecen sobre la carretera.
+  // El orden es el de la búsqueda real; el ritmo se ajusta para que toda la animación dure unos 5 segundos.
+  const AZUL_BUSQUEDA = "#4f9bff";
+  const CIAN_BUSQUEDA = "#3dd6f5";
+  const VERDE_RUTA = "#3ee07a";
+  let animando = false;
+  let cuadro = 0;
+
+  type Rama = { coords: Lnglat[]; largos: number[]; total: number; inicio: number; duracion: number; lado: string; mejora: boolean };
+
+  function preparar(coords: Lnglat[]) {
+    const largos = [0];
+    for (let i = 1; i < coords.length; i++) largos.push(largos[i - 1] + Math.hypot(coords[i][0] - coords[i - 1][0], coords[i][1] - coords[i - 1][1]));
+    return { largos, total: largos.at(-1) ?? 0 };
+  }
+
+  // La parte de la línea que ya se recorrió, de 0 (nada) a 1 (completa)
+  function recorte(r: { coords: Lnglat[]; largos: number[]; total: number }, f: number): Lnglat[] {
+    if (f >= 1) return r.coords;
+    const meta = r.total * f;
+    const fuera: Lnglat[] = [r.coords[0]];
+    for (let i = 1; i < r.coords.length; i++) {
+      if (r.largos[i] <= meta) {
+        fuera.push(r.coords[i]);
+        continue;
+      }
+      const t = (meta - r.largos[i - 1]) / (r.largos[i] - r.largos[i - 1] || 1);
+      const [a, b] = [r.coords[i - 1], r.coords[i]];
+      fuera.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
+      break;
+    }
+    return fuera;
+  }
+
+  function oscurecer(si: boolean) {
+    if (!mapaGl) return;
+    mapaGl.setPaintProperty("velo", "background-opacity", si ? 0.84 : 0);
+    mapaGl.setPaintProperty("tramos", "line-opacity", si ? 0.35 : 1);
+    for (const capa of ["tramos-tren", "tramos-terraceria", "tramos-cerrados"]) mapaGl.setPaintProperty(capa, "line-opacity", si ? 0.35 : 1);
+    mapaGl.setPaintProperty("ruta", "line-color", si ? VERDE_RUTA : VERDE);
+    mapaGl.setPaintProperty("ruta-borde", "line-color", si ? "#0e1726" : "#fff");
+  }
+
+  function limpiarBusqueda() {
+    cancelAnimationFrame(cuadro);
+    animando = false;
+    fuente("busqueda")?.setData(coleccion([]));
+    fuente("visitados")?.setData(coleccion([]));
+  }
+
+  function animar(e: Exploracion) {
+    if (!mapaGl || !listo) return;
+    limpiarBusqueda();
+    oscurecer(true);
+    animando = true;
+    for (const m of marcadoresResaltado) m.remove();
+    marcadoresResaltado = [];
+    fuente("ruta")?.setData(coleccion([]));
+    fuente("ruta-secundaria")?.setData(coleccion([]));
+
+    const visitas = e.pasos.filter((p) => p.tipo === "visita").length;
+    const paso = Math.min(420, Math.max(110, 5200 / Math.max(visitas, 1)));
+    const ramas: Rama[] = [];
+    const encendidos: { c: Lnglat; t: number; lado: string }[] = [];
+    let t = 0;
+    let enTurno = 0;
+    for (const p of e.pasos) {
+      if (p.tipo === "visita") {
+        t = encendidos.length * paso;
+        enTurno = 0;
+        const c = coordenadas.get(p.punto);
+        if (c) encendidos.push({ c, t, lado: p.lado });
+      } else {
+        const coords = trazo(p.desde, p.hasta);
+        if (!coords) continue;
+        ramas.push({ coords, ...preparar(coords), inicio: t + enTurno * 35, duracion: paso * 2.2, lado: p.lado, mejora: p.mejora });
+        enTurno++;
+      }
+    }
+    const fin = Math.max(t, ...ramas.map((r) => r.inicio + r.duracion));
+
+    // Encuadre: todo lo que va a explorar
+    const todos = encendidos.map((x) => x.c);
+    if (todos.length > 1) {
+      const limites = todos.reduce((b, c) => b.extend(c), new maplibregl.LngLatBounds(todos[0], todos[0]));
+      mapaGl.fitBounds(limites, { padding: { top: 90, bottom: 50, left: 60, right: 170 }, maxZoom: 8.5, duration: 700 });
+    }
+
+    const lineaFinal = lineaDeRuta(ruta.length > 1 ? ruta : e.ruta);
+    const final = { coords: lineaFinal, ...preparar(lineaFinal) };
+    const reducido = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const arranque = performance.now() + (reducido ? -1e9 : 700); // espera a que termine el encuadre
+    let ultimoConteo = -1;
+
+    const pintar = (ahora: number) => {
+      const reloj = ahora - arranque;
+      fuente("busqueda")?.setData(
+        coleccion(
+          ramas
+            .filter((r) => reloj >= r.inicio)
+            .map((r) => lineaGeo(recorte(r, (reloj - r.inicio) / r.duracion), { lado: r.lado, mejora: r.mejora })),
+        ),
+      );
+      const vistos = encendidos.filter((x) => reloj >= x.t);
+      fuente("visitados")?.setData(coleccion(vistos.map((x) => puntoGeo(x.c, { lado: x.lado }))));
+      if (vistos.length !== ultimoConteo) {
+        ultimoConteo = vistos.length;
+        alAvanzar?.({ explorados: vistos.length, terminado: false });
+      }
+
+      // Al terminar la búsqueda, la ruta elegida se dibuja de punta a punta en un segundo
+      const f = (reloj - fin) / 1000;
+      if (f > 0 && final.coords.length > 1) fuente("ruta")?.setData(coleccion([lineaGeo(recorte(final, Math.min(f, 1)))]));
+      if (f >= 1 || reducido) {
+        animando = false;
+        alAvanzar?.({ explorados: encendidos.length, terminado: true });
+        dibujarResaltado();
+        return;
+      }
+      cuadro = requestAnimationFrame(pintar);
+    };
+    cuadro = requestAnimationFrame(pintar);
   }
 
   onMount(() => {
@@ -325,6 +496,7 @@
     observador.observe(contenedor);
     return () => {
       cancelado = true;
+      cancelAnimationFrame(cuadro);
       observador.disconnect();
       mapaGl?.remove();
     };
@@ -335,6 +507,19 @@
     void mostrarVehiculos;
     void geometrias;
     if (listo) dibujarRed();
+  });
+
+  $effect(() => {
+    void reproduccion;
+    const e = exploracion;
+    if (!listo) return;
+    if (e) {
+      animar(e);
+    } else if (animando || mapaGl?.getPaintProperty("velo", "background-opacity")) {
+      limpiarBusqueda();
+      oscurecer(false);
+      dibujarResaltado();
+    }
   });
 
   $effect(() => {

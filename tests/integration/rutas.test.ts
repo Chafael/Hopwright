@@ -134,6 +134,39 @@ describe("GET /red/ciudades-aisladas (C4)", () => {
   });
 });
 
+describe("GET /rutas/exploracion", () => {
+  it("repite la búsqueda paso a paso y llega al mismo resultado que Neo4j", async () => {
+    const res = await app.inject({ url: "/rutas/exploracion?origen=07101&destino=07078" });
+    expect(res.statusCode).toBe(200);
+    const r = res.json();
+    expect(r.coincide).toBe(true);
+    expect(r.minutos).toBe(72);
+    expect(r.neo4j.minutos).toBe(72);
+    expect(r.ruta[0]).toBe("07101");
+    expect(r.ruta.at(-1)).toBe("07078");
+    expect(r.pasos[0]).toMatchObject({ tipo: "visita", punto: "07101" });
+    expect(r.explorados).toBeGreaterThan(2);
+  });
+
+  it("el bidireccional también coincide con Neo4j", async () => {
+    const normal = (await app.inject({ url: "/rutas/exploracion?origen=07101&destino=07089" })).json();
+    const bi = (await app.inject({ url: "/rutas/exploracion?origen=07101&destino=07089&algoritmo=bidireccional" })).json();
+    expect(bi.coincide).toBe(true);
+    expect(bi.minutos).toBe(normal.minutos);
+    expect(bi.pasos.some((p: { lado: string }) => p.lado === "destino")).toBe(true);
+  });
+
+  it("evitando terracería coincide con los 218 minutos a Arriaga", async () => {
+    const r = (await app.inject({ url: "/rutas/exploracion?origen=07101&destino=07009&evitarTerraceria=true" })).json();
+    expect(r.minutos).toBe(218);
+    expect(r.coincide).toBe(true);
+  });
+
+  it("400 con un algoritmo desconocido", async () => {
+    expect((await app.inject({ url: "/rutas/exploracion?origen=07101&destino=07078&algoritmo=a-estrella" })).statusCode).toBe(400);
+  });
+});
+
 describe("GET /red/mapa", () => {
   it("regresa los 36 puntos con coordenadas, una línea por tramo, incidentes activos y vehículos", async () => {
     const mapa = (await app.inject({ url: "/red/mapa" })).json();
