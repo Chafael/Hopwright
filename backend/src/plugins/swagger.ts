@@ -12,8 +12,18 @@ export async function registrarSwagger(app: FastifyInstance): Promise<void> {
         description: "API de Hopwright: asignación de vehículos, manifiestos de carga, incidentes y cálculo de rutas.",
         version: "0.1.0",
       },
-      tags: [
-        { name: "Salud", description: "Estado de las tres bases de datos" },
+        components: {
+          securitySchemes: {
+            bearerAuth: {
+              type: "http",
+              scheme: "bearer",
+              bearerFormat: "JWT",
+              description: "Token JWT emitido por POST /auth/login",
+            },
+          },
+        },
+        tags: [
+          { name: "Salud", description: "Estado de las tres bases de datos" },
         { name: "Autenticación", description: "Inicio de sesión y emisión de tokens JWT" },
         { name: "Clientes", description: "Catálogo de clientes de la paquetería" },
         { name: "Conductores", description: "Catálogo de conductores" },

@@ -18,6 +18,6 @@ export async function agregarEventoBitacora(idEnvio: string, evento: EventoBitac
   await col.updateOne({ idEnvio }, { $setOnInsert: { idEnvio, eventos: [] } }, { upsert: true });
   await col.updateOne(
     { idEnvio, eventos: { $not: { $elemMatch: { tipo: evento.tipo, fecha: evento.fecha } } } },
-    { $push: { eventos: evento } },
+    { $push: { eventos: { $each: [evento], $sort: { fecha: 1 } } } },
   );
 }

@@ -1,5 +1,5 @@
 import { Conflicto, DatosInvalidos, NoEncontrado } from "../errores.js";
-import { actualizarCliente, buscarCliente, crearCliente, listarClientes, type ClienteEntrada } from "../repositories/relational/clientes.repository.js";
+import { actualizarCliente, borrarCliente, buscarCliente, crearCliente, listarClientes, type ClienteEntrada } from "../repositories/relational/clientes.repository.js";
 
 function validar(datos: ClienteEntrada) {
   if (!datos.razonSocial?.trim()) throw new DatosInvalidos("La razón social es obligatoria");
@@ -22,6 +22,16 @@ export async function registrarCliente(datos: ClienteEntrada) {
     return await crearCliente({ ...datos, razonSocial: datos.razonSocial.trim(), rfc: datos.rfc.trim().toUpperCase() });
   } catch (error: any) {
     if (error?.code === "23505") throw new Conflicto("Ya existe un cliente con ese RFC");
+    throw error;
+  }
+}
+
+export async function eliminarCliente(idCliente: number): Promise<void> {
+  if (!await buscarCliente(idCliente)) throw new NoEncontrado(`El cliente ${idCliente} no existe`);
+  try {
+    if (!await borrarCliente(idCliente)) throw new NoEncontrado(`El cliente ${idCliente} no existe`);
+  } catch (error: any) {
+    if (error?.code === "23503") throw new Conflicto("Tiene envíos asociados");
     throw error;
   }
 }

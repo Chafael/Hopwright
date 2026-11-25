@@ -4,7 +4,7 @@ export type Conductor = { idConductor: number; nombre: string; licencia: string;
 export type ConductorEntrada = { nombre: string; licencia: string; telefono?: string | null; activo?: boolean };
 
 function mapear(fila: any): Conductor {
-  return { idConductor: fila.id_conductor, nombre: fila.nombre, licencia: fila.licencia, telefono: fila.telefono, activo: fila.activo };
+  return { idConductor: Number(fila.id_conductor), nombre: fila.nombre, licencia: fila.licencia, telefono: fila.telefono, activo: fila.activo };
 }
 
 export async function listarConductores(): Promise<Conductor[]> {
@@ -23,6 +23,11 @@ export async function crearConductor(datos: ConductorEntrada): Promise<Conductor
     [datos.nombre, datos.licencia, datos.telefono ?? null, datos.activo ?? true],
   );
   return mapear(rows[0]);
+}
+
+export async function borrarConductor(idConductor: number): Promise<boolean> {
+  const { rowCount } = await pool.query("DELETE FROM conductor WHERE id_conductor = $1", [idConductor]);
+  return (rowCount ?? 0) > 0;
 }
 
 export async function actualizarConductor(idConductor: number, datos: ConductorEntrada): Promise<Conductor | null> {

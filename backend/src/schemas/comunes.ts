@@ -18,6 +18,9 @@ export function respuestasError(...codigos: number[]): Record<number, typeof esq
   return Object.fromEntries(codigos.map((c) => [c, esquemaError]));
 }
 
+// Seguridad Bearer que se documenta en las rutas protegidas.
+export const seguridadBearer: { bearerAuth: string[] }[] = [{ bearerAuth: [] }];
+
 // Clave de municipio del INEGI: 5 dígitos, por ejemplo "07101" (Tuxtla Gutiérrez)
 export const esquemaIdCiudad = {
   type: "string",

@@ -42,7 +42,7 @@ CREATE TABLE vehiculo (
 );
 
 CREATE TABLE envio (
-  id_envio           TEXT PRIMARY KEY,
+  id_envio           TEXT PRIMARY KEY CHECK (id_envio ~ '^E-[0-9]+$'),
   id_cliente         BIGINT NOT NULL REFERENCES cliente(id_cliente),
   id_ciudad_origen   TEXT NOT NULL REFERENCES ciudad(id_ciudad),
   id_ciudad_destino  TEXT NOT NULL REFERENCES ciudad(id_ciudad),
@@ -69,7 +69,7 @@ CREATE UNIQUE INDEX asignacion_envio_activa_idx ON asignacion (id_envio) WHERE a
 
 CREATE TABLE eventos_pendientes (
   id            BIGSERIAL PRIMARY KEY,
-  tipo          TEXT NOT NULL,
+  tipo          TEXT NOT NULL CHECK (tipo IN ('CIUDAD_GUARDADA', 'VEHICULO_GUARDADO', 'ASIGNACION_CREADA', 'ENVIO_SALIO', 'ENVIO_ENTREGADO', 'ENVIO_CANCELADO')),
   payload       JSONB NOT NULL,
   estado        TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'aplicado', 'fallido')),
   intentos      INTEGER NOT NULL DEFAULT 0 CHECK (intentos >= 0),

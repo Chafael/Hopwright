@@ -45,6 +45,13 @@ La propuesta completa, la matriz de responsabilidades y la fuente de verdad de c
 
 Para empezar desde cero (borra todos los datos): `docker compose down -v` y luego `docker compose up -d`.
 
+## Usuarios de prueba
+
+| Correo | Rol | Contraseña |
+| --- | --- | --- |
+| `despacho@hopwright.local` | `despachador` | `hopwright123` |
+| `admin@hopwright.local` | `administrador` | `hopwright123` |
+
 ## Pruebas
 
 Desde `backend/`:

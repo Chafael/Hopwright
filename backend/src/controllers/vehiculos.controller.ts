@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { respuestasError } from "../schemas/comunes.js";
+import { respuestasError, seguridadBearer } from "../schemas/comunes.js";
 import { modificarVehiculo, obtenerVehiculo, obtenerVehiculos, registrarVehiculo } from "../services/vehiculos.service.js";
 
 const esquemaVehiculo = {
@@ -36,6 +36,7 @@ export async function rutasVehiculos(app: FastifyInstance): Promise<void> {
           },
         },
         response: { 201: esquemaVehiculo, ...respuestasError(400, 401, 403, 409) },
+        security: seguridadBearer,
       },
     },
     async (req, reply) => reply.code(201).send(await registrarVehiculo(req.body)),
@@ -46,6 +47,7 @@ export async function rutasVehiculos(app: FastifyInstance): Promise<void> {
   }, async (req) => obtenerVehiculo(req.params.placa));
 
   app.patch<{ Params: { placa: string }; Body: { tipo?: string; capacidadKg?: number; estado?: string; idConductor?: number | null } }>("/vehiculos/:placa", {
+    preHandler: app.requiereRol("administrador"),
     schema: {
       tags: ["Vehículos"],
       summary: "Actualiza un vehículo",
@@ -60,7 +62,8 @@ export async function rutasVehiculos(app: FastifyInstance): Promise<void> {
           idConductor: { type: ["integer", "null"] },
         },
       },
-      response: { 200: esquemaVehiculo, ...respuestasError(400, 404) },
+      response: { 200: esquemaVehiculo, ...respuestasError(400, 401, 403, 404, 409) },
+      security: seguridadBearer,
     },
   }, async (req) => modificarVehiculo(req.params.placa, req.body));
 }

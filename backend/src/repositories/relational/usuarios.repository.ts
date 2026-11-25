@@ -11,7 +11,7 @@ export type Usuario = {
 
 function mapear(fila: any): Usuario {
   return {
-    idUsuario: fila.id_usuario,
+    idUsuario: Number(fila.id_usuario),
     nombre: fila.nombre,
     correo: fila.correo,
     passwordHash: fila.password_hash,

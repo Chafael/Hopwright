@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { respuestasError, esquemaIdCiudad } from "../schemas/comunes.js";
+import { respuestasError, esquemaIdCiudad, seguridadBearer } from "../schemas/comunes.js";
 import { obtenerCiudades, registrarCiudad } from "../services/ciudades.service.js";
 
 const esquemaCiudad = {
@@ -24,6 +24,7 @@ export async function rutasCiudades(app: FastifyInstance): Promise<void> {
           properties: { idCiudad: esquemaIdCiudad, nombre: { type: "string" }, estado: { type: "string" } },
         },
         response: { 201: esquemaCiudad, ...respuestasError(400, 401, 403, 409) },
+        security: seguridadBearer,
       },
     },
     async (req, reply) => reply.code(201).send(await registrarCiudad(req.body)),

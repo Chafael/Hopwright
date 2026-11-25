@@ -10,7 +10,7 @@ function mapear(fila: any): Vehiculo {
     tipo: fila.tipo,
     capacidadKg: Number(fila.capacidad_kg),
     estado: fila.estado,
-    idConductor: fila.id_conductor ?? null,
+    idConductor: fila.id_conductor == null ? null : Number(fila.id_conductor),
   };
 }
 

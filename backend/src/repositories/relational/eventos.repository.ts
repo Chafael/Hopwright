@@ -27,14 +27,16 @@ export async function tomarEventosPendientes(limite = 20): Promise<EventoPendien
      RETURNING id, tipo, payload, estado, intentos, ultimo_error`,
     [limite],
   );
-  return rows.map((r) => ({
-    id: r.id,
-    tipo: r.tipo,
-    payload: r.payload,
-    estado: r.estado,
-    intentos: r.intentos,
-    ultimoError: r.ultimo_error,
-  }));
+  return rows
+    .map((r) => ({
+      id: Number(r.id),
+      tipo: r.tipo,
+      payload: r.payload,
+      estado: r.estado,
+      intentos: Number(r.intentos),
+      ultimoError: r.ultimo_error,
+    }))
+    .sort((a, b) => a.id - b.id);
 }
 
 export async function marcarEventoAplicado(id: number): Promise<void> {

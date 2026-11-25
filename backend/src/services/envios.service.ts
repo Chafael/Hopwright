@@ -2,7 +2,7 @@ import { Conflicto, DatosInvalidos, NoEncontrado } from "../errores.js";
 import { enTransaccion } from "../db/postgres.js";
 import { buscarCliente } from "../repositories/relational/clientes.repository.js";
 import { buscarCiudad } from "../repositories/relational/ciudades.repository.js";
-import { buscarEnvio, cambiarEstadoEnvio, crearEnvio, listarEnvios, type EnvioEntrada } from "../repositories/relational/envios.repository.js";
+import { buscarEnvio, buscarEnvioParaActualizar, cambiarEstadoEnvio, crearEnvio, listarEnvios, type EnvioEntrada } from "../repositories/relational/envios.repository.js";
 import { buscarVehiculoParaActualizar, listarVehiculosDisponiblesConCapacidad } from "../repositories/relational/vehiculos.repository.js";
 import { buscarAsignacionActivaPorEnvio, buscarAsignacionActivaPorPlaca, crearAsignacion, desactivarAsignacionActiva } from "../repositories/relational/asignaciones.repository.js";
 import { encolarEvento } from "../repositories/relational/eventos.repository.js";
@@ -40,7 +40,7 @@ export async function registrarEnvio(datos: EnvioEntrada) {
 
 export async function asignarVehiculo(idEnvio: string, placa: string) {
   return enTransaccion(async (cliente) => {
-    const envio = await buscarEnvio(idEnvio, cliente);
+    const envio = await buscarEnvioParaActualizar(idEnvio, cliente);
     if (!envio) throw new NoEncontrado(`El envío ${idEnvio} no existe`);
     if (envio.estado !== "Pendiente") throw new Conflicto("Solo se pueden asignar envíos pendientes");
 
@@ -64,7 +64,7 @@ export async function asignarVehiculo(idEnvio: string, placa: string) {
 
 export async function registrarSalida(idEnvio: string) {
   return enTransaccion(async (cliente) => {
-    const envio = await buscarEnvio(idEnvio, cliente);
+    const envio = await buscarEnvioParaActualizar(idEnvio, cliente);
     if (!envio) throw new NoEncontrado(`El envío ${idEnvio} no existe`);
     if (envio.estado !== "Asignado") throw new Conflicto("Solo se puede marcar salida de un envío asignado");
     const fecha = new Date();
@@ -76,7 +76,7 @@ export async function registrarSalida(idEnvio: string) {
 
 export async function registrarEntrega(idEnvio: string) {
   return enTransaccion(async (cliente) => {
-    const envio = await buscarEnvio(idEnvio, cliente);
+    const envio = await buscarEnvioParaActualizar(idEnvio, cliente);
     if (!envio) throw new NoEncontrado(`El envío ${idEnvio} no existe`);
     if (envio.estado !== "En camino") throw new Conflicto("Solo se puede entregar un envío en camino");
     const asignacion = await desactivarAsignacionActiva(idEnvio, cliente);
@@ -85,6 +85,25 @@ export async function registrarEntrega(idEnvio: string) {
     const actualizado = await cambiarEstadoEnvio(idEnvio, "Entregado", cliente);
     const fecha = new Date().toISOString();
     await encolarEvento("ENVIO_ENTREGADO", { idEnvio, fecha }, cliente);
+    return actualizado;
+  });
+}
+
+export async function cancelarEnvio(idEnvio: string) {
+  return enTransaccion(async (cliente) => {
+    const envio = await buscarEnvioParaActualizar(idEnvio, cliente);
+    if (!envio) throw new NoEncontrado(`El envío ${idEnvio} no existe`);
+    if (envio.estado !== "Pendiente" && envio.estado !== "Asignado") {
+      throw new Conflicto("Solo se pueden cancelar envíos pendientes o asignados");
+    }
+    const asignacion = await buscarAsignacionActivaPorEnvio(idEnvio, cliente);
+    if (asignacion) {
+      await desactivarAsignacionActiva(idEnvio, cliente);
+      await cliente.query("UPDATE vehiculo SET estado = 'Disponible' WHERE placa = $1", [asignacion.placa]);
+    }
+    const actualizado = await cambiarEstadoEnvio(idEnvio, "Cancelado", cliente);
+    const fecha = new Date().toISOString();
+    await encolarEvento("ENVIO_CANCELADO", { idEnvio, fecha }, cliente);
     return actualizado;
   });
 }
@@ -137,7 +156,14 @@ export async function guardarManifiesto(idEnvio: string, entrada: any) {
   const existente = await buscarManifiesto(idEnvio);
   if (existente) throw new Conflicto(`El envío ${idEnvio} ya tiene manifiesto`);
   const manifiesto = validarManifiesto({ ...entrada, idEnvio });
-  await crearManifiesto(manifiesto);
+  try {
+    await crearManifiesto(manifiesto);
+  } catch (error: any) {
+    if (error?.name === "MongoServerError" && error?.code === 121) {
+      throw new DatosInvalidos("El manifiesto no cumple el esquema de MongoDB", error.errInfo);
+    }
+    throw error;
+  }
   return manifiesto;
 }
 

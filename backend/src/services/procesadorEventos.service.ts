@@ -16,7 +16,7 @@ async function aplicarEvento(evento: { tipo: string; payload: Record<string, unk
     await escribir(`MERGE (v:Vehiculo {placa: $placa})`, { placa });
     return;
   }
-  if (evento.tipo === "ASIGNACION_CREADA" || evento.tipo === "ENVIO_SALIO" || evento.tipo === "ENVIO_ENTREGADO") {
+  if (evento.tipo === "ASIGNACION_CREADA" || evento.tipo === "ENVIO_SALIO" || evento.tipo === "ENVIO_ENTREGADO" || evento.tipo === "ENVIO_CANCELADO") {
     const idEnvio = String(evento.payload.idEnvio);
     const fecha = evento.payload.fecha ? new Date(String(evento.payload.fecha)) : new Date();
     await agregarEventoBitacora(idEnvio, { tipo: evento.tipo, fecha, detalle: evento.payload });

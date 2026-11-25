@@ -4,7 +4,7 @@ export type Cliente = { idCliente: number; razonSocial: string; rfc: string; tel
 export type ClienteEntrada = { razonSocial: string; rfc: string; telefono?: string | null; correo?: string | null };
 
 function mapear(fila: any): Cliente {
-  return { idCliente: fila.id_cliente, razonSocial: fila.razon_social, rfc: fila.rfc, telefono: fila.telefono, correo: fila.correo };
+  return { idCliente: Number(fila.id_cliente), razonSocial: fila.razon_social, rfc: fila.rfc, telefono: fila.telefono, correo: fila.correo };
 }
 
 export async function listarClientes(): Promise<Cliente[]> {
@@ -23,6 +23,11 @@ export async function crearCliente(datos: ClienteEntrada): Promise<Cliente> {
     [datos.razonSocial, datos.rfc, datos.telefono ?? null, datos.correo ?? null],
   );
   return mapear(rows[0]);
+}
+
+export async function borrarCliente(idCliente: number): Promise<boolean> {
+  const { rowCount } = await pool.query("DELETE FROM cliente WHERE id_cliente = $1", [idCliente]);
+  return (rowCount ?? 0) > 0;
 }
 
 export async function actualizarCliente(idCliente: number, datos: ClienteEntrada): Promise<Cliente | null> {

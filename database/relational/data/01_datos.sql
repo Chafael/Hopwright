@@ -10,11 +10,23 @@ INSERT INTO ciudad (id_ciudad, nombre, estado) VALUES
   ('07097', 'Tonalá', 'Chiapas'),
   ('07108', 'Villaflores', 'Chiapas'),
   ('07017', 'Cintalapa', 'Chiapas'),
-  ('07009', 'Arriaga', 'Chiapas');
+  ('07009', 'Arriaga', 'Chiapas'),
+  ('07027', 'Chiapa de Corzo', 'Chiapas'),
+  ('07094', 'Teopisca', 'Chiapas'),
+  ('07012', 'Berriozábal', 'Chiapas'),
+  ('07061', 'Ocozocoautla de Espinosa', 'Chiapas'),
+  ('07046', 'Jiquipilas', 'Chiapas'),
+  ('07069', 'Pijijiapan', 'Chiapas'),
+  ('07051', 'Mapastepec', 'Chiapas'),
+  ('07040', 'Huixtla', 'Chiapas'),
+  ('07086', 'Suchiapa', 'Chiapas'),
+  ('07099', 'La Trinitaria', 'Chiapas'),
+  ('07057', 'Motozintla', 'Chiapas'),
+  ('07068', 'Pichucalco', 'Chiapas');
 
 INSERT INTO usuario (nombre, correo, password_hash, rol, activo) VALUES
-  ('Despacho Central', 'despacho@hopwright.local', '$2b$10$U4/3E7ZtinkuCQ31YTrSpOIi34MO6F4M8jf.wqeAzbMD2EsTubwV6', 'despachador', TRUE),
-  ('Administración Hopwright', 'admin@hopwright.local', '$2b$10$U4/3E7ZtinkuCQ31YTrSpOIi34MO6F4M8jf.wqeAzbMD2EsTubwV6', 'administrador', TRUE);
+  ('Despacho Central', 'despacho@hopwright.local', '$2b$10$8AEyf1C1Sju2MxysHbcmy.tB/AowA2NXdX9J2zhG1C81V8QD5.YyC', 'despachador', TRUE),
+  ('Administración Hopwright', 'admin@hopwright.local', '$2b$10$8AEyf1C1Sju2MxysHbcmy.tB/AowA2NXdX9J2zhG1C81V8QD5.YyC', 'administrador', TRUE);
 
 INSERT INTO cliente (razon_social, rfc, telefono, correo) VALUES
   ('Alimentos del Soconusco SA de CV', 'ASO120304AB1', '9621234567', 'contacto@soconusco.mx'),
@@ -31,10 +43,11 @@ INSERT INTO conductor (nombre, licencia, telefono, activo) VALUES
 INSERT INTO vehiculo (placa, tipo, capacidad_kg, estado, id_conductor) VALUES
   ('CHP-1001', 'Camión', 8000.00, 'En ruta', 1),
   ('CHP-1002', 'Tráiler', 25000.00, 'Disponible', 2),
-  ('CHP-1003', 'Camión', 8000.00, 'Disponible', 3),
+  ('CHP-1003', 'Camión', 8000.00, 'En ruta', 3),
   ('CHP-1004', 'Tráiler', 25000.00, 'En taller', NULL),
   ('CHP-1005', 'Camión', 3500.00, 'En ruta', 4),
-  ('CHP-1006', 'Camión', 8000.00, 'Disponible', NULL);
+  ('CHP-1006', 'Camión', 8000.00, 'Disponible', NULL),
+  ('TREN-01', 'Tren', 60000.00, 'Disponible', NULL);
 
 INSERT INTO envio (id_envio, id_cliente, id_ciudad_origen, id_ciudad_destino, peso_kg, prioridad, estado, fecha_salida, creado_en) VALUES
   ('E-101', 1, '07101', '07078', 1200.00, 'Normal', 'Pendiente', NULL, '2026-11-20T08:00:00-06:00'),
@@ -49,5 +62,5 @@ INSERT INTO envio (id_envio, id_cliente, id_ciudad_origen, id_ciudad_destino, pe
 INSERT INTO asignacion (id_envio, placa, fecha_asignacion, fecha_fin, activa) VALUES
   ('E-102', 'CHP-1001', '2026-11-20T08:15:00-06:00', NULL, TRUE),
   ('E-107', 'CHP-1005', '2026-11-20T09:25:00-06:00', NULL, TRUE),
-  ('E-104', 'CHP-1003', '2026-11-20T08:40:00-06:00', '2026-11-20T09:00:00-06:00', FALSE),
+  ('E-104', 'CHP-1003', '2026-11-20T08:40:00-06:00', NULL, TRUE),
   ('E-105', 'CHP-1002', '2026-11-19T06:30:00-06:00', '2026-11-19T18:00:00-06:00', FALSE);
