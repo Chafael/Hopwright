@@ -18,7 +18,7 @@ Las consultas no piden sesión. Las escrituras de la red (`/red/intersecciones`,
 
 `POST /red/tramos`, `PATCH /red/tramos`, `DELETE /red/tramos`. Escriben N4. Validan R2, R4, R5, R12, R14 y R15 antes de escribir.
 
-`GET /rutas` (C1). Lee N4. Ruta por tiempo, distancia o costo con restricciones de terracería y tiempo máximo. Si ninguna ruta cumple, responde 200 con `encontrada: false` y el motivo.
+`GET /rutas` (C1). Lee N4. Ruta por tiempo, distancia o costo con restricciones de terracería y tiempo máximo. Si ninguna ruta cumple, responde 200 con `encontrada: false` y el motivo. Neo4j propone hasta 250 rutas candidatas y se queda con la primera que cumple; si ninguna cumple (un cruce muy usado bloqueado), el backend corre Dijkstra sobre la red leída de Neo4j sin los puntos y tramos prohibidos.
 
 `GET /rutas/exploracion`. Lee N4 (la red completa y los puntos bloqueados) y calcula la ruta con Neo4j. Repite Dijkstra, normal o bidireccional, paso a paso con las mismas restricciones, regresa en orden cada punto resuelto y cada tramo revisado, y dice si llegó al mismo costo que Neo4j. Es lo que anima la interfaz.
 

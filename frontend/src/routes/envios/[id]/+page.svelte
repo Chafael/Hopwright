@@ -99,9 +99,9 @@
     errorAccion = "";
     try {
       await hacer();
+      // Al cambiar el envío, el $effect de arriba vuelve a pedir la ruta
       envio = await api.envio(id);
       vehiculos = await api.vehiculos();
-      await calcular(criterio);
       setTimeout(async () => {
         bitacora = await api.bitacora(id).catch(() => bitacora);
         mapaRed = await recargarRed().catch(() => mapaRed);
