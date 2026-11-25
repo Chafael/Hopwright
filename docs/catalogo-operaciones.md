@@ -6,6 +6,8 @@ Las bases se abrevian así: PG es PostgreSQL, MG es MongoDB y N4 es Neo4j. "Lee"
 
 ## Red, rutas y ubicación (Rafael)
 
+Las consultas no piden sesión. Las escrituras de la red (`/red/intersecciones`, `/red/estaciones`, `/red/tramos`) y `POST /admin/reconciliar` son solo para el administrador; reportar, cerrar o agregar evidencias a un incidente y mover un vehículo piden despachador o administrador. Sin token responden 401 y con un rol que no alcanza, 403.
+
 `GET /health`. Lee PG, MG y N4 con un ping cada una. Responde 200 si las tres contestan y 503 con el estado de cada una si alguna falla.
 
 `GET /red/puntos`. Lee N4. Lista ciudades, intersecciones y estaciones.

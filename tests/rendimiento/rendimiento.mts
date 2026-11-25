@@ -130,7 +130,7 @@ const escenarios: Escenario[] = [
     alTerminar: async () => {
       await fetch(`${base}/vehiculos/CHP-1005/ubicacion`, {
         method: "PATCH",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", ...autorizacion },
         body: JSON.stringify({ idPunto: "07078" }),
       });
     },
@@ -140,11 +140,14 @@ const escenarios: Escenario[] = [
 const filtro = (process.env.ESCENARIOS ?? "").split(",").map((t) => t.trim()).filter(Boolean);
 const elegidos = filtro.length === 0 ? escenarios : escenarios.filter((e) => filtro.some((t) => e.nombre.includes(t)));
 
+// Las escrituras piden sesión: se firma un token de administrador con la misma app
+const autorizacion = { authorization: `Bearer ${app.jwt.sign({ idUsuario: 2, rol: "administrador", correo: "admin@hopwright.local" })}` };
+
 async function enviar(p: Peticion): Promise<{ ms: number; codigo: number }> {
   const inicio = performance.now();
   const res = await fetch(base + p.url, {
     method: p.method,
-    headers: p.body === undefined ? undefined : { "content-type": "application/json" },
+    headers: p.body === undefined ? autorizacion : { "content-type": "application/json", ...autorizacion },
     body: p.body === undefined ? undefined : JSON.stringify(p.body),
   });
   const cuerpo = await res.text();

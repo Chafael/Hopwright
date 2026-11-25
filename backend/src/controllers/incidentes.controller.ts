@@ -10,7 +10,7 @@ import {
 } from "../services/incidentes.service.js";
 import { enviosAfectados } from "../services/envios-afectados.service.js";
 import { GRAVEDADES, TIPOS_INCIDENTE, type Gravedad, type TipoIncidente } from "../services/incidentes.reglas.js";
-import { respuestasError } from "../schemas/comunes.js";
+import { conToken, respuestasError } from "../schemas/comunes.js";
 
 const fecha = { type: "string", format: "date-time" } as const;
 
@@ -71,7 +71,9 @@ export async function rutasIncidentes(app: FastifyInstance): Promise<void> {
   app.post<{ Body: NuevoIncidente }>(
     "/incidentes",
     {
+      preHandler: app.requiereRol("despachador", "administrador"),
       schema: {
+        security: conToken,
         tags: ["Incidentes"],
         summary: "Reporta un incidente en un punto de la red",
         description:
@@ -95,7 +97,7 @@ export async function rutasIncidentes(app: FastifyInstance): Promise<void> {
             reportadoPor: { type: "string", minLength: 2, maxLength: 150, examples: ["Despacho Tuxtla"] },
           },
         },
-        response: { 201: esquemaEscritura, 202: esquemaEscritura, ...respuestasError(400, 404, 503) },
+        response: { 201: esquemaEscritura, 202: esquemaEscritura, ...respuestasError(401, 403, 400, 404, 503) },
       },
     },
     async (req, reply) => {
@@ -146,7 +148,9 @@ export async function rutasIncidentes(app: FastifyInstance): Promise<void> {
   app.patch<{ Params: { id: string }; Body: { motivoCierre?: string; fechaFin?: string } }>(
     "/incidentes/:id/cerrar",
     {
+      preHandler: app.requiereRol("despachador", "administrador"),
       schema: {
+        security: conToken,
         tags: ["Incidentes"],
         summary: "Cierra un incidente y libera el punto para el cálculo de rutas",
         description: "Responde 200 si el cierre llegó a las dos bases y 202 si Neo4j no respondió.",
@@ -159,7 +163,7 @@ export async function rutasIncidentes(app: FastifyInstance): Promise<void> {
             fechaFin: { ...fecha, description: "Si no se manda, se usa la hora actual" },
           },
         },
-        response: { 200: esquemaEscritura, 202: esquemaEscritura, ...respuestasError(400, 404, 409, 503) },
+        response: { 200: esquemaEscritura, 202: esquemaEscritura, ...respuestasError(401, 403, 400, 404, 409, 503) },
       },
     },
     async (req, reply) => {
@@ -171,12 +175,14 @@ export async function rutasIncidentes(app: FastifyInstance): Promise<void> {
   app.post<{ Params: { id: string }; Body: { tipo: "Foto" | "Testimonio"; url?: string; texto?: string; autor?: string; fecha?: string } }>(
     "/incidentes/:id/evidencias",
     {
+      preHandler: app.requiereRol("despachador", "administrador"),
       schema: {
+        security: conToken,
         tags: ["Incidentes"],
         summary: "Agrega una foto o un testimonio a un incidente",
         params: paramsId,
         body: evidenciaEntrada,
-        response: { 201: esquemaIncidente, ...respuestasError(400, 404, 503) },
+        response: { 201: esquemaIncidente, ...respuestasError(401, 403, 400, 404, 503) },
       },
     },
     async (req, reply) => reply.code(201).send(await nuevaEvidencia(req.params.id, req.body)),

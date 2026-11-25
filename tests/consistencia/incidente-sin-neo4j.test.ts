@@ -12,6 +12,7 @@ import { construirApp } from "../../backend/src/server.js";
 import { mongoDb } from "../../backend/src/db/mongo.js";
 import { escribir } from "../../backend/src/db/neo4j.js";
 import { leerIncidenteEnGrafo } from "../../backend/src/repositories/graph/incidentes.repository.js";
+import { conAdmin } from "../token.js";
 
 const CONTENEDOR = "hopwright-neo4j";
 
@@ -51,6 +52,7 @@ it("un incidente reportado con Neo4j apagado llega al grafo al reconciliar", asy
   const res = await app.inject({
     method: "POST",
     url: "/incidentes",
+    headers: conAdmin(app),
     payload: {
       tipo: "Accidente",
       idPunto: "INT-CRU",
@@ -74,13 +76,13 @@ it("un incidente reportado con Neo4j apagado llega al grafo al reconciliar", asy
   await esperarNeo4j(120_000);
   expect(await leerIncidenteEnGrafo(idIncidente!)).toBeNull();
 
-  const resumen = (await app.inject({ method: "POST", url: "/admin/reconciliar" })).json();
+  const resumen = (await app.inject({ method: "POST", url: "/admin/reconciliar", headers: conAdmin(app) })).json();
   expect(resumen.incidentes.copiados).toContain(idIncidente);
 
   expect(await leerIncidenteEnGrafo(idIncidente!)).toMatchObject({ gravedad: "Alta", activo: true, idPunto: "INT-CRU" });
   expect((await app.inject({ url: `/incidentes/${idIncidente}` })).json().sincronizado).toBe(true);
 
   // Una segunda reconciliación ya no tiene nada que copiar de este incidente
-  const otraVez = (await app.inject({ method: "POST", url: "/admin/reconciliar" })).json();
+  const otraVez = (await app.inject({ method: "POST", url: "/admin/reconciliar", headers: conAdmin(app) })).json();
   expect(otraVez.incidentes.copiados).not.toContain(idIncidente);
 });
