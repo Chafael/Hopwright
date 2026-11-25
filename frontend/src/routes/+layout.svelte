@@ -2,12 +2,14 @@
   import "../app.css";
   import { page } from "$app/state";
   import { onMount } from "svelte";
-  import { Map as IconoMapa, RefreshCw, Route, Scale, TriangleAlert } from "@lucide/svelte";
+  import { LogIn, LogOut, Map as IconoMapa, Package, RefreshCw, Route, Scale, TriangleAlert } from "@lucide/svelte";
   import { api, type Salud } from "$lib/api";
+  import { cargarSesion, cerrarSesion, nombreRol, sesion } from "$lib/sesion.svelte";
 
   let { children } = $props();
 
   const secciones = [
+    { href: "/envios", texto: "Envíos", icono: Package },
     { href: "/", texto: "Planear ruta", icono: Route },
     { href: "/camion-tren", texto: "Camión o tren", icono: Scale },
     { href: "/red", texto: "Mapa y cierres", icono: IconoMapa },
@@ -29,9 +31,15 @@
     }
   }
   onMount(() => {
+    cargarSesion();
+    const vencida = () => cerrarSesion();
+    window.addEventListener("hopwright:sesion-vencida", vencida);
     revisar();
     const t = setInterval(revisar, 20_000);
-    return () => clearInterval(t);
+    return () => {
+      clearInterval(t);
+      window.removeEventListener("hopwright:sesion-vencida", vencida);
+    };
   });
 
   const bases = [
@@ -69,7 +77,34 @@
       {/each}
     </nav>
 
-    <section aria-label="Estado de las bases de datos" class="mt-auto hidden px-3 pb-4 md:block">
+    <section aria-label="Sesión" class="px-3 pb-3 md:mt-auto">
+      {#if sesion.usuario}
+        <div class="flex items-center gap-2 rounded-xl bg-senal-700/60 px-3 py-2">
+          <span class="min-w-0 flex-1 leading-tight">
+            <span class="block truncate text-sm font-bold">{sesion.usuario.correo}</span>
+            <span class="block text-xs text-senal-100">{nombreRol[sesion.usuario.rol]}</span>
+          </span>
+          <button
+            type="button"
+            onclick={cerrarSesion}
+            title="Cerrar sesión"
+            aria-label="Cerrar sesión"
+            class="grid h-9 w-9 shrink-0 place-items-center rounded-lg hover:bg-senal-600 focus-visible:outline-2 focus-visible:outline-white"
+          >
+            <LogOut class="h-5 w-5" />
+          </button>
+        </div>
+      {:else}
+        <a
+          href="/entrar?volver={encodeURIComponent(page.url.pathname + page.url.search)}"
+          class="flex items-center gap-3 rounded-lg px-3 py-2.5 font-bold text-white ring-2 ring-white/40 hover:bg-senal-600 focus-visible:outline-2 focus-visible:outline-white"
+        >
+          <LogIn class="h-5 w-5" />Iniciar sesión
+        </a>
+      {/if}
+    </section>
+
+    <section aria-label="Estado de las bases de datos" class="hidden px-3 pb-4 md:block">
       <div class="rounded-xl bg-senal-700/60 p-3">
         <p class="mb-2 text-xs font-bold text-senal-100">Bases de datos</p>
         {#if sinApi}
