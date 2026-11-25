@@ -1,4 +1,6 @@
-// Red de ejemplo de Chiapas: 22 ciudades, 9 intersecciones y 5 estaciones de tren.
+// Red de ejemplo de Chiapas: 50 ciudades, 9 intersecciones y 5 estaciones de tren, con 65 tramos de
+// carretera y 4 de vía férrea. Cubre las regiones Centro, Altos, Frailesca, Fronteriza, Costa, Soconusco,
+// Norte y Selva.
 //
 // Las distancias (km) y los tiempos (minutos, para un camión de carga) son aproximados y sirven
 // para demostrar el modelo, no son datos oficiales. Las claves de ciudad son las claves de
@@ -33,7 +35,42 @@ UNWIND [
   {id: '07108', nombre: 'Villaflores', lat: 16.2333, lon: -93.2667},
   {id: '07099', nombre: 'La Trinitaria', lat: 16.1196, lon: -92.0517},
   {id: '07057', nombre: 'Motozintla', lat: 15.3667, lon: -92.2500},
-  {id: '07068', nombre: 'Pichucalco', lat: 17.5114, lon: -93.1167}
+  {id: '07068', nombre: 'Pichucalco', lat: 17.5114, lon: -93.1167},
+  // Soconusco
+  {id: '07102', nombre: 'Tuxtla Chico', lat: 14.9389, lon: -92.1678},
+  {id: '07015', nombre: 'Cacahoatán', lat: 14.9917, lon: -92.1650},
+  {id: '07105', nombre: 'Unión Juárez', lat: 15.0625, lon: -92.0803},
+  {id: '07035', nombre: 'Frontera Hidalgo', lat: 14.7767, lon: -92.1772},
+  {id: '07087', nombre: 'Suchiate', lat: 14.6797, lon: -92.1508},
+  {id: '07054', nombre: 'Mazatán', lat: 14.8606, lon: -92.4497},
+  // Fronteriza
+  {id: '07052', nombre: 'Las Margaritas', lat: 16.3125, lon: -91.9811},
+  {id: '07030', nombre: 'Chicomuselo', lat: 15.7458, lon: -92.2847},
+  // Frailesca
+  {id: '07107', nombre: 'Villa Corzo', lat: 16.1847, lon: -93.2681},
+  {id: '07020', nombre: 'La Concordia', lat: 16.1167, lon: -92.6903},
+  {id: '07008', nombre: 'Ángel Albino Corzo', lat: 15.8725, lon: -92.7250},
+  // Centro
+  {id: '07002', nombre: 'Acala', lat: 16.5536, lon: -92.8069},
+  {id: '07106', nombre: 'Venustiano Carranza', lat: 16.3411, lon: -92.5583},
+  {id: '07029', nombre: 'Chicoasén', lat: 16.9647, lon: -93.1028},
+  {id: '07021', nombre: 'Copainalá', lat: 17.0886, lon: -93.2061},
+  {id: '07092', nombre: 'Tecpatán', lat: 17.1333, lon: -93.3119},
+  // Norte
+  {id: '07081', nombre: 'Simojovel', lat: 17.1381, lon: -92.7117},
+  {id: '07074', nombre: 'Reforma', lat: 17.8672, lon: -93.1494},
+  // Altos
+  {id: '07023', nombre: 'Chamula', lat: 16.7875, lon: -92.6894},
+  {id: '07111', nombre: 'Zinacantán', lat: 16.7597, lon: -92.7222},
+  {id: '07093', nombre: 'Tenejapa', lat: 16.8133, lon: -92.5122},
+  {id: '07026', nombre: 'Chenalhó', lat: 16.8919, lon: -92.6383},
+  // Selva
+  {id: '07004', nombre: 'Altamirano', lat: 16.7356, lon: -92.0386},
+  {id: '07031', nombre: 'Chilón', lat: 17.1170, lon: -92.2830},
+  {id: '07109', nombre: 'Yajalón', lat: 17.1733, lon: -92.3333},
+  {id: '07096', nombre: 'Tila', lat: 17.2994, lon: -92.4278},
+  {id: '07077', nombre: 'Salto de Agua', lat: 17.5547, lon: -92.3389},
+  {id: '07016', nombre: 'Catazajá', lat: 17.7297, lon: -92.0153}
 ] AS c
 MERGE (n:Ciudad {idCiudad: c.id})
 SET n.nombre = c.nombre, n.latitud = c.lat, n.longitud = c.lon;
@@ -104,7 +141,46 @@ UNWIND [
   {a: 'INT-FCO', b: '07057',   km: 70,  min: 100, caseta: 0,   via: 'Federal'},
   {a: '07057',   b: '07040',   km: 75,  min: 110, caseta: 0,   via: 'Estatal'},
   {a: '07101',   b: 'INT-BOC', km: 70,  min: 90,  caseta: 0,   via: 'Federal'},
-  {a: 'INT-BOC', b: '07068',   km: 110, min: 150, caseta: 0,   via: 'Federal'}
+  {a: 'INT-BOC', b: '07068',   km: 110, min: 150, caseta: 0,   via: 'Federal'},
+  // Soconusco: alrededor de Tapachula y hacia la frontera con Guatemala
+  {a: '07089',   b: '07102',   km: 13,  min: 18,  caseta: 0,   via: 'Federal'},
+  {a: '07102',   b: '07015',   km: 7,   min: 10,  caseta: 0,   via: 'Estatal'},
+  {a: '07089',   b: '07015',   km: 17,  min: 22,  caseta: 0,   via: 'Federal'},
+  {a: '07015',   b: '07105',   km: 10,  min: 20,  minVuelta: 15, caseta: 0, via: 'Estatal'},
+  {a: '07089',   b: '07035',   km: 25,  min: 25,  caseta: 0,   via: 'Federal'},
+  {a: '07035',   b: '07087',   km: 12,  min: 12,  caseta: 0,   via: 'Federal'},
+  {a: '07089',   b: '07054',   km: 22,  min: 25,  caseta: 0,   via: 'Estatal'},
+  // Fronteriza
+  {a: '07019',   b: '07052',   km: 17,  min: 20,  caseta: 0,   via: 'Federal'},
+  {a: 'INT-FCO', b: '07030',   km: 22,  min: 30,  caseta: 0,   via: 'Estatal'},
+  // Frailesca: sale de Villaflores hacia la sierra
+  {a: '07108',   b: '07107',   km: 10,  min: 12,  caseta: 0,   via: 'Federal'},
+  {a: '07107',   b: '07020',   km: 75,  min: 95,  caseta: 0,   via: 'Estatal'},
+  {a: '07107',   b: '07008',   km: 65,  min: 90,  caseta: 0,   via: 'Estatal'},
+  // Centro: Chiapa de Corzo a Venustiano Carranza por Acala, y la presa de Chicoasén al noroeste
+  {a: '07027',   b: '07002',   km: 30,  min: 35,  caseta: 0,   via: 'Estatal'},
+  {a: '07002',   b: '07106',   km: 40,  min: 50,  caseta: 0,   via: 'Estatal'},
+  {a: '07106',   b: 'INT-AMA', km: 35,  min: 45,  caseta: 0,   via: 'Estatal'},
+  {a: '07101',   b: '07029',   km: 40,  min: 55,  minVuelta: 50, caseta: 0, via: 'Estatal'},
+  {a: '07029',   b: '07021',   km: 25,  min: 40,  caseta: 0,   via: 'Estatal'},
+  {a: '07021',   b: '07092',   km: 13,  min: 20,  caseta: 0,   via: 'Estatal'},
+  // Norte
+  {a: 'INT-BOC', b: '07081',   km: 35,  min: 55,  caseta: 0,   via: 'Estatal'},
+  {a: '07068',   b: '07074',   km: 45,  min: 45,  caseta: 0,   via: 'Federal'},
+  // Altos: pueblos alrededor de San Cristóbal
+  {a: '07078',   b: '07111',   km: 11,  min: 18,  caseta: 0,   via: 'Estatal'},
+  {a: '07078',   b: '07023',   km: 10,  min: 15,  caseta: 0,   via: 'Estatal'},
+  {a: '07111',   b: '07023',   km: 9,   min: 15,  caseta: 0,   via: 'Estatal'},
+  {a: '07023',   b: '07026',   km: 24,  min: 40,  caseta: 0,   via: 'Estatal'},
+  {a: '07078',   b: '07093',   km: 28,  min: 40,  caseta: 0,   via: 'Estatal'},
+  // Selva: de Ocosingo a Palenque por Chilón, Yajalón y Tila, y de Palenque a Catazajá
+  {a: '07059',   b: '07004',   km: 32,  min: 45,  caseta: 0,   via: 'Estatal'},
+  {a: '07059',   b: '07031',   km: 40,  min: 55,  caseta: 0,   via: 'Federal'},
+  {a: '07031',   b: '07109',   km: 11,  min: 18,  caseta: 0,   via: 'Estatal'},
+  {a: '07109',   b: '07096',   km: 28,  min: 50,  caseta: 0,   via: 'Estatal'},
+  {a: '07096',   b: '07077',   km: 45,  min: 70,  caseta: 0,   via: 'Estatal'},
+  {a: '07077',   b: '07065',   km: 25,  min: 30,  caseta: 0,   via: 'Federal'},
+  {a: '07065',   b: '07016',   km: 30,  min: 28,  caseta: 0,   via: 'Federal'}
 ] AS t
 MATCH (x) WHERE (x:Ciudad AND x.idCiudad = t.a) OR (x:Interseccion AND x.idInterseccion = t.a)
 MATCH (y) WHERE (y:Ciudad AND y.idCiudad = t.b) OR (y:Interseccion AND y.idInterseccion = t.b)

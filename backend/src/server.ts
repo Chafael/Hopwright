@@ -3,15 +3,23 @@ import cors from "@fastify/cors";
 import { env } from "./config/env.js";
 import { registrarSwagger } from "./plugins/swagger.js";
 import { ErrorApp, esBaseCaida } from "./errores.js";
+import { registrarAuth } from "./plugins/auth.js";
 import { rutasSalud } from "./controllers/salud.controller.js";
 import { rutasRed } from "./controllers/red.controller.js";
 import { rutasRutas } from "./controllers/rutas.controller.js";
 import { rutasUbicacion } from "./controllers/ubicacion.controller.js";
 import { rutasIncidentes } from "./controllers/incidentes.controller.js";
 import { rutasAdmin } from "./controllers/admin.controller.js";
+import { rutasAuth } from "./controllers/auth.controller.js";
+import { rutasClientes } from "./controllers/clientes.controller.js";
+import { rutasConductores } from "./controllers/conductores.controller.js";
+import { rutasCiudades } from "./controllers/ciudades.controller.js";
+import { rutasVehiculos } from "./controllers/vehiculos.controller.js";
+import { rutasEnvios } from "./controllers/envios.controller.js";
 import { cerrarPostgres } from "./db/postgres.js";
 import { cerrarMongo } from "./db/mongo.js";
 import { cerrarNeo4j } from "./db/neo4j.js";
+import { detenerProcesadorEventos, iniciarProcesadorEventos } from "./services/procesadorEventos.service.js";
 
 // Construye la aplicación sin ponerla a escuchar. Las pruebas usan esta función con app.inject().
 export async function construirApp(): Promise<FastifyInstance> {
@@ -25,6 +33,7 @@ export async function construirApp(): Promise<FastifyInstance> {
   await app.register(cors, { origin: env.corsOrigin === "*" ? true : env.corsOrigin.split(",") });
 
   await registrarSwagger(app);
+  await registrarAuth(app);
 
   // Todos los errores salen con la misma forma: { error, mensaje, statusCode, detalles? }
   app.setErrorHandler((error: Error & { statusCode?: number; validation?: unknown }, req, reply) => {
@@ -58,6 +67,16 @@ export async function construirApp(): Promise<FastifyInstance> {
     if (error.name === "MongoServerError" && codigoMongo === 11000) {
       return reply.code(409).send({ error: "Conflicto", mensaje: "Ya existe un documento con ese identificador", statusCode: 409 });
     }
+    const codigoPg = (error as { code?: unknown }).code;
+    if (typeof codigoPg === "string" && codigoPg === "23505") {
+      return reply.code(409).send({ error: "Conflicto", mensaje: "Ya existe un registro con ese identificador o valor único", statusCode: 409 });
+    }
+    if (typeof codigoPg === "string" && codigoPg === "23503") {
+      return reply.code(400).send({ error: "Datos inválidos", mensaje: "La referencia indicada no existe", statusCode: 400 });
+    }
+    if (typeof codigoPg === "string" && codigoPg === "23514") {
+      return reply.code(400).send({ error: "Datos inválidos", mensaje: "Los datos no cumplen las restricciones de la base", statusCode: 400 });
+    }
     if (error.validation) {
       // Error de validación del esquema de la ruta (tipo equivocado, campo faltante, etc.)
       return reply.code(400).send({ error: "Datos inválidos", mensaje: error.message, statusCode: 400 });
@@ -76,13 +95,22 @@ export async function construirApp(): Promise<FastifyInstance> {
   });
 
   await app.register(rutasSalud);
+  await app.register(rutasAuth);
+  await app.register(rutasClientes);
+  await app.register(rutasConductores);
+  await app.register(rutasCiudades);
+  await app.register(rutasVehiculos);
+  await app.register(rutasEnvios);
   await app.register(rutasRed);
   await app.register(rutasRutas);
   await app.register(rutasUbicacion);
   await app.register(rutasIncidentes);
   await app.register(rutasAdmin);
 
+  if (process.env.NODE_ENV !== "test") iniciarProcesadorEventos();
+
   app.addHook("onClose", async () => {
+    detenerProcesadorEventos();
     await Promise.allSettled([cerrarPostgres(), cerrarMongo(), cerrarNeo4j()]);
   });
 

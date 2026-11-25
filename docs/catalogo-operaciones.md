@@ -44,4 +44,18 @@ Las bases se abrevian así: PG es PostgreSQL, MG es MongoDB y N4 es Neo4j. "Lee"
 
 ## Envíos, flota y usuarios (compañero)
 
-Pendiente: aquí van `/clientes`, `/conductores`, `/vehiculos`, `/ciudades`, `/envios`, la asignación, los manifiestos, la bitácora y el login.
+`POST /auth/login`. Valida contra PostgreSQL con bcrypt y devuelve un JWT; credenciales inválidas responden 401 con el mismo mensaje. Los token se envían como `Authorization: Bearer <token>`. Un token válido con rol insuficiente responde 403; los `GET` quedan abiertos.
+
+`GET/POST /ciudades`. Lista o crea ciudades con clave INEGI de 5 dígitos. POST es solo administrador; en transacción guarda en PG y encola `CIUDAD_GUARDADA` para replicar en Neo4j.
+
+`GET/POST/PUT/DELETE /clientes` y `GET/POST/PUT/DELETE /conductores`. POST y PUT requieren despachador o administrador; DELETE requiere administrador. Borrar regresa 204, 404 si no existe y 409 si ya tiene envíos o vehículos asociados (foreign key 23503 traducido a mensaje claro).
+
+`GET/POST /vehiculos` y `PATCH /vehiculos/{placa}`. POST y PATCH son solo administrador; validan placa, tipo, capacidad y estado; en transacción escriben PG y encolan `VEHICULO_GUARDADO` para el grafo.
+
+`GET/POST /envios` y `GET /envios/{id}`. POST requiere despachador o administrador, valida formato `E-[0-9]+`, peso positivo, prioridad, cliente y ciudades existentes; los dos IDs de ciudad no pueden ser iguales.
+
+`POST /envios/{id}/asignacion`. Requiere despachador o administrador. Bloquea el envío con `FOR UPDATE` antes que el vehículo, verifica que el envío esté Pendiente, que el vehículo esté Disponible y con capacidad suficiente, y que no haya asignaciones activas duplicadas. Crea la asignación, cambia estados y encola `ASIGNACION_CREADA`.
+
+`POST /envios/{id}/salida`, `POST /envios/{id}/entrega` y `POST /envios/{id}/cancelacion`. Requieren despachador o administrador. Salida: Asignado a En camino. Entrega: En camino a Entregado, cierra la asignación y libera el vehículo. Cancelación: solo desde Pendiente o Asignado, cierra la asignación, libera el vehículo y encola `ENVIO_CANCELADO`. Cualquier transición inválida responde 409.
+
+`GET/POST /envios/{id}/manifiesto`. POST requiere despachador o administrador. Fastify valida la forma general con ejemplos para carga general, refrigerada y peligrosa; MongoDB aplica el `$jsonSchema` por tipo y un documento rechazado responde 400 con mensaje claro. `GET /envios/{id}/bitacora` devuelve los eventos ordenados por fecha; `GET /envios/{id}/datos-ruta` entrega el contrato a la otra parte.

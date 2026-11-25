@@ -28,6 +28,7 @@ export const env = {
   nodeEnv: process.env.NODE_ENV ?? "development",
   // Orígenes que pueden llamar a la API desde el navegador. "*" permite cualquiera (solo para desarrollo).
   corsOrigin: process.env.CORS_ORIGIN ?? "*",
+  jwtSecret: process.env.JWT_SECRET ?? "cambia_este_secreto_en_desarrollo",
   rutas: {
     // Costo de operar un camión por kilómetro (combustible, desgaste, conductor), en pesos.
     // Es un supuesto del proyecto para comparar camión contra tren; se puede cambiar en el .env.
