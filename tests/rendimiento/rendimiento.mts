@@ -90,7 +90,7 @@ const escenarios: Escenario[] = [
   {
     nombre: "GET /red/ciudades-aisladas (C4)",
     bases: "Neo4j",
-    peticion: () => ({ method: "GET", url: "/red/ciudades-aisladas?punto=INT-OXC" }),
+    peticion: () => ({ method: "GET", url: "/red/ciudades-aisladas?punto=07089" }),
   },
   {
     nombre: "GET /incidentes?activo=true",

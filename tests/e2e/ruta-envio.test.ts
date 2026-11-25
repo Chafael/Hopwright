@@ -70,9 +70,10 @@ describe("ruta de un envío con los datos de ejemplo", () => {
   it("carga refrigerada (E-102): respeta el tiempo máximo del manifiesto", async () => {
     const r = (await ruta("E-102")).json();
     expect(r.tipoCarga).toBe("refrigerada");
-    expect(r.restricciones.tiempoMaxMin).toBe(360);
-    if (r.encontrada) expect(r.minutos).toBeLessThanOrEqual(360);
-    else expect(r.avisos.join(" ")).toMatch(/360 minutos/);
+    expect(r.restricciones.tiempoMaxMin).toBe(480);
+    // San Cristóbal a Tapachula: la más rápida tarda 384 minutos, dentro del máximo
+    expect(r.encontrada).toBe(true);
+    expect(r.minutos).toBe(384);
   });
 
   it("un envío entregado se puede consultar, con aviso", async () => {

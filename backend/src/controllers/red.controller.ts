@@ -279,7 +279,7 @@ export async function rutasRed(app: FastifyInstance): Promise<void> {
           type: "object",
           required: ["punto"],
           properties: {
-            punto: { type: "string", minLength: 1, description: "idCiudad o idInterseccion que se cierra", examples: ["INT-OXC"] },
+            punto: { type: "string", minLength: 1, description: "idCiudad o idInterseccion que se cierra", examples: ["07089"] },
             destino: { ...esquemaIdCiudad, default: "07101" },
           },
         },

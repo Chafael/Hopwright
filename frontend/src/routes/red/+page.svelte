@@ -12,7 +12,7 @@
   let mapaRed = $state<Mapa>();
   let error = $state("");
 
-  let punto = $state("INT-OXC");
+  let punto = $state("07089"); // Tapachula: si se cierra, la frontera del Soconusco queda sin camino
   let destino = $state("07101");
   let resultado = $state<CiudadesAisladas>();
   let calculando = $state(false);

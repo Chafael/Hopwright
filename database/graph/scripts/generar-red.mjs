@@ -95,19 +95,39 @@ function dentro([x, y], anillo) {
   }
   return adentro;
 }
-const enGuatemala = (punto) => dentro(punto, guatemala[0]) && !guatemala.slice(1).some((hueco) => dentro(punto, hueco));
+// El contorno de Guatemala es de baja resolución y se come unos kilómetros de la orilla mexicana (Suchiate,
+// Frontera Hidalgo, Metapa, Unión Juárez). Por eso un punto cuenta como "en Guatemala" solo si además queda
+// a más de MARGEN_FRONTERA km de la línea; las rutas que de verdad cruzan se meten mucho más.
+const MARGEN_FRONTERA = 3;
+function distanciaAlBorde(punto, anillo) {
+  const [px, py] = plano(punto);
+  let minima = Infinity;
+  for (let i = 1; i < anillo.length; i++) {
+    const [ax, ay] = plano(anillo[i - 1]);
+    const [bx, by] = plano(anillo[i]);
+    const dx = bx - ax;
+    const dy = by - ay;
+    const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy || 1)));
+    minima = Math.min(minima, Math.hypot(px - (ax + t * dx), py - (ay + t * dy)));
+  }
+  return minima;
+}
+const enGuatemala = (punto) =>
+  dentro(punto, guatemala[0]) && !guatemala.slice(1).some((hueco) => dentro(punto, hueco)) && distanciaAlBorde(punto, guatemala[0]) > MARGEN_FRONTERA;
 
 // ---------- Datos de un pedazo de ruta a partir de los pasos de OSRM ----------
 // pasos: [inicio en metros, metros, segundos, número de carretera, nombre, clases]
 function describir(pasos, m0, m1) {
   let segundos = 0;
   const metros = { cuota: 0, federal: 0, lento: 0, total: 0 };
-  for (const [inicio, largo, dura, ref, , clases] of pasos) {
+  for (const [inicio, largo, dura, ref, nombre, clases] of pasos) {
     const traslape = Math.min(m1, inicio + largo) - Math.max(m0, inicio);
     if (traslape <= 0 || largo <= 0) continue;
     segundos += (dura * traslape) / largo;
     metros.total += traslape;
-    if (clases.includes("toll") || clases.includes("motorway")) metros.cuota += traslape;
+    // El servidor público de OSRM no siempre marca las cuotas; en México se reconocen también por la D del
+    // número (MEX 190D, MEX 187D) o porque el nombre lo dice: "(Cuota)" o "Autopista".
+    if (clases.includes("toll") || clases.includes("motorway") || /\d\s*D\b/.test(ref) || /\(cuota\)|autopista/i.test(nombre)) metros.cuota += traslape;
     if (/MEX/i.test(ref)) metros.federal += traslape;
     if (dura > 0 && (largo / dura) * 3.6 < VELOCIDAD_TERRACERIA) metros.lento += traslape;
   }

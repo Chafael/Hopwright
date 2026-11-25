@@ -6,7 +6,7 @@ El grafo no es la fuente de verdad de todo lo que contiene. La red (puntos, tram
 
 Scripts: `database/graph/schema/` (restricciones e índices), `database/graph/data/` (red de ejemplo), `database/graph/queries/` (consultas representativas) y `database/graph/tests/` (pruebas de integridad).
 
-La red de ejemplo tiene 50 ciudades, 9 intersecciones y 5 estaciones, unidas por 65 tramos de carretera (130 aristas, una por sentido) y 4 de vía férrea. Cubre el Centro, los Altos, la Frailesca, la zona Fronteriza, la Costa, el Soconusco, el Norte y la Selva. Las distancias y los tiempos son aproximados; las claves de ciudad son las del INEGI y tienen que existir también en la tabla `ciudad` de PostgreSQL.
+La red cubre todo Chiapas: las 124 cabeceras municipales, 9 intersecciones y 5 estaciones, unidas por 333 tramos de carretera (666 aristas, una por sentido) y 4 de vía férrea. La genera `database/graph/scripts/generar-red.mjs` a partir de las rutas de OSRM sobre OpenStreetMap (ver `database/graph/fuentes/LEEME.md`): distancias reales, tiempos de OSRM por 1.2 para un camión de carga y casetas estimadas por kilómetro de autopista de cuota. Hay 125 tramos federales, 191 estatales, 11 de autopista y 6 de terracería. Las claves de ciudad son las del INEGI y tienen que existir también en la tabla `ciudad` de PostgreSQL.
 
 ## Nodos
 
