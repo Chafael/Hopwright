@@ -4,12 +4,12 @@ import type { Algoritmo } from "../services/rutas.exploracion.js";
 import { esquemaIdCiudad, respuestasError } from "../schemas/comunes.js";
 import type { Criterio } from "../repositories/graph/rutas.repository.js";
 
-const esquemaPunto = {
+export const esquemaPunto = {
   type: "object",
   properties: { idPunto: { type: "string" }, nombre: { type: "string" }, tipo: { type: "string" } },
 } as const;
 
-const esquemaTramo = {
+export const esquemaTramo = {
   type: "object",
   properties: {
     desde: { type: "string" },

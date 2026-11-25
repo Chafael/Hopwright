@@ -226,10 +226,12 @@ export async function calcularRutaConRestricciones(entrada: {
   }
 
   return {
+    encontrada: ruta.encontrada,
     ruta: ruta.ruta,
+    tramos: ruta.tramos,
     minutos: ruta.minutos,
     kilometros: ruta.kilometros,
-    costo: ruta.costoCasetas,
+    costoCasetas: ruta.costoCasetas,
     vehiculoSugerido,
     avisos,
   };

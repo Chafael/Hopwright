@@ -2,6 +2,9 @@ import type { FastifyInstance } from "fastify";
 import { respuestasError, esquemaIdCiudad, esquemaIdEnvio, paramsIdEnvio, conToken } from "../schemas/comunes.js";
 import { asignarVehiculo, cancelarEnvio, guardarManifiesto, obtenerDatosParaRuta, obtenerEnvio, obtenerEnvios, obtenerManifiesto, registrarEntrega, registrarEnvio, registrarSalida } from "../services/envios.service.js";
 import { buscarBitacora } from "../repositories/document/bitacora.repository.js";
+import { planearRutaDeEnvio } from "../services/envios-ruta.service.js";
+import { esquemaPunto, esquemaTramo } from "./rutas.controller.js";
+import type { Criterio } from "../repositories/graph/rutas.repository.js";
 
 const esquemaEnvio = {
   type: "object",
@@ -146,4 +149,44 @@ export async function rutasEnvios(app: FastifyInstance): Promise<void> {
   app.get<{ Params: { id: string } }>("/envios/:id/datos-ruta", {
     schema: { tags: ["Envíos"], summary: "Datos para cálculo de ruta", params: paramsIdEnvio, response: { 200: { type: "object", additionalProperties: true }, ...respuestasError(404) } },
   }, async (req) => obtenerDatosParaRuta(req.params.id));
+
+  // Flujo integrado: PostgreSQL + MongoDB + Neo4j en una sola respuesta
+  app.get<{ Params: { id: string }; Querystring: { criterio?: Criterio } }>("/envios/:id/ruta", {
+    schema: {
+      tags: ["Envíos"],
+      summary: "Ruta de un envío con las restricciones de su carga (flujo integrado)",
+      description:
+        "PostgreSQL aporta origen, destino, peso y los vehículos disponibles que aguantan la carga; MongoDB, las restricciones del manifiesto " +
+        "(peligrosa: sin terracería; refrigerada: tiempo máximo); Neo4j calcula la ruta esquivando incidentes y elige el vehículo que llega antes al origen. " +
+        "Si no hay ruta posible responde 200 con encontrada=false y el motivo en avisos.",
+      params: paramsIdEnvio,
+      querystring: { type: "object", properties: { criterio: { type: "string", enum: ["tiempo", "distancia", "costo"], default: "tiempo" } } },
+      response: {
+        200: {
+          type: "object",
+          properties: {
+            idEnvio: { type: "string" },
+            estado: { type: "string" },
+            origen: esquemaIdCiudad,
+            destino: esquemaIdCiudad,
+            pesoKg: { type: "number" },
+            tipoCarga: { type: ["string", "null"], enum: ["general", "refrigerada", "peligrosa", null] },
+            criterio: { type: "string" },
+            restricciones: { type: "object", properties: { evitarTerraceria: { type: "boolean" }, tiempoMaxMin: { type: ["integer", "null"] } } },
+            candidatos: { type: "array", items: { type: "string" } },
+            encontrada: { type: "boolean" },
+            ruta: { type: "array", items: esquemaPunto },
+            tramos: { type: "array", items: esquemaTramo },
+            minutos: { type: "number" },
+            kilometros: { type: "number" },
+            costoCasetas: { type: "number" },
+            vehiculoSugerido: { type: ["object", "null"], properties: { placa: { type: "string" }, minutosAlOrigen: { type: "number" } } },
+            avisos: { type: "array", items: { type: "string" } },
+            fuentes: { type: "object", properties: { postgresql: { type: "string" }, mongodb: { type: "string" }, neo4j: { type: "string" } } },
+          },
+        },
+        ...respuestasError(400, 404, 503),
+      },
+    },
+  }, async (req) => planearRutaDeEnvio(req.params.id, req.query.criterio ?? "tiempo"));
 }

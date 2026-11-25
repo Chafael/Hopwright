@@ -1,5 +1,6 @@
 import { escribir } from "../db/neo4j.js";
 import { agregarEventoBitacora } from "../repositories/document/bitacora.repository.js";
+import { moverVehiculo } from "../repositories/graph/ubicacion.repository.js";
 import { marcarEventoAplicado, marcarEventoFallido, tomarEventosPendientes } from "../repositories/relational/eventos.repository.js";
 
 let intervalo: NodeJS.Timeout | null = null;
@@ -20,6 +21,13 @@ async function aplicarEvento(evento: { tipo: string; payload: Record<string, unk
     const idEnvio = String(evento.payload.idEnvio);
     const fecha = evento.payload.fecha ? new Date(String(evento.payload.fecha)) : new Date();
     await agregarEventoBitacora(idEnvio, { tipo: evento.tipo, fecha, detalle: evento.payload });
+    // Al entregar, el camión queda en la ciudad de destino. Si falla, el evento se reintenta;
+    // la bitácora no se duplica porque agregarEventoBitacora no repite un evento igual.
+    const { placa, moverA } = evento.payload as { placa?: string; moverA?: string | null };
+    if (evento.tipo === "ENVIO_ENTREGADO" && placa && moverA) {
+      const movido = await moverVehiculo(placa, moverA);
+      if (!movido) throw new Error(`El vehículo ${placa} o la ciudad ${moverA} no existen en Neo4j`);
+    }
   }
 }
 
