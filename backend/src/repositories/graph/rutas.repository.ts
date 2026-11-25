@@ -7,8 +7,10 @@ import { leer, entero } from "../../db/neo4j.js";
 // pero no sabe filtrar tramos ni puntos. Por eso le pedimos varias rutas candidatas
 // (las k más cortas, sin ciclos) y en la misma consulta descartamos las que pasan por un tramo
 // cerrado, por terracería cuando no se permite, o por un punto con un incidente activo de
-// gravedad Alta. Nos quedamos con la primera que cumple. En una red de este tamaño, 10 candidatas
-// cubren todas las alternativas razonables; si ninguna cumple, se avisa.
+// gravedad Alta. Nos quedamos con la primera que cumple. Casi siempre alguna de las primeras 10 sirve;
+// si ninguna cumple (por ejemplo, con un cruce bloqueado por el que pasan todas las rutas cortas),
+// se repite pidiendo 5 y 25 veces más candidatas antes de decir que no hay ruta. Como las candidatas
+// vienen ordenadas por peso, la primera que cumple es la mejor ruta posible con esas restricciones.
 
 export type Criterio = "tiempo" | "distancia" | "costo";
 
@@ -67,6 +69,15 @@ export async function rutaCarretera(params: {
   ignorarIncidentes?: string[];
   evitarPuntos?: string[];
 }): Promise<RutaCarretera | null> {
+  const intentos = [...new Set([params.candidatas, params.candidatas * 5, params.candidatas * 25].map((k) => Math.min(Math.max(k, 1), 250)))];
+  for (const candidatas of intentos) {
+    const ruta = await buscarRutaCarretera({ ...params, candidatas });
+    if (ruta) return ruta;
+  }
+  return null;
+}
+
+async function buscarRutaCarretera(params: Parameters<typeof rutaCarretera>[0]): Promise<RutaCarretera | null> {
   const filas = await leer<RutaCarretera>(
     `MATCH (o) WHERE (o:Ciudad AND o.idCiudad = $origen) OR (o:Interseccion AND o.idInterseccion = $origen)
      MATCH (d) WHERE (d:Ciudad AND d.idCiudad = $destino) OR (d:Interseccion AND d.idInterseccion = $destino)
@@ -167,4 +178,24 @@ export async function ubicacionesDeVehiculos(placas: string[]): Promise<{ placa:
      RETURN v.placa AS placa, coalesce(p.idCiudad, p.idInterseccion, p.idEstacion) AS idPunto, labels(p)[0] AS tipo`,
     { placas },
   );
+}
+
+// Toda la red de carreteras y los puntos bloqueados, para repetir Dijkstra paso a paso (rutas.exploracion.ts)
+export async function redDeCarreteras(): Promise<{
+  aristas: { desde: string; hasta: string; tiempoMin: number; distanciaKm: number; costoCaseta: number; tipoVia: string; abierto: boolean }[];
+  bloqueados: string[];
+}> {
+  const [aristas, bloqueados] = await Promise.all([
+    leer<{ desde: string; hasta: string; tiempoMin: number; distanciaKm: number; costoCaseta: number; tipoVia: string; abierto: boolean }>(
+      `MATCH (a)-[r:CARRETERA]->(b)
+       RETURN coalesce(a.idCiudad, a.idInterseccion) AS desde, coalesce(b.idCiudad, b.idInterseccion) AS hasta,
+              r.tiempoMin AS tiempoMin, r.distanciaKm AS distanciaKm, coalesce(r.costoCaseta, 0.0) AS costoCaseta,
+              r.tipoVia AS tipoVia, coalesce(r.abierto, true) AS abierto`,
+    ),
+    leer<{ idPunto: string }>(
+      `MATCH (i:Incidente {activo: true, gravedad: 'Alta'})-[:BLOQUEA]->(p)
+       RETURN DISTINCT coalesce(p.idCiudad, p.idInterseccion) AS idPunto`,
+    ),
+  ]);
+  return { aristas, bloqueados: bloqueados.map((b) => b.idPunto) };
 }

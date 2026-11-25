@@ -20,7 +20,7 @@ export class DatosInvalidos extends ErrorApp {
   }
 }
 
-// 401: la petición no trae credenciales válidas
+// 401: no se pudo comprobar quién hace la petición (credenciales o token inválidos)
 export class NoAutorizado extends ErrorApp {
   constructor(mensaje: string) {
     super(401, "No autorizado", mensaje);

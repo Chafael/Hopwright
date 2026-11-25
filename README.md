@@ -45,12 +45,37 @@ La propuesta completa, la matriz de responsabilidades y la fuente de verdad de c
 
 Para empezar desde cero (borra todos los datos): `docker compose down -v` y luego `docker compose up -d`.
 
-## Usuarios de prueba
+### Usuarios de prueba
 
-| Correo | Rol | Contraseña |
-| --- | --- | --- |
-| `despacho@hopwright.local` | `despachador` | `hopwright123` |
-| `admin@hopwright.local` | `administrador` | `hopwright123` |
+Las operaciones que cambian datos de envíos y flota piden un token. Se obtiene con `POST /auth/login` y en Swagger se pega en el botón "Authorize".
+
+- Despachador: `despacho@hopwright.local`, contraseña `hopwright123`. Puede registrar envíos, asignarlos, marcar salida y entrega, y dar de alta clientes y conductores.
+- Administrador: `admin@hopwright.local`, contraseña `hopwright123`. Puede hacer lo mismo que el despachador y además dar de alta ciudades y vehículos y cambiar los datos de un vehículo.
+
+Son contraseñas solo para la demostración; el hash está en `database/relational/data/01_datos.sql`.
+
+## Interfaz web
+
+La interfaz está en `frontend/` (SvelteKit en modo estático, Tailwind, Flowbite y MapLibre con el mapa Positron de OpenFreeMap). Solo habla con la API, nunca con las bases. Con el backend corriendo en otra terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Se abre en http://localhost:5173. Si la API no está en `http://localhost:3000`, copia `frontend/.env.example` como `frontend/.env` y cambia `VITE_API_URL`.
+
+Pantallas: rutas (C1), camión o tren (C2), red y cierres (C4 y ubicación de vehículos), incidentes (alta, cierre, evidencias y envíos afectados, C5) y mantenimiento (reconciliación). El mapa necesita internet para el fondo; sin conexión cae a un fondo liso y la red se sigue viendo.
+
+Para que los tramos sigan el trazo real de la carretera y no se dibujen rectos, con el backend corriendo:
+
+```bash
+cd frontend
+npm run geometria
+```
+
+Pide a OSRM (el ruteador público de OpenStreetMap) el camino de cada tramo, una petición por segundo, y lo guarda en `frontend/static/geometria-tramos.json`. Se corre una vez y el archivo se sube al repositorio; solo hay que repetirlo si se agregan tramos.
 
 ## Pruebas
 
@@ -61,7 +86,10 @@ npm run test:unit         # no necesitan bases de datos
 npm run test:integration  # necesitan los contenedores arriba (docker compose up -d)
 npm test                  # unitarias e integración
 npm run test:consistencia # apaga y enciende Neo4j; tarda alrededor de un minuto
+npm run rendimiento       # mide los flujos principales y escribe docs/pruebas/rendimiento.md
 ```
+
+La prueba de rendimiento manda 200 peticiones por escenario con 10 clientes a la vez. Se puede cambiar con `PETICIONES=500 CONCURRENCIA=20 npm run rendimiento` (en PowerShell: `$env:PETICIONES=500; npm run rendimiento`). Lo que crea durante la prueba se borra al terminar.
 
 Las pruebas de integración usan los datos de ejemplo. Si los modificaste a mano, regresa al estado inicial con `docker compose down -v`, `docker compose up -d` y `docker compose up neo4j-init`.
 

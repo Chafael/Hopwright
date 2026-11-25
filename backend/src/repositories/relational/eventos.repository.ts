@@ -20,20 +20,22 @@ export async function tomarEventosPendientes(limite = 20): Promise<EventoPendien
      WHERE id IN (
        SELECT id FROM eventos_pendientes
        WHERE estado = 'pendiente' AND intentos < 5
-       ORDER BY creado_en
+       ORDER BY id
        LIMIT $1
        FOR UPDATE SKIP LOCKED
      )
      RETURNING id, tipo, payload, estado, intentos, ultimo_error`,
     [limite],
   );
+  // UPDATE ... RETURNING no respeta el ORDER BY de la subconsulta: se ordena aquí para aplicar los
+  // eventos en el orden en que se encolaron. El id es BIGSERIAL y pg lo regresa como texto.
   return rows
     .map((r) => ({
       id: Number(r.id),
       tipo: r.tipo,
       payload: r.payload,
       estado: r.estado,
-      intentos: Number(r.intentos),
+      intentos: r.intentos,
       ultimoError: r.ultimo_error,
     }))
     .sort((a, b) => a.id - b.id);

@@ -18,6 +18,7 @@ export async function agregarEventoBitacora(idEnvio: string, evento: EventoBitac
   await col.updateOne({ idEnvio }, { $setOnInsert: { idEnvio, eventos: [] } }, { upsert: true });
   await col.updateOne(
     { idEnvio, eventos: { $not: { $elemMatch: { tipo: evento.tipo, fecha: evento.fecha } } } },
+    // $sort mantiene la bitácora en orden de fecha aunque un evento se aplique tarde (por un reintento)
     { $push: { eventos: { $each: [evento], $sort: { fecha: 1 } } } },
   );
 }

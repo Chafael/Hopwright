@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { calcularCiudadesAisladas } from "../services/rutas.service.js";
 import { altaEstacion, altaInterseccion, altaTramo, bajaInterseccion, bajaTramo, cambioTramo, type NuevoTramo } from "../services/red.service.js";
 import { listarPuntos } from "../repositories/graph/rutas.repository.js";
+import { mapaDeLaRed } from "../repositories/graph/mapa.repository.js";
 import { esquemaIdCiudad, respuestasError } from "../schemas/comunes.js";
 
 const esquemaPunto = {
@@ -197,6 +198,63 @@ export async function rutasRed(app: FastifyInstance): Promise<void> {
       },
     },
     async () => listarPuntos(),
+  );
+
+  app.get(
+    "/red/mapa",
+    {
+      schema: {
+        tags: ["Red"],
+        summary: "La red completa para dibujarla: puntos con coordenadas, tramos, incidentes activos y vehículos",
+        description: "Cada tramo de doble sentido aparece una sola vez. Los puntos sin coordenadas (por ejemplo, una ciudad recién copiada de PostgreSQL) traen latitud y longitud en null.",
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              puntos: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    idPunto: { type: "string" },
+                    nombre: { type: "string" },
+                    tipo: { type: "string" },
+                    latitud: { type: ["number", "null"] },
+                    longitud: { type: ["number", "null"] },
+                  },
+                },
+              },
+              tramos: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    desde: { type: "string" },
+                    hasta: { type: "string" },
+                    tipo: { type: "string" },
+                    tipoVia: { type: ["string", "null"] },
+                    abierto: { type: "boolean" },
+                    distanciaKm: { type: "number" },
+                    tiempoMin: { type: "number" },
+                    costoCaseta: { type: "number" },
+                  },
+                },
+              },
+              incidentes: {
+                type: "array",
+                items: { type: "object", properties: { idIncidente: { type: "string" }, gravedad: { type: "string" }, idPunto: { type: "string" } } },
+              },
+              vehiculos: {
+                type: "array",
+                items: { type: "object", properties: { placa: { type: "string" }, idPunto: { type: "string" } } },
+              },
+            },
+          },
+          ...respuestasError(503),
+        },
+      },
+    },
+    async () => mapaDeLaRed(),
   );
 
   app.get<{ Querystring: { punto: string; destino?: string } }>(

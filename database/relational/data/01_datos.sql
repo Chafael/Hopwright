@@ -22,11 +22,40 @@ INSERT INTO ciudad (id_ciudad, nombre, estado) VALUES
   ('07086', 'Suchiapa', 'Chiapas'),
   ('07099', 'La Trinitaria', 'Chiapas'),
   ('07057', 'Motozintla', 'Chiapas'),
-  ('07068', 'Pichucalco', 'Chiapas');
+  ('07068', 'Pichucalco', 'Chiapas'),
+  ('07102', 'Tuxtla Chico', 'Chiapas'),
+  ('07015', 'Cacahoatán', 'Chiapas'),
+  ('07105', 'Unión Juárez', 'Chiapas'),
+  ('07035', 'Frontera Hidalgo', 'Chiapas'),
+  ('07087', 'Suchiate', 'Chiapas'),
+  ('07054', 'Mazatán', 'Chiapas'),
+  ('07052', 'Las Margaritas', 'Chiapas'),
+  ('07030', 'Chicomuselo', 'Chiapas'),
+  ('07107', 'Villa Corzo', 'Chiapas'),
+  ('07020', 'La Concordia', 'Chiapas'),
+  ('07008', 'Ángel Albino Corzo', 'Chiapas'),
+  ('07002', 'Acala', 'Chiapas'),
+  ('07106', 'Venustiano Carranza', 'Chiapas'),
+  ('07029', 'Chicoasén', 'Chiapas'),
+  ('07021', 'Copainalá', 'Chiapas'),
+  ('07092', 'Tecpatán', 'Chiapas'),
+  ('07081', 'Simojovel', 'Chiapas'),
+  ('07074', 'Reforma', 'Chiapas'),
+  ('07023', 'Chamula', 'Chiapas'),
+  ('07111', 'Zinacantán', 'Chiapas'),
+  ('07093', 'Tenejapa', 'Chiapas'),
+  ('07026', 'Chenalhó', 'Chiapas'),
+  ('07004', 'Altamirano', 'Chiapas'),
+  ('07031', 'Chilón', 'Chiapas'),
+  ('07109', 'Yajalón', 'Chiapas'),
+  ('07096', 'Tila', 'Chiapas'),
+  ('07077', 'Salto de Agua', 'Chiapas'),
+  ('07016', 'Catazajá', 'Chiapas');
 
+-- Usuarios de prueba. La contraseña de los dos es hopwright123 (ver README).
 INSERT INTO usuario (nombre, correo, password_hash, rol, activo) VALUES
-  ('Despacho Central', 'despacho@hopwright.local', '$2b$10$8AEyf1C1Sju2MxysHbcmy.tB/AowA2NXdX9J2zhG1C81V8QD5.YyC', 'despachador', TRUE),
-  ('Administración Hopwright', 'admin@hopwright.local', '$2b$10$8AEyf1C1Sju2MxysHbcmy.tB/AowA2NXdX9J2zhG1C81V8QD5.YyC', 'administrador', TRUE);
+  ('Despacho Central', 'despacho@hopwright.local', '$2b$10$80IC8hlSesZi2apdKBIFs.RCC5ehJghBDejxST0GcR4evg4EN0rVa', 'despachador', TRUE),
+  ('Administración Hopwright', 'admin@hopwright.local', '$2b$10$80IC8hlSesZi2apdKBIFs.RCC5ehJghBDejxST0GcR4evg4EN0rVa', 'administrador', TRUE);
 
 INSERT INTO cliente (razon_social, rfc, telefono, correo) VALUES
   ('Alimentos del Soconusco SA de CV', 'ASO120304AB1', '9621234567', 'contacto@soconusco.mx'),

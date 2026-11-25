@@ -6,11 +6,14 @@ El grafo no es la fuente de verdad de todo lo que contiene. La red (puntos, tram
 
 Scripts: `database/graph/schema/` (restricciones e índices), `database/graph/data/` (red de ejemplo), `database/graph/queries/` (consultas representativas) y `database/graph/tests/` (pruebas de integridad).
 
+La red de ejemplo tiene 50 ciudades, 9 intersecciones y 5 estaciones, unidas por 65 tramos de carretera (130 aristas, una por sentido) y 4 de vía férrea. Cubre el Centro, los Altos, la Frailesca, la zona Fronteriza, la Costa, el Soconusco, el Norte y la Selva. Las distancias y los tiempos son aproximados; las claves de ciudad son las del INEGI y tienen que existir también en la tabla `ciudad` de PostgreSQL.
+
 ## Nodos
 
 `Ciudad`. Un municipio de Chiapas. Réplica de la tabla `ciudad` de PostgreSQL.
 - `idCiudad`: clave de municipio del INEGI en texto, por ejemplo `"07101"` para Tuxtla Gutiérrez. Única.
 - `nombre`.
+- `latitud`, `longitud`: estas dos no vienen de PostgreSQL, son del grafo. La posición en el mapa es geometría de la red, igual que en intersecciones y estaciones. Una ciudad nueva que llega por el procesador de eventos no trae coordenadas hasta que se le ponen.
 
 `Interseccion`. Un punto de la carretera que no es ciudad: un cruce, una glorieta o una caseta. Existe solo en el grafo.
 - `idInterseccion`: texto con prefijo, por ejemplo `INT-CRU`. Única.
@@ -18,7 +21,7 @@ Scripts: `database/graph/schema/` (restricciones e índices), `database/graph/da
 
 `Estacion`. Una estación del tren de carga. Existe solo en el grafo.
 - `idEstacion`: texto con prefijo, por ejemplo `EST-ARR`. Única, igual que `nombre`.
-- `tipoServicio`.
+- `tipoServicio`, `latitud`, `longitud`.
 
 `Incidente`. Réplica mínima de un reporte de `reportes_incidente` en MongoDB.
 - `idIncidente` (único), `gravedad` (`Baja`, `Media` o `Alta`), `activo`.
@@ -65,7 +68,9 @@ Neo4j Community solo impone unicidad, así que las demás reglas las revisa el b
 
 ## Cómo se calcula una ruta
 
-`apoc.algo.dijkstra` encuentra caminos sumando una propiedad de las aristas (`tiempoMin`, `distanciaKm` o `costoCaseta`, según el criterio), pero no sabe saltarse tramos ni puntos. Por eso le pedimos las 10 rutas más cortas y en la misma consulta descartamos las que pasan por un tramo cerrado, por terracería cuando la carga no lo permite, o por un punto con un incidente Alta activo. Nos quedamos con la primera que cumple. En una red de este tamaño 10 candidatas alcanzan; si la red creciera mucho habría que subir `RUTAS_CANDIDATAS` o cambiar de estrategia.
+`apoc.algo.dijkstra` encuentra caminos sumando una propiedad de las aristas (`tiempoMin`, `distanciaKm` o `costoCaseta`, según el criterio), pero no sabe saltarse tramos ni puntos. Por eso le pedimos las 10 rutas más cortas y en la misma consulta descartamos las que pasan por un tramo cerrado, por terracería cuando la carga no lo permite, o por un punto con un incidente Alta activo. Nos quedamos con la primera que cumple. Casi siempre alguna de las primeras 10 sirve. Si ninguna cumple, por ejemplo cuando todas las rutas cortas pasan por un cruce bloqueado, la consulta se repite con 50 y después con 250 candidatas antes de responder que no hay ruta. Como las candidatas vienen ordenadas por peso, la primera que cumple es la mejor ruta posible con esas restricciones.
+
+Para que se vea cómo funciona, `GET /rutas/exploracion` repite Dijkstra en el backend (`backend/src/services/rutas.exploracion.ts`) sobre la misma red que lee de Neo4j y con las mismas restricciones, pero guardando en orden cada punto que resuelve y cada tramo que revisa. También tiene la versión bidireccional, que busca desde la salida y desde la llegada a la vez. La interfaz anima esos pasos y al final dibuja la ruta que dio Neo4j; la respuesta trae `coincide` para comprobar que los dos llegaron al mismo costo. Las pruebas unitarias corren el algoritmo sobre la red de ejemplo, leída del mismo `.cypher`, y verifican los mismos resultados que se esperan de Neo4j.
 
 Las ciudades aisladas (C4) se calculan con `apoc.path.subgraphNodes` desde el destino, recorriendo las carreteras al revés y sin pasar por el punto cerrado. Las ciudades que no aparecen en ese subgrafo son las que se quedan sin camino.
 

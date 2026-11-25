@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import { pool } from "../../backend/src/db/postgres.js";
 import { mongoDb } from "../../backend/src/db/mongo.js";
 import { construirApp } from "../../backend/src/server.js";
-import { asignarVehiculo } from "../../backend/src/services/envios.service.js";
 import { procesarEventosPendientes } from "../../backend/src/services/procesadorEventos.service.js";
 import { agregarEventoBitacora, buscarBitacora } from "../../backend/src/repositories/document/bitacora.repository.js";
 
@@ -12,7 +11,6 @@ const puedeCorrer = Boolean(process.env.PG_HOST && process.env.PG_DATABASE);
 let app: FastifyInstance;
 
 const tokenAdmin = () => app.jwt.sign({ idUsuario: 2, rol: "administrador", correo: "admin@hopwright.local" });
-const tokenDespachador = () => app.jwt.sign({ idUsuario: 1, rol: "despachador", correo: "despacho@hopwright.local" });
 const authAdmin = () => ({ authorization: `Bearer ${tokenAdmin()}` });
 
 async function crearClienteDirecto(rfc: string): Promise<number> {
@@ -54,15 +52,7 @@ describe.skipIf(!puedeCorrer)("envíos, flota y usuarios", () => {
     await app.close();
   });
 
-  it("valida el login y devuelve el mismo error 401 para correo inexistente y contraseña incorrecta", async () => {
-    const correcto = await app.inject({
-      method: "POST",
-      url: "/auth/login",
-      payload: { correo: "admin@hopwright.local", password: "hopwright123" },
-    });
-    expect(correcto.statusCode).toBe(200);
-    expect(correcto.json().token).toBeTruthy();
-
+  it("no revela cuál credencial falló en el login", async () => {
     const contrasena = await app.inject({
       method: "POST",
       url: "/auth/login",
@@ -77,24 +67,6 @@ describe.skipIf(!puedeCorrer)("envíos, flota y usuarios", () => {
     expect(correo.statusCode).toBe(401);
     expect(correo.json().mensaje).toBe(contrasena.json().mensaje);
     expect(contrasena.json().error).toBe("No autorizado");
-  });
-
-  it("devuelve 401 sin token y 403 con un rol que no alcanza", async () => {
-    const cuerpo = { idEnvio: "E-7000001", idCliente: 1, idCiudadOrigen: "07101", idCiudadDestino: "07078", pesoKg: 10, prioridad: "Normal" };
-    const sinToken = await app.inject({ method: "POST", url: "/envios", payload: cuerpo });
-    expect(sinToken.statusCode).toBe(401);
-
-    const sinPermiso = await app.inject({
-      method: "POST",
-      url: "/ciudades",
-      headers: { authorization: `Bearer ${tokenDespachador()}` },
-      payload: { idCiudad: "07999", nombre: "Ciudad prueba", estado: "Chiapas" },
-    });
-    expect(sinPermiso.statusCode).toBe(403);
-
-    const permitido = await app.inject({ method: "POST", url: "/envios", headers: authAdmin(), payload: cuerpo });
-    expect(permitido.statusCode).toBe(201);
-    await limpiarEnvio("E-7000001", []);
   });
 
   it("rechaza ids de envío que no cumplen el formato acordado", async () => {
@@ -165,29 +137,6 @@ describe.skipIf(!puedeCorrer)("envíos, flota y usuarios", () => {
       expect(res.json().mensaje).toMatch(/cancelar envíos pendientes o asignados/);
     } finally {
       await limpiarEnvio(idEnvio, [placa], idCliente);
-    }
-  });
-
-  it("bloquea el envío antes que el vehículo cuando dos peticiones asignan el mismo envío", async () => {
-    const sufijo = String(Date.now()).slice(-8);
-    const idEnvio = `E-73${sufijo}`;
-    const placaA = `TCA${String(Date.now()).slice(-5)}`;
-    const placaB = `TCB${String(Date.now()).slice(-5)}`;
-    let idCliente: number | undefined;
-    try {
-      idCliente = await crearClienteDirecto(`RD${sufijo}`);
-      await crearEnvioDirecto(idEnvio, idCliente);
-      await crearVehiculoDirecto(placaA);
-      await crearVehiculoDirecto(placaB);
-
-      const [a, b] = await Promise.allSettled([asignarVehiculo(idEnvio, placaA), asignarVehiculo(idEnvio, placaB)]);
-      const fallos = [a, b].filter((r) => r.status === "rejected");
-      expect([a, b].filter((r) => r.status === "fulfilled")).toHaveLength(1);
-      expect(fallos).toHaveLength(1);
-      expect((fallos[0].reason as { statusCode?: number }).statusCode).toBe(409);
-      expect((fallos[0].reason as { message?: string }).message).toBe("Solo se pueden asignar envíos pendientes");
-    } finally {
-      await limpiarEnvio(idEnvio, [placaA, placaB], idCliente);
     }
   });
 

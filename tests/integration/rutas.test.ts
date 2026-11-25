@@ -118,9 +118,23 @@ describe("GET /rutas/camion-tren (C2)", () => {
 });
 
 describe("GET /red/ciudades-aisladas (C4)", () => {
-  it("si se cierra el entronque de Oxchuc, Ocosingo y Palenque se quedan sin camino a Tuxtla", async () => {
+  it("si se cierra el entronque de Oxchuc, toda la Selva se queda sin camino a Tuxtla", async () => {
     const r = (await app.inject({ url: "/red/ciudades-aisladas?punto=INT-OXC" })).json();
-    expect(r.aisladas.map((c: { nombre: string }) => c.nombre)).toEqual(["Ocosingo", "Palenque"]);
+    expect(r.aisladas.map((c: { nombre: string }) => c.nombre)).toEqual([
+      "Altamirano",
+      "Catazajá",
+      "Chilón",
+      "Ocosingo",
+      "Palenque",
+      "Salto de Agua",
+      "Tila",
+      "Yajalón",
+    ]);
+  });
+
+  it("si se cierra el entronque de Bochil, se quedan sin camino las ciudades del norte", async () => {
+    const r = (await app.inject({ url: "/red/ciudades-aisladas?punto=INT-BOC" })).json();
+    expect(r.aisladas.map((c: { nombre: string }) => c.nombre)).toEqual(["Pichucalco", "Reforma", "Simojovel"]);
   });
 
   it("si se cierra Las Cruces nadie queda aislado, porque hay caminos alternos", async () => {
@@ -134,9 +148,55 @@ describe("GET /red/ciudades-aisladas (C4)", () => {
   });
 });
 
+describe("GET /rutas/exploracion", () => {
+  it("repite la búsqueda paso a paso y llega al mismo resultado que Neo4j", async () => {
+    const res = await app.inject({ url: "/rutas/exploracion?origen=07101&destino=07078" });
+    expect(res.statusCode).toBe(200);
+    const r = res.json();
+    expect(r.coincide).toBe(true);
+    expect(r.minutos).toBe(72);
+    expect(r.neo4j.minutos).toBe(72);
+    expect(r.ruta[0]).toBe("07101");
+    expect(r.ruta.at(-1)).toBe("07078");
+    expect(r.pasos[0]).toMatchObject({ tipo: "visita", punto: "07101" });
+    expect(r.explorados).toBeGreaterThan(2);
+  });
+
+  it("el bidireccional también coincide con Neo4j", async () => {
+    const normal = (await app.inject({ url: "/rutas/exploracion?origen=07101&destino=07089" })).json();
+    const bi = (await app.inject({ url: "/rutas/exploracion?origen=07101&destino=07089&algoritmo=bidireccional" })).json();
+    expect(bi.coincide).toBe(true);
+    expect(bi.minutos).toBe(normal.minutos);
+    expect(bi.pasos.some((p: { lado: string }) => p.lado === "destino")).toBe(true);
+  });
+
+  it("evitando terracería coincide con los 218 minutos a Arriaga", async () => {
+    const r = (await app.inject({ url: "/rutas/exploracion?origen=07101&destino=07009&evitarTerraceria=true" })).json();
+    expect(r.minutos).toBe(218);
+    expect(r.coincide).toBe(true);
+  });
+
+  it("400 con un algoritmo desconocido", async () => {
+    expect((await app.inject({ url: "/rutas/exploracion?origen=07101&destino=07078&algoritmo=a-estrella" })).statusCode).toBe(400);
+  });
+});
+
+describe("GET /red/mapa", () => {
+  it("regresa los 64 puntos con coordenadas, una línea por tramo, incidentes activos y vehículos", async () => {
+    const mapa = (await app.inject({ url: "/red/mapa" })).json();
+    expect(mapa.puntos).toHaveLength(64);
+    expect(mapa.puntos.every((p: { latitud: number | null }) => typeof p.latitud === "number")).toBe(true);
+    // 65 tramos de carretera y 4 de vía férrea, cada uno una sola vez
+    expect(mapa.tramos.filter((t: { tipo: string }) => t.tipo === "CARRETERA")).toHaveLength(65);
+    expect(mapa.tramos.filter((t: { tipo: string }) => t.tipo === "VIA_FERREA")).toHaveLength(4);
+    expect(mapa.incidentes.map((i: { idIncidente: string }) => i.idIncidente)).toContain("INC-0001");
+    expect(mapa.vehiculos.length).toBeGreaterThanOrEqual(7);
+  });
+});
+
 describe("GET /red/puntos", () => {
-  it("lista los 36 puntos de la red de ejemplo", async () => {
+  it("lista los 64 puntos de la red de ejemplo", async () => {
     const puntos = (await app.inject({ url: "/red/puntos" })).json();
-    expect(puntos).toHaveLength(36);
+    expect(puntos).toHaveLength(64);
   });
 });
