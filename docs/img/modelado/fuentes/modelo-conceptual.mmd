@@ -1,0 +1,23 @@
+erDiagram
+    CLIENTE ||--o{ ENVIO : "solicita"
+    CIUDAD ||--o{ ENVIO : "es origen de"
+    CIUDAD ||--o{ ENVIO : "es destino de"
+    ENVIO ||--o| MANIFIESTO : "se describe en"
+    MANIFIESTO ||--|{ ARTICULO : "contiene"
+    ENVIO ||--o{ ASIGNACION : "recibe"
+    VEHICULO ||--o{ ASIGNACION : "atiende"
+    CONDUCTOR |o--o{ VEHICULO : "maneja"
+    ENVIO ||--o{ EVENTO_SEGUIMIENTO : "acumula"
+    PUNTO_RED ||--o{ TRAMO : "une"
+    CIUDAD ||--|| PUNTO_RED : "es un"
+    INTERSECCION ||--|| PUNTO_RED : "es un"
+    ESTACION ||--o{ TRAMO_FERREO : "une"
+    ESTACION }o--|| CIUDAD : "está en"
+    INCIDENTE }o--|| PUNTO_RED : "ocurre en"
+    INCIDENTE ||--o{ EVIDENCIA : "junta"
+    VEHICULO }o--|| PUNTO_RED : "está en"
+    VEHICULO }o--o| ESTACION : "está en"
+    USUARIO {
+        string correo
+        string rol
+    }

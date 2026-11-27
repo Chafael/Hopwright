@@ -1,0 +1,71 @@
+erDiagram
+    usuario {
+        BIGSERIAL id_usuario PK
+        TEXT nombre
+        TEXT correo UK
+        TEXT password_hash
+        TEXT rol
+        BOOLEAN activo
+        TIMESTAMPTZ creado_en
+    }
+    cliente {
+        BIGSERIAL id_cliente PK
+        TEXT razon_social
+        TEXT rfc UK
+        TEXT telefono
+        TEXT correo
+    }
+    conductor {
+        BIGSERIAL id_conductor PK
+        TEXT nombre
+        TEXT licencia UK
+        TEXT telefono
+        BOOLEAN activo
+    }
+    ciudad {
+        TEXT id_ciudad PK
+        TEXT nombre
+        TEXT estado
+    }
+    vehiculo {
+        TEXT placa PK
+        TEXT tipo
+        NUMERIC capacidad_kg
+        TEXT estado
+        BIGINT id_conductor FK
+    }
+    envio {
+        TEXT id_envio PK
+        BIGINT id_cliente FK
+        TEXT id_ciudad_origen FK
+        TEXT id_ciudad_destino FK
+        NUMERIC peso_kg
+        TEXT prioridad
+        TEXT estado
+        TIMESTAMPTZ fecha_salida
+        TIMESTAMPTZ creado_en
+    }
+    asignacion {
+        BIGSERIAL id_asignacion PK
+        TEXT id_envio FK
+        TEXT placa FK
+        TIMESTAMPTZ fecha_asignacion
+        TIMESTAMPTZ fecha_fin
+        BOOLEAN activa
+    }
+    eventos_pendientes {
+        BIGSERIAL id PK
+        TEXT tipo
+        JSONB payload
+        TEXT estado
+        INTEGER intentos
+        TEXT ultimo_error
+        TIMESTAMPTZ creado_en
+        TIMESTAMPTZ aplicado_en
+    }
+    cliente ||--o{ envio : "solicita"
+    ciudad ||--o{ envio : "origen"
+    ciudad ||--o{ envio : "destino"
+    conductor |o--o{ vehiculo : "maneja"
+    envio ||--o{ asignacion : "recibe"
+    vehiculo ||--o{ asignacion : "atiende"
