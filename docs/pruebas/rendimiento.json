@@ -1,19 +1,19 @@
 {
-  "fecha": "2026-11-24T06:25:30.671Z",
+  "fecha": "2026-11-27T22:50:59.136Z",
   "peticiones": 200,
   "concurrencia": 10,
   "equipo": {
     "Procesador": "AMD Ryzen 5 7535HS with Radeon Graphics (12 hilos)",
     "Memoria": "15 GB",
     "Sistema operativo": "win32 10.0.26200 (x64)",
-    "Node.js": "v26.13.1"
+    "Node.js": "v24.15.0"
   },
   "datos": {
     "neo4j": {
       "nodos": [
         {
           "etiqueta": "Ciudad",
-          "total": 22
+          "total": 124
         },
         {
           "etiqueta": "Estacion",
@@ -39,7 +39,7 @@
         },
         {
           "tipo": "CARRETERA",
-          "total": 66
+          "total": 666
         },
         {
           "tipo": "SE_ENCUENTRA_EN",
@@ -56,10 +56,21 @@
       ]
     },
     "mongo": {
+      "manifiestos": 6,
+      "reportes_incidente": 2,
       "contadores": 1,
-      "reportes_incidente": 2
+      "bitacora_envio": 2
     },
-    "postgres": {}
+    "postgres": {
+      "asignacion": 4,
+      "ciudad": 124,
+      "cliente": 4,
+      "conductor": 4,
+      "envio": 8,
+      "eventos_pendientes": 0,
+      "usuario": 2,
+      "vehiculo": 7
+    }
   },
   "resultados": [
     {
@@ -70,13 +81,13 @@
       "codigos": {
         "200": 200
       },
-      "porSegundo": 366.7,
+      "porSegundo": 365.6,
       "ms": {
-        "min": 5.1,
-        "p50": 22.1,
-        "p95": 71,
-        "p99": 131.6,
-        "max": 142.7,
+        "min": 4.8,
+        "p50": 22.3,
+        "p95": 90.4,
+        "p99": 125,
+        "max": 131.9,
         "promedio": 27.1
       }
     },
@@ -88,14 +99,14 @@
       "codigos": {
         "200": 200
       },
-      "porSegundo": 135.5,
+      "porSegundo": 122.5,
       "ms": {
-        "min": 56,
-        "p50": 69.8,
-        "p95": 96.1,
-        "p99": 101.5,
-        "max": 103.7,
-        "promedio": 73.3
+        "min": 59.3,
+        "p50": 78.1,
+        "p95": 105.1,
+        "p99": 110.8,
+        "max": 118.8,
+        "promedio": 80.9
       }
     },
     {
@@ -106,14 +117,14 @@
       "codigos": {
         "200": 200
       },
-      "porSegundo": 137.4,
+      "porSegundo": 131.6,
       "ms": {
-        "min": 52.9,
-        "p50": 67.9,
-        "p95": 84.7,
-        "p99": 141.5,
-        "max": 145.4,
-        "promedio": 71.3
+        "min": 55.4,
+        "p50": 74.9,
+        "p95": 90.6,
+        "p99": 94.8,
+        "max": 95,
+        "promedio": 74.8
       }
     },
     {
@@ -124,14 +135,14 @@
       "codigos": {
         "200": 200
       },
-      "porSegundo": 18.5,
+      "porSegundo": 17.7,
       "ms": {
-        "min": 472.1,
-        "p50": 526.4,
-        "p95": 609.2,
-        "p99": 631,
-        "max": 655.8,
-        "promedio": 536
+        "min": 499.6,
+        "p50": 552.2,
+        "p95": 628.9,
+        "p99": 689.4,
+        "max": 693,
+        "promedio": 560.4
       }
     },
     {
@@ -142,14 +153,14 @@
       "codigos": {
         "200": 200
       },
-      "porSegundo": 331.6,
+      "porSegundo": 265.5,
       "ms": {
-        "min": 18.4,
-        "p50": 28.8,
-        "p95": 42.1,
-        "p99": 50.1,
-        "max": 57.8,
-        "promedio": 29.8
+        "min": 23.4,
+        "p50": 35.9,
+        "p95": 49.6,
+        "p99": 55,
+        "max": 57.3,
+        "promedio": 36.9
       }
     },
     {
@@ -160,14 +171,14 @@
       "codigos": {
         "200": 200
       },
-      "porSegundo": 1038.5,
+      "porSegundo": 772.2,
       "ms": {
-        "min": 4.2,
-        "p50": 9.1,
-        "p95": 12.6,
-        "p99": 13.5,
-        "max": 38.6,
-        "promedio": 9.6
+        "min": 4.9,
+        "p50": 12.4,
+        "p95": 16.3,
+        "p99": 19.8,
+        "max": 60.5,
+        "promedio": 12.8
       }
     },
     {
@@ -178,14 +189,14 @@
       "codigos": {
         "201": 200
       },
-      "porSegundo": 146.2,
+      "porSegundo": 163.1,
       "ms": {
-        "min": 15.5,
-        "p50": 49.5,
-        "p95": 171.8,
-        "p99": 245.4,
-        "max": 271.1,
-        "promedio": 67.3
+        "min": 18.5,
+        "p50": 47.5,
+        "p95": 141.2,
+        "p99": 183.4,
+        "max": 218.1,
+        "promedio": 60.1
       }
     },
     {
@@ -196,14 +207,68 @@
       "codigos": {
         "200": 200
       },
-      "porSegundo": 259.1,
+      "porSegundo": 142.8,
       "ms": {
-        "min": 18.1,
-        "p50": 37.6,
-        "p95": 47.9,
-        "p99": 56.5,
-        "max": 61.3,
-        "promedio": 38
+        "min": 56.9,
+        "p50": 66.1,
+        "p95": 92.1,
+        "p99": 113.1,
+        "max": 116.8,
+        "promedio": 68.4
+      }
+    },
+    {
+      "nombre": "GET /envios",
+      "bases": "PostgreSQL",
+      "peticiones": 200,
+      "errores": 0,
+      "codigos": {
+        "200": 200
+      },
+      "porSegundo": 1186.5,
+      "ms": {
+        "min": 4.7,
+        "p50": 8.1,
+        "p95": 13.2,
+        "p99": 15.4,
+        "max": 16,
+        "promedio": 8.3
+      }
+    },
+    {
+      "nombre": "GET /envios/{id}/manifiesto",
+      "bases": "MongoDB",
+      "peticiones": 200,
+      "errores": 0,
+      "codigos": {
+        "200": 200
+      },
+      "porSegundo": 959.7,
+      "ms": {
+        "min": 6.8,
+        "p50": 10,
+        "p95": 13.6,
+        "p99": 15,
+        "max": 18,
+        "promedio": 10.3
+      }
+    },
+    {
+      "nombre": "GET /envios/{id}/ruta (flujo integrado)",
+      "bases": "PostgreSQL, MongoDB y Neo4j",
+      "peticiones": 200,
+      "errores": 0,
+      "codigos": {
+        "200": 200
+      },
+      "porSegundo": 68.7,
+      "ms": {
+        "min": 106.8,
+        "p50": 138.6,
+        "p95": 176.5,
+        "p99": 182.9,
+        "max": 189.2,
+        "promedio": 142.1
       }
     },
     {
@@ -214,14 +279,14 @@
       "codigos": {
         "200": 200
       },
-      "porSegundo": 132.3,
+      "porSegundo": 167.6,
       "ms": {
-        "min": 32.3,
-        "p50": 70.8,
-        "p95": 106.5,
-        "p99": 152.9,
-        "max": 180.1,
-        "promedio": 74.4
+        "min": 14.7,
+        "p50": 56.5,
+        "p95": 83.1,
+        "p99": 129.8,
+        "max": 157.9,
+        "promedio": 58.7
       }
     }
   ]
