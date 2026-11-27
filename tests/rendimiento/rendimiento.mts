@@ -123,6 +123,22 @@ const escenarios: Escenario[] = [
     peticion: () => ({ method: "GET", url: "/incidentes/INC-0001/envios-afectados" }),
   },
   {
+    nombre: "GET /envios",
+    bases: "PostgreSQL",
+    peticion: () => ({ method: "GET", url: "/envios" }),
+  },
+  {
+    nombre: "GET /envios/{id}/manifiesto",
+    bases: "MongoDB",
+    peticion: (i) => ({ method: "GET", url: `/envios/${i % 2 === 0 ? "E-102" : "E-103"}/manifiesto` }),
+  },
+  {
+    nombre: "GET /envios/{id}/ruta (flujo integrado)",
+    bases: "PostgreSQL, MongoDB y Neo4j",
+    // Alterna la carga refrigerada (tiempo máximo) y la peligrosa (sin terracería)
+    peticion: (i) => ({ method: "GET", url: `/envios/${i % 2 === 0 ? "E-102" : "E-103"}/ruta` }),
+  },
+  {
     nombre: "PATCH /vehiculos/{placa}/ubicacion",
     bases: "PostgreSQL (lectura) y Neo4j (escritura)",
     // Va y viene entre San Cristóbal y Teopisca
