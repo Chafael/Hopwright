@@ -87,6 +87,7 @@ npm run test:integration  # necesitan los contenedores arriba (docker compose up
 npm test                  # unitarias e integración
 npm run test:consistencia # apaga y enciende Neo4j; tarda alrededor de un minuto
 npm run rendimiento       # mide los flujos principales y escribe docs/pruebas/rendimiento.md
+npm run catalogo          # corre los casos del catálogo y escribe docs/pruebas/catalogo-evidencia.md
 ```
 
 La prueba de rendimiento manda 200 peticiones por escenario con 10 clientes a la vez. Se puede cambiar con `PETICIONES=500 CONCURRENCIA=20 npm run rendimiento` (en PowerShell: `$env:PETICIONES=500; npm run rendimiento`). Lo que crea durante la prueba se borra al terminar.

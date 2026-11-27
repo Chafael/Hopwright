@@ -13,7 +13,8 @@
     "test:unit": "vitest run unit",
     "test:integration": "vitest run integration",
     "test:consistencia": "vitest run -c vitest.consistencia.config.ts",
-    "rendimiento": "tsx ../tests/rendimiento/rendimiento.mts"
+    "rendimiento": "tsx ../tests/rendimiento/rendimiento.mts",
+    "catalogo": "tsx ../tests/catalogo/evidencia.mts"
   },
   "engines": {
     "node": ">=22"
