@@ -153,8 +153,8 @@ describe("GET /rutas/exploracion", () => {
     expect(res.statusCode).toBe(200);
     const r = res.json();
     expect(r.coincide).toBe(true);
-    expect(r.minutos).toBe(72);
-    expect(r.neo4j.minutos).toBe(72);
+    expect(r.minutos).toBe(73);
+    expect(r.neo4j.minutos).toBe(73);
     expect(r.ruta[0]).toBe("07101");
     expect(r.ruta.at(-1)).toBe("07078");
     expect(r.pasos[0]).toMatchObject({ tipo: "visita", punto: "07101" });
@@ -169,9 +169,9 @@ describe("GET /rutas/exploracion", () => {
     expect(bi.pasos.some((p: { lado: string }) => p.lado === "destino")).toBe(true);
   });
 
-  it("evitando terracería coincide con los 218 minutos a Arriaga", async () => {
-    const r = (await app.inject({ url: "/rutas/exploracion?origen=07101&destino=07009&evitarTerraceria=true" })).json();
-    expect(r.minutos).toBe(218);
+  it("evitando terracería coincide con los 108 minutos de San Cristóbal a Totolapa", async () => {
+    const r = (await app.inject({ url: "/rutas/exploracion?origen=07078&destino=07098&evitarTerraceria=true" })).json();
+    expect(r.minutos).toBe(108);
     expect(r.coincide).toBe(true);
   });
 
@@ -181,12 +181,13 @@ describe("GET /rutas/exploracion", () => {
 });
 
 describe("GET /red/mapa", () => {
-  it("regresa los 64 puntos con coordenadas, una línea por tramo, incidentes activos y vehículos", async () => {
+  it("regresa los 138 puntos con coordenadas, una línea por tramo, incidentes activos y vehículos", async () => {
     const mapa = (await app.inject({ url: "/red/mapa" })).json();
-    expect(mapa.puntos).toHaveLength(64);
+    // 124 municipios y 14 entronques
+    expect(mapa.puntos).toHaveLength(138);
     expect(mapa.puntos.every((p: { latitud: number | null }) => typeof p.latitud === "number")).toBe(true);
-    // 65 tramos de carretera y 4 de vía férrea, cada uno una sola vez
-    expect(mapa.tramos.filter((t: { tipo: string }) => t.tipo === "CARRETERA")).toHaveLength(65);
+    // 333 tramos de carretera y 4 de vía férrea, cada uno una sola vez
+    expect(mapa.tramos.filter((t: { tipo: string }) => t.tipo === "CARRETERA")).toHaveLength(333);
     expect(mapa.tramos.filter((t: { tipo: string }) => t.tipo === "VIA_FERREA")).toHaveLength(4);
     expect(mapa.incidentes.map((i: { idIncidente: string }) => i.idIncidente)).toContain("INC-0001");
     expect(mapa.vehiculos.length).toBeGreaterThanOrEqual(7);
@@ -194,8 +195,8 @@ describe("GET /red/mapa", () => {
 });
 
 describe("GET /red/puntos", () => {
-  it("lista los 64 puntos de la red de ejemplo", async () => {
+  it("lista los 138 puntos de la red de ejemplo", async () => {
     const puntos = (await app.inject({ url: "/red/puntos" })).json();
-    expect(puntos).toHaveLength(64);
+    expect(puntos).toHaveLength(138);
   });
 });

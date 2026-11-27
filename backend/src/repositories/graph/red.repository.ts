@@ -79,7 +79,8 @@ export async function crearTramoCarretera(t: {
   await escribir(
     `MATCH (a) WHERE ${esPuntoCarretera("a", "desde")}
      MATCH (b) WHERE ${esPuntoCarretera("b", "hasta")}
-     CREATE (a)-[:CARRETERA {distanciaKm: $distanciaKm, tiempoMin: $tiempoMin, costoCaseta: $costoCaseta, tipoVia: $tipoVia, abierto: true}]->(b)`,
+     CREATE (a)-[:CARRETERA {distanciaKm: $distanciaKm, tiempoMin: $tiempoMin, costoCaseta: $costoCaseta,
+                             pesoCosto: $costoCaseta + $tiempoMin * 0.000001, tipoVia: $tipoVia, abierto: true}]->(b)`,
     t,
   );
 }
@@ -104,6 +105,7 @@ export async function actualizarTramoCarretera(
      MATCH (b) WHERE ${esPuntoCarretera("b", "hasta")}
      MATCH (a)-[r:CARRETERA {tipoVia: $tipoVia}]->(b)
      SET r += $cambios
+     SET r.pesoCosto = coalesce(r.costoCaseta, 0.0) + r.tiempoMin * 0.000001
      RETURN r { .distanciaKm, .tiempoMin, .costoCaseta, .tipoVia, .abierto, desde: $desde, hasta: $hasta } AS tramo`,
     { desde, hasta, tipoVia, cambios },
   );

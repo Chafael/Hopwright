@@ -513,9 +513,9 @@ UNWIND [
 MATCH (x) WHERE (x:Ciudad AND x.idCiudad = t.a) OR (x:Interseccion AND x.idInterseccion = t.a)
 MATCH (y) WHERE (y:Ciudad AND y.idCiudad = t.b) OR (y:Interseccion AND y.idInterseccion = t.b)
 MERGE (x)-[ida:CARRETERA {tipoVia: t.via}]->(y)
-SET ida.distanciaKm = toFloat(t.km), ida.tiempoMin = t.min, ida.costoCaseta = toFloat(t.caseta), ida.abierto = true
+SET ida.distanciaKm = toFloat(t.km), ida.tiempoMin = t.min, ida.costoCaseta = toFloat(t.caseta), ida.pesoCosto = toFloat(t.caseta) + t.min * 0.000001, ida.abierto = true
 MERGE (y)-[vuelta:CARRETERA {tipoVia: t.via}]->(x)
-SET vuelta.distanciaKm = toFloat(t.km), vuelta.tiempoMin = t.min, vuelta.costoCaseta = toFloat(t.caseta), vuelta.abierto = true;
+SET vuelta.distanciaKm = toFloat(t.km), vuelta.tiempoMin = t.min, vuelta.costoCaseta = toFloat(t.caseta), vuelta.pesoCosto = toFloat(t.caseta) + t.min * 0.000001, vuelta.abierto = true;
 
 // ---------- Vía férrea de la costa (dos aristas por tramo) ----------
 // costoTon: pesos por tonelada transportada en ese tramo

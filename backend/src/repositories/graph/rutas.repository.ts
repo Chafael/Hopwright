@@ -20,10 +20,14 @@ import { dijkstra } from "../../services/rutas.exploracion.js";
 
 export type Criterio = "tiempo" | "distancia" | "costo";
 
+// Por costo no basta con sumar casetas: casi todos los tramos cuestan cero y Dijkstra se queda con
+// cualquier camino sin casetas, aunque tarde horas de más. pesoCosto es la caseta más una fracción
+// muy pequeña de los minutos, así entre dos rutas igual de baratas gana la más rápida
+// (el mismo desempate que usa peso() en rutas.exploracion.ts).
 const propiedadPorCriterio: Record<Criterio, string> = {
   tiempo: "tiempoMin",
   distancia: "distanciaKm",
-  costo: "costoCaseta",
+  costo: "pesoCosto",
 };
 
 export type PuntoRuta = { idPunto: string; nombre: string; tipo: string };

@@ -34,6 +34,7 @@ La red cubre todo Chiapas: las 124 cabeceras municipales, 9 intersecciones y 5 e
 `(:Ciudad|Interseccion)-[:CARRETERA]->(:Ciudad|Interseccion)`. Un tramo de carretera en un sentido. Un camino de doble sentido son dos aristas, porque el tiempo de ida y el de vuelta pueden ser distintos (una subida, por ejemplo).
 - `distanciaKm` y `tiempoMin`: mayores que cero.
 - `costoCaseta`: pesos, cero si no hay caseta.
+- `pesoCosto`: `costoCaseta` más los minutos por 0.000001. Es el peso que usa Dijkstra cuando el criterio es costo: entre dos rutas sin casetas elige la más rápida y no cualquiera.
 - `tipoVia`: `Autopista`, `Federal`, `Estatal` o `Terracería`.
 - `abierto`: si es `false`, el cálculo de rutas no lo usa.
 
@@ -68,7 +69,7 @@ Neo4j Community solo impone unicidad, así que las demás reglas las revisa el b
 
 ## Cómo se calcula una ruta
 
-`apoc.algo.dijkstra` encuentra caminos sumando una propiedad de las aristas (`tiempoMin`, `distanciaKm` o `costoCaseta`, según el criterio), pero no sabe saltarse tramos ni puntos. Por eso le pedimos las 10 rutas más cortas y en la misma consulta descartamos las que pasan por un tramo cerrado, por terracería cuando la carga no lo permite, o por un punto con un incidente Alta activo. Nos quedamos con la primera que cumple. Casi siempre alguna de las primeras 10 sirve. Si ninguna cumple, por ejemplo cuando todas las rutas cortas pasan por un cruce bloqueado, la consulta se repite con 50 y después con 250 candidatas antes de responder que no hay ruta. Como las candidatas vienen ordenadas por peso, la primera que cumple es la mejor ruta posible con esas restricciones.
+`apoc.algo.dijkstra` encuentra caminos sumando una propiedad de las aristas (`tiempoMin`, `distanciaKm` o `pesoCosto`, según el criterio), pero no sabe saltarse tramos ni puntos. Por eso le pedimos las 10 rutas más cortas y en la misma consulta descartamos las que pasan por un tramo cerrado, por terracería cuando la carga no lo permite, o por un punto con un incidente Alta activo. Nos quedamos con la primera que cumple. Casi siempre alguna de las primeras 10 sirve. Si ninguna cumple, por ejemplo cuando todas las rutas cortas pasan por un cruce bloqueado, la consulta se repite con 50 y después con 250 candidatas antes de responder que no hay ruta. Como las candidatas vienen ordenadas por peso, la primera que cumple es la mejor ruta posible con esas restricciones.
 
 Para que se vea cómo funciona, `GET /rutas/exploracion` repite Dijkstra en el backend (`backend/src/services/rutas.exploracion.ts`) sobre la misma red que lee de Neo4j y con las mismas restricciones, pero guardando en orden cada punto que resuelve y cada tramo que revisa. También tiene la versión bidireccional, que busca desde la salida y desde la llegada a la vez. La interfaz anima esos pasos y al final dibuja la ruta que dio Neo4j; la respuesta trae `coincide` para comprobar que los dos llegaron al mismo costo. Las pruebas unitarias corren el algoritmo sobre la red de ejemplo, leída del mismo `.cypher`, y verifican los mismos resultados que se esperan de Neo4j.
 
