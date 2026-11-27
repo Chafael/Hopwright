@@ -6,6 +6,8 @@ Las bases se abrevian así: PG es PostgreSQL, MG es MongoDB y N4 es Neo4j. "Lee"
 
 ## Red, rutas y ubicación (Rafael)
 
+Las consultas no piden sesión. Las escrituras de la red (`/red/intersecciones`, `/red/estaciones`, `/red/tramos`) y `POST /admin/reconciliar` son solo para el administrador; reportar, cerrar o agregar evidencias a un incidente y mover un vehículo piden despachador o administrador. Sin token responden 401 y con un rol que no alcanza, 403.
+
 `GET /health`. Lee PG, MG y N4 con un ping cada una. Responde 200 si las tres contestan y 503 con el estado de cada una si alguna falla.
 
 `GET /red/puntos`. Lee N4. Lista ciudades, intersecciones y estaciones.
@@ -16,7 +18,7 @@ Las bases se abrevian así: PG es PostgreSQL, MG es MongoDB y N4 es Neo4j. "Lee"
 
 `POST /red/tramos`, `PATCH /red/tramos`, `DELETE /red/tramos`. Escriben N4. Validan R2, R4, R5, R12, R14 y R15 antes de escribir.
 
-`GET /rutas` (C1). Lee N4. Ruta por tiempo, distancia o costo con restricciones de terracería y tiempo máximo. Si ninguna ruta cumple, responde 200 con `encontrada: false` y el motivo.
+`GET /rutas` (C1). Lee N4. Ruta por tiempo, distancia o costo con restricciones de terracería y tiempo máximo. Si ninguna ruta cumple, responde 200 con `encontrada: false` y el motivo. Neo4j propone hasta 250 rutas candidatas y se queda con la primera que cumple; si ninguna cumple (un cruce muy usado bloqueado), el backend corre Dijkstra sobre la red leída de Neo4j sin los puntos y tramos prohibidos.
 
 `GET /rutas/exploracion`. Lee N4 (la red completa y los puntos bloqueados) y calcula la ruta con Neo4j. Repite Dijkstra, normal o bidireccional, paso a paso con las mismas restricciones, regresa en orden cada punto resuelto y cada tramo revisado, y dice si llegó al mismo costo que Neo4j. Es lo que anima la interfaz.
 
@@ -56,6 +58,10 @@ Las bases se abrevian así: PG es PostgreSQL, MG es MongoDB y N4 es Neo4j. "Lee"
 
 `POST /envios/{id}/asignacion`. Requiere despachador o administrador. Bloquea el envío con `FOR UPDATE` antes que el vehículo, verifica que el envío esté Pendiente, que el vehículo esté Disponible y con capacidad suficiente, y que no haya asignaciones activas duplicadas. Crea la asignación, cambia estados y encola `ASIGNACION_CREADA`.
 
-`POST /envios/{id}/salida`, `POST /envios/{id}/entrega` y `POST /envios/{id}/cancelacion`. Requieren despachador o administrador. Salida: Asignado a En camino. Entrega: En camino a Entregado, cierra la asignación y libera el vehículo. Cancelación: solo desde Pendiente o Asignado, cierra la asignación, libera el vehículo y encola `ENVIO_CANCELADO`. Cualquier transición inválida responde 409.
+`POST /envios/{id}/salida`, `POST /envios/{id}/entrega` y `POST /envios/{id}/cancelacion`. Requieren despachador o administrador. Salida: Asignado a En camino. Entrega: En camino a Entregado, cierra la asignación, libera el vehículo y encola `ENVIO_ENTREGADO` con la placa; al aplicarlo, el procesador escribe la bitácora y deja el camión en la ciudad de destino en N4 (un tren no se mueve, solo puede estar en una estación). Cancelación: solo desde Pendiente o Asignado, cierra la asignación, libera el vehículo y encola `ENVIO_CANCELADO`. Cualquier transición inválida responde 409.
 
 `GET/POST /envios/{id}/manifiesto`. POST requiere despachador o administrador. Fastify valida la forma general con ejemplos para carga general, refrigerada y peligrosa; MongoDB aplica el `$jsonSchema` por tipo y un documento rechazado responde 400 con mensaje claro. `GET /envios/{id}/bitacora` devuelve los eventos ordenados por fecha; `GET /envios/{id}/datos-ruta` entrega el contrato a la otra parte.
+
+## Flujo integrado (los dos)
+
+`GET /envios/{id}/ruta`. Lee PG (origen, destino, peso, estado y vehículos Disponibles que aguantan el peso), MG (manifiesto: una carga peligrosa no usa terracería y una refrigerada tiene tiempo máximo) y N4 (ruta que cumple esas condiciones esquivando incidentes de gravedad Alta, y el vehículo candidato que llega antes al origen por carretera). Parámetro opcional `criterio` (`tiempo`, `distancia` o `costo`). Responde 200 con la ruta, el vehículo sugerido, los avisos de las tres partes y `fuentes` con lo que aportó cada base. Sin manifiesto calcula sin restricciones y lo avisa; si ninguna ruta cumple, `encontrada: false` con el motivo; un envío entregado o cancelado se puede consultar con aviso. 404 si el envío no existe o una ciudad no está en la red, 400 si el criterio no es válido. Prueba de punta a punta: `tests/e2e/ruta-envio.test.ts`.

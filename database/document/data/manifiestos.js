@@ -20,8 +20,8 @@ module.exports = {
       ],
       tempMinC: 2,
       tempMaxC: 8,
-      tiempoMaxMin: 360,
-      restriccionesRuta: { evitarTerraceria: false, tiempoMaxMin: 360 },
+      tiempoMaxMin: 480,
+      restriccionesRuta: { evitarTerraceria: false, tiempoMaxMin: 480 },
       creadoEn: new Date("2026-11-20T08:12:00-06:00"),
     },
     {

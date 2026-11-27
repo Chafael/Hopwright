@@ -81,10 +81,13 @@ export async function registrarEntrega(idEnvio: string) {
     if (envio.estado !== "En camino") throw new Conflicto("Solo se puede entregar un envío en camino");
     const asignacion = await desactivarAsignacionActiva(idEnvio, cliente);
     if (!asignacion) throw new Conflicto("El envío no tiene una asignación activa");
-    await cliente.query("UPDATE vehiculo SET estado = 'Disponible' WHERE placa = $1", [asignacion.placa]);
+    const { rows } = await cliente.query<{ tipo: string }>("UPDATE vehiculo SET estado = 'Disponible' WHERE placa = $1 RETURNING tipo", [asignacion.placa]);
     const actualizado = await cambiarEstadoEnvio(idEnvio, "Entregado", cliente);
     const fecha = new Date().toISOString();
-    await encolarEvento("ENVIO_ENTREGADO", { idEnvio, fecha }, cliente);
+    // El camión se queda en la ciudad de destino; el procesador de eventos lo mueve en Neo4j.
+    // Un tren no se mueve: solo puede estar en una estación (R11).
+    const moverA = rows[0]?.tipo === "Tren" ? null : envio.idCiudadDestino;
+    await encolarEvento("ENVIO_ENTREGADO", { idEnvio, fecha, placa: asignacion.placa, moverA }, cliente);
     return actualizado;
   });
 }
@@ -185,13 +188,16 @@ export async function obtenerDatosParaRuta(idEnvio: string) {
   if (!manifiesto) {
     avisos.push("El envío no tiene manifiesto");
   } else {
+    const tiempoMax = manifiesto.tipoCarga === "refrigerada" ? manifiesto.tiempoMaxMin ?? manifiesto.restriccionesRuta?.tiempoMaxMin : manifiesto.restriccionesRuta?.tiempoMaxMin;
     restricciones = {
       evitarTerraceria: Boolean(manifiesto.restriccionesRuta?.evitarTerraceria) || manifiesto.tipoCarga === "peligrosa",
-      tiempoMaxMin: manifiesto.tipoCarga === "refrigerada" ? Number(manifiesto.tiempoMaxMin ?? manifiesto.restriccionesRuta?.tiempoMaxMin) : manifiesto.restriccionesRuta?.tiempoMaxMin ?? null,
+      tiempoMaxMin: Number(tiempoMax) > 0 ? Number(tiempoMax) : null,
     };
   }
   return {
     idEnvio: envio.idEnvio,
+    estado: envio.estado,
+    tipoCarga: manifiesto?.tipoCarga ?? null,
     origen: envio.idCiudadOrigen,
     destino: envio.idCiudadDestino,
     pesoKg: envio.pesoKg,

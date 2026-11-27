@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { cambiarUbicacion, consultarUbicacion } from "../services/ubicacion.service.js";
-import { respuestasError } from "../schemas/comunes.js";
+import { conToken, respuestasError } from "../schemas/comunes.js";
 
 const esquemaPunto = {
   type: ["object", "null"],
@@ -32,7 +32,9 @@ export async function rutasUbicacion(app: FastifyInstance): Promise<void> {
   app.patch<{ Params: { placa: string }; Body: { idPunto: string } }>(
     "/vehiculos/:placa/ubicacion",
     {
+      preHandler: app.requiereRol("despachador", "administrador"),
       schema: {
+        security: conToken,
         tags: ["Vehículos"],
         summary: "Mueve un vehículo a otro punto de la red",
         description:
@@ -55,7 +57,7 @@ export async function rutasUbicacion(app: FastifyInstance): Promise<void> {
               avisos: { type: "array", items: { type: "string" } },
             },
           },
-          ...respuestasError(400, 404, 503),
+          ...respuestasError(401, 403, 400, 404, 503),
         },
       },
     },

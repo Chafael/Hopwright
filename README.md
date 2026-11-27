@@ -47,10 +47,10 @@ Para empezar desde cero (borra todos los datos): `docker compose down -v` y lueg
 
 ### Usuarios de prueba
 
-Las operaciones que cambian datos de envíos y flota piden un token. Se obtiene con `POST /auth/login` y en Swagger se pega en el botón "Authorize".
+Las consultas no piden sesión; todo lo que cambia datos pide un token. Se obtiene con `POST /auth/login` (en la interfaz, con "Iniciar sesión") y en Swagger se pega en el botón "Authorize".
 
-- Despachador: `despacho@hopwright.local`, contraseña `hopwright123`. Puede registrar envíos, asignarlos, marcar salida y entrega, y dar de alta clientes y conductores.
-- Administrador: `admin@hopwright.local`, contraseña `hopwright123`. Puede hacer lo mismo que el despachador y además dar de alta ciudades y vehículos y cambiar los datos de un vehículo.
+- Despachador: `despacho@hopwright.local`, contraseña `hopwright123`. Puede registrar envíos y su manifiesto, asignarlos, marcar salida, entrega o cancelación, dar de alta clientes y conductores, reportar y cerrar incidentes y mover vehículos en el mapa.
+- Administrador: `admin@hopwright.local`, contraseña `hopwright123`. Puede hacer lo mismo que el despachador y además dar de alta ciudades y vehículos, cambiar la red (intersecciones, estaciones y tramos), borrar clientes y conductores y sincronizar las bases.
 
 Son contraseñas solo para la demostración; el hash está en `database/relational/data/01_datos.sql`.
 

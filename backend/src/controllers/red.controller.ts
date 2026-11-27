@@ -3,7 +3,7 @@ import { calcularCiudadesAisladas } from "../services/rutas.service.js";
 import { altaEstacion, altaInterseccion, altaTramo, bajaInterseccion, bajaTramo, cambioTramo, type NuevoTramo } from "../services/red.service.js";
 import { listarPuntos } from "../repositories/graph/rutas.repository.js";
 import { mapaDeLaRed } from "../repositories/graph/mapa.repository.js";
-import { esquemaIdCiudad, respuestasError } from "../schemas/comunes.js";
+import { conToken, esquemaIdCiudad, respuestasError } from "../schemas/comunes.js";
 
 const esquemaPunto = {
   type: "object",
@@ -12,14 +12,15 @@ const esquemaPunto = {
 
 const tiposVia = ["Autopista", "Federal", "Estatal", "Terracería"];
 
-// Pendiente: cuando exista el login (tarea del compañero), las rutas que modifican la red
-// llevarán preHandler: requiereRol("administrador").
+// Las rutas que modifican la red son solo para el administrador.
 
 export async function rutasRed(app: FastifyInstance): Promise<void> {
   app.post<{ Body: { idInterseccion: string; nombre?: string; tipo: string; latitud: number; longitud: number } }>(
     "/red/intersecciones",
     {
+      preHandler: app.requiereRol("administrador"),
       schema: {
+        security: conToken,
         tags: ["Red"],
         summary: "Da de alta una intersección (cruce, glorieta o caseta)",
         body: {
@@ -34,7 +35,7 @@ export async function rutasRed(app: FastifyInstance): Promise<void> {
             longitud: { type: "number", minimum: -180, maximum: 180 },
           },
         },
-        response: { 201: esquemaPunto, ...respuestasError(400, 409, 503) },
+        response: { 201: esquemaPunto, ...respuestasError(401, 403, 400, 409, 503) },
       },
     },
     async (req, reply) => reply.code(201).send(await altaInterseccion(req.body)),
@@ -43,12 +44,14 @@ export async function rutasRed(app: FastifyInstance): Promise<void> {
   app.delete<{ Params: { id: string } }>(
     "/red/intersecciones/:id",
     {
+      preHandler: app.requiereRol("administrador"),
       schema: {
+        security: conToken,
         tags: ["Red"],
         summary: "Borra una intersección y sus tramos",
         description: "No se permite si tiene incidentes activos o si algún punto vecino se quedaría sin tramos.",
         params: { type: "object", properties: { id: { type: "string" } } },
-        response: { 204: { type: "null" }, ...respuestasError(404, 409, 503) },
+        response: { 204: { type: "null" }, ...respuestasError(401, 403, 404, 409, 503) },
       },
     },
     async (req, reply) => {
@@ -60,7 +63,9 @@ export async function rutasRed(app: FastifyInstance): Promise<void> {
   app.post<{ Body: { idEstacion: string; nombre: string; tipoServicio: string; idCiudad: string; tiempoCambioMin: number } }>(
     "/red/estaciones",
     {
+      preHandler: app.requiereRol("administrador"),
       schema: {
+        security: conToken,
         tags: ["Red"],
         summary: "Da de alta una estación de tren y la ciudad donde está",
         body: {
@@ -75,7 +80,7 @@ export async function rutasRed(app: FastifyInstance): Promise<void> {
             tiempoCambioMin: { type: "integer", minimum: 0, description: "Minutos para pasar la carga del camión al tren" },
           },
         },
-        response: { 201: esquemaPunto, ...respuestasError(400, 404, 409, 503) },
+        response: { 201: esquemaPunto, ...respuestasError(401, 403, 400, 404, 409, 503) },
       },
     },
     async (req, reply) => reply.code(201).send(await altaEstacion(req.body)),
@@ -84,7 +89,9 @@ export async function rutasRed(app: FastifyInstance): Promise<void> {
   app.post<{ Body: NuevoTramo }>(
     "/red/tramos",
     {
+      preHandler: app.requiereRol("administrador"),
       schema: {
+        security: conToken,
         tags: ["Red"],
         summary: "Da de alta un tramo de carretera o de vía de tren",
         description:
@@ -111,7 +118,7 @@ export async function rutasRed(app: FastifyInstance): Promise<void> {
             type: "object",
             properties: { creados: { type: "integer" }, desde: { type: "string" }, hasta: { type: "string" }, tipo: { type: "string" } },
           },
-          ...respuestasError(400, 404, 409, 503),
+          ...respuestasError(401, 403, 400, 404, 409, 503),
         },
       },
     },
@@ -134,7 +141,9 @@ export async function rutasRed(app: FastifyInstance): Promise<void> {
   }>(
     "/red/tramos",
     {
+      preHandler: app.requiereRol("administrador"),
       schema: {
+        security: conToken,
         tags: ["Red"],
         summary: "Cambia un tramo de carretera (por ejemplo, cerrarlo o corregir su tiempo)",
         querystring: {
@@ -168,7 +177,7 @@ export async function rutasRed(app: FastifyInstance): Promise<void> {
               },
             },
           },
-          ...respuestasError(400, 404, 503),
+          ...respuestasError(401, 403, 400, 404, 503),
         },
       },
     },
@@ -178,11 +187,13 @@ export async function rutasRed(app: FastifyInstance): Promise<void> {
   app.delete<{ Querystring: { desde: string; hasta: string; tipoVia: string } }>(
     "/red/tramos",
     {
+      preHandler: app.requiereRol("administrador"),
       schema: {
+        security: conToken,
         tags: ["Red"],
         summary: "Borra un tramo de carretera en los dos sentidos",
         querystring: consultaTramo,
-        response: { 200: { type: "object", properties: { borradas: { type: "integer" } } }, ...respuestasError(404, 503) },
+        response: { 200: { type: "object", properties: { borradas: { type: "integer" } } }, ...respuestasError(401, 403, 404, 503) },
       },
     },
     async (req) => bajaTramo(req.query.desde, req.query.hasta, req.query.tipoVia),
@@ -268,7 +279,7 @@ export async function rutasRed(app: FastifyInstance): Promise<void> {
           type: "object",
           required: ["punto"],
           properties: {
-            punto: { type: "string", minLength: 1, description: "idCiudad o idInterseccion que se cierra", examples: ["INT-OXC"] },
+            punto: { type: "string", minLength: 1, description: "idCiudad o idInterseccion que se cierra", examples: ["07089"] },
             destino: { ...esquemaIdCiudad, default: "07101" },
           },
         },

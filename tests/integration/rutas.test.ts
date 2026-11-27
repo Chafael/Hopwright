@@ -10,6 +10,7 @@ const SAN_CRISTOBAL = "07078";
 const ARRIAGA = "07009";
 const TAPACHULA = "07089";
 const COMITAN = "07019";
+const TOTOLAPA = "07098";
 
 let app: FastifyInstance;
 beforeAll(async () => {
@@ -27,26 +28,26 @@ describe("GET /rutas (C1)", () => {
     expect(res.statusCode).toBe(200);
     const r = res.json();
     expect(r.encontrada).toBe(true);
-    expect(nombres(r.ruta)).toEqual(["Tuxtla Gutiérrez", "Chiapa de Corzo", "Caseta Chiapa de Corzo", "San Cristóbal de las Casas"]);
-    expect(r.minutos).toBe(72);
-    expect(r.kilometros).toBe(60);
-    expect(r.costoCasetas).toBe(180);
+    expect(nombres(r.ruta)).toEqual(["Tuxtla Gutiérrez", "Caseta Chiapa de Corzo", "San Cristóbal de las Casas"]);
+    expect(r.minutos).toBe(73);
+    expect(r.kilometros).toBe(64.5);
+    expect(r.costoCasetas).toBe(230);
   });
 
   it("Tuxtla a San Cristóbal por costo usa la libre y no paga caseta", async () => {
     const r = (await app.inject({ url: `/rutas?origen=${TUXTLA}&destino=${SAN_CRISTOBAL}&criterio=costo` })).json();
     expect(r.costoCasetas).toBe(0);
-    expect(r.minutos).toBe(105);
-    expect(nombres(r.ruta)).not.toContain("Caseta Chiapa de Corzo");
+    expect(r.minutos).toBe(140);
+    expect(r.tramos.some((t: { tipoVia: string }) => t.tipoVia === "Autopista")).toBe(false);
   });
 
-  it("Tuxtla a Arriaga: la más rápida usa terracería; una carga peligrosa no", async () => {
-    const rapida = (await app.inject({ url: `/rutas?origen=${TUXTLA}&destino=${ARRIAGA}` })).json();
-    expect(rapida.minutos).toBe(193);
+  it("San Cristóbal a Totolapa: la más rápida usa terracería; una carga peligrosa no", async () => {
+    const rapida = (await app.inject({ url: `/rutas?origen=${SAN_CRISTOBAL}&destino=${TOTOLAPA}` })).json();
+    expect(rapida.minutos).toBe(80);
     expect(rapida.tramos.some((t: { tipoVia: string }) => t.tipoVia === "Terracería")).toBe(true);
 
-    const segura = (await app.inject({ url: `/rutas?origen=${TUXTLA}&destino=${ARRIAGA}&evitarTerraceria=true` })).json();
-    expect(segura.minutos).toBe(218);
+    const segura = (await app.inject({ url: `/rutas?origen=${SAN_CRISTOBAL}&destino=${TOTOLAPA}&evitarTerraceria=true` })).json();
+    expect(segura.minutos).toBe(108);
     expect(segura.tramos.some((t: { tipoVia: string }) => t.tipoVia === "Terracería")).toBe(false);
   });
 
@@ -64,15 +65,15 @@ describe("GET /rutas (C1)", () => {
 
   it("esquiva un punto con un incidente activo de gravedad Alta (R16)", async () => {
     await escribir(
-      `MATCH (p:Interseccion {idInterseccion: 'INT-CRU'})
+      `MATCH (p:Interseccion {idInterseccion: 'INT-CHC'})
        MERGE (i:Incidente {idIncidente: 'INC-PRUEBA'}) SET i.gravedad = 'Alta', i.activo = true
        MERGE (i)-[:BLOQUEA]->(p)`,
     );
     try {
-      const r = (await app.inject({ url: `/rutas?origen=${TUXTLA}&destino=${ARRIAGA}&evitarTerraceria=true` })).json();
+      const r = (await app.inject({ url: `/rutas?origen=${TUXTLA}&destino=${SAN_CRISTOBAL}` })).json();
       expect(r.encontrada).toBe(true);
-      expect(nombres(r.ruta)).not.toContain("Entronque Las Cruces");
-      expect(r.minutos).toBe(652); // rodea por San Cristóbal, Comitán, Motozintla y la costa
+      expect(nombres(r.ruta)).not.toContain("Caseta Chiapa de Corzo");
+      expect(r.minutos).toBe(176); // rodea por Chiapa de Corzo, Acala y Chiapilla
     } finally {
       await escribir(`MATCH (i:Incidente {idIncidente: 'INC-PRUEBA'}) DETACH DELETE i`);
     }
@@ -101,12 +102,12 @@ describe("GET /rutas/camion-tren (C2)", () => {
     const res = await app.inject({ url: `/rutas/camion-tren?origen=${TUXTLA}&destino=${TAPACHULA}&pesoKg=20000` });
     expect(res.statusCode).toBe(200);
     const r = res.json();
-    expect(r.soloCamion.minutos).toBe(438);
-    expect(r.soloCamion.costo).toBe(395 * 25); // 395 km sin casetas, a 25 pesos por km
+    expect(r.soloCamion.minutos).toBe(353);
+    expect(r.soloCamion.costo).toBe(10032.5); // 380.9 km a 25 pesos por km más 510 de casetas
     expect(r.camionTren.estacionSubida).toBe("Estación Arriaga");
     expect(r.camionTren.estacionBajada).toBe("Estación Tapachula");
-    expect(r.camionTren.costo).toBe(6260); // 140 km × 25 + 138 $/ton × 20 ton
-    expect(r.camionTren.minutos).toBe(683); // 193 camión + 340 tren + 150 de carga y descarga
+    expect(r.camionTren.costo).toBe(6557.5); // 131.5 km × 25 + 510 de casetas + 138 $/ton × 20 ton
+    expect(r.camionTren.minutos).toBe(612); // 122 camión + 340 tren + 150 de carga y descarga
     expect(r.masBarata).toBe("camion-tren");
     expect(r.masRapida).toBe("camion");
   });
@@ -118,27 +119,25 @@ describe("GET /rutas/camion-tren (C2)", () => {
 });
 
 describe("GET /red/ciudades-aisladas (C4)", () => {
-  it("si se cierra el entronque de Oxchuc, toda la Selva se queda sin camino a Tuxtla", async () => {
-    const r = (await app.inject({ url: "/red/ciudades-aisladas?punto=INT-OXC" })).json();
+  it("si se cierra Tapachula, los municipios de la frontera del Soconusco se quedan sin camino a Tuxtla", async () => {
+    const r = (await app.inject({ url: `/red/ciudades-aisladas?punto=${TAPACHULA}` })).json();
     expect(r.aisladas.map((c: { nombre: string }) => c.nombre)).toEqual([
-      "Altamirano",
-      "Catazajá",
-      "Chilón",
-      "Ocosingo",
-      "Palenque",
-      "Salto de Agua",
-      "Tila",
-      "Yajalón",
+      "Cacahoatán",
+      "Frontera Hidalgo",
+      "Metapa",
+      "Suchiate",
+      "Tuxtla Chico",
+      "Unión Juárez",
     ]);
   });
 
-  it("si se cierra el entronque de Bochil, se quedan sin camino las ciudades del norte", async () => {
-    const r = (await app.inject({ url: "/red/ciudades-aisladas?punto=INT-BOC" })).json();
-    expect(r.aisladas.map((c: { nombre: string }) => c.nombre)).toEqual(["Pichucalco", "Reforma", "Simojovel"]);
+  it("si se cierra Juárez, Reforma se queda sin camino", async () => {
+    const r = (await app.inject({ url: "/red/ciudades-aisladas?punto=07048" })).json();
+    expect(r.aisladas.map((c: { nombre: string }) => c.nombre)).toEqual(["Reforma"]);
   });
 
-  it("si se cierra Las Cruces nadie queda aislado, porque hay caminos alternos", async () => {
-    const r = (await app.inject({ url: "/red/ciudades-aisladas?punto=INT-CRU" })).json();
+  it("si se cierra el entronque de Oxchuc nadie queda aislado, porque hay caminos alternos", async () => {
+    const r = (await app.inject({ url: "/red/ciudades-aisladas?punto=INT-OXC" })).json();
     expect(r.aisladas).toEqual([]);
   });
 

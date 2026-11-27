@@ -51,7 +51,7 @@ describe("dijkstra paso a paso", () => {
 function redDeChiapas(bloqueados: string[] = []): RedExploracion {
   const cypher = readFileSync(fileURLToPath(new URL("../../database/graph/data/01_red_chiapas.cypher", import.meta.url)), "utf-8");
   const aristas: AristaRed[] = [];
-  const patron = /\{a: '([\w-]+)',\s*b: '([\w-]+)',\s*km: (\d+),\s*min: (\d+),(?:\s*minVuelta: (\d+),)?\s*caseta: (\d+),\s*via: '([^']+)'\}/g;
+  const patron = /\{a: '([\w-]+)',\s*b: '([\w-]+)',\s*km: ([\d.]+),\s*min: (\d+),(?:\s*minVuelta: (\d+),)?\s*caseta: (\d+),\s*via: '([^']+)'\}/g;
   for (const m of cypher.matchAll(patron)) {
     const [, a, b, km, min, minVuelta, caseta, via] = m;
     const base = { distanciaKm: Number(km), costoCaseta: Number(caseta), tipoVia: via, abierto: true };
@@ -62,24 +62,24 @@ function redDeChiapas(bloqueados: string[] = []): RedExploracion {
 }
 
 describe("sobre la red de Chiapas (mismos resultados que espera Neo4j en las pruebas de integración)", () => {
-  it("lee los 65 tramos de carretera", () => {
-    expect(redDeChiapas().aristas).toHaveLength(130);
+  it("lee los 333 tramos de carretera", () => {
+    expect(redDeChiapas().aristas).toHaveLength(666);
   });
 
-  it("Tuxtla a San Cristóbal: 72 minutos por tiempo y sin casetas por costo", () => {
-    expect(dijkstra(redDeChiapas(), "07101", "07078", "tiempo", false).minutos).toBe(72);
+  it("Tuxtla a San Cristóbal: 73 minutos por tiempo y sin casetas por costo", () => {
+    expect(dijkstra(redDeChiapas(), "07101", "07078", "tiempo", false).minutos).toBe(73);
     const barata = dijkstra(redDeChiapas(), "07101", "07078", "costo", false);
     expect(barata.costoCasetas).toBe(0);
-    expect(barata.minutos).toBe(105);
+    expect(barata.minutos).toBe(140);
   });
 
-  it("Tuxtla a Arriaga: 193 minutos por terracería y 218 evitándola", () => {
-    expect(dijkstra(redDeChiapas(), "07101", "07009", "tiempo", false).minutos).toBe(193);
-    expect(dijkstra(redDeChiapas(), "07101", "07009", "tiempo", true).minutos).toBe(218);
+  it("San Cristóbal a Totolapa: 80 minutos por terracería y 108 evitándola", () => {
+    expect(dijkstra(redDeChiapas(), "07078", "07098", "tiempo", false).minutos).toBe(80);
+    expect(dijkstra(redDeChiapas(), "07078", "07098", "tiempo", true).minutos).toBe(108);
   });
 
-  it("con Las Cruces bloqueado, el rodeo a Arriaga tarda 652 minutos", () => {
-    expect(dijkstra(redDeChiapas(["INT-CRU"]), "07101", "07009", "tiempo", true).minutos).toBe(652);
+  it("con la caseta de Chiapa de Corzo bloqueada, el rodeo a San Cristóbal tarda 176 minutos", () => {
+    expect(dijkstra(redDeChiapas(["INT-CHC"]), "07101", "07078", "tiempo", false).minutos).toBe(176);
   });
 
   it("el bidireccional da el mismo resultado en todos los pares y en general revisa menos puntos", () => {

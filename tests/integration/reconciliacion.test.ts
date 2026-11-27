@@ -6,6 +6,7 @@ import { construirApp } from "../../backend/src/server.js";
 import { mongoDb } from "../../backend/src/db/mongo.js";
 import { escribir } from "../../backend/src/db/neo4j.js";
 import { leerIncidenteEnGrafo } from "../../backend/src/repositories/graph/incidentes.repository.js";
+import { conAdmin } from "../token.js";
 
 const SIN_COPIAR = "INC-90001"; // está en MongoDB pero nunca llegó al grafo
 const HUERFANO = "INC-90002"; // está en el grafo pero no en MongoDB
@@ -49,8 +50,14 @@ afterAll(async () => {
 });
 
 describe("POST /admin/reconciliar", () => {
+  it("solo el administrador puede reconciliar: 401 sin sesión y 403 con un despachador", async () => {
+    expect((await app.inject({ method: "POST", url: "/admin/reconciliar" })).statusCode).toBe(401);
+    const despachador = { authorization: `Bearer ${app.jwt.sign({ idUsuario: 1, rol: "despachador", correo: "despacho@hopwright.local" })}` };
+    expect((await app.inject({ method: "POST", url: "/admin/reconciliar", headers: despachador })).statusCode).toBe(403);
+  });
+
   it("copia lo que falta, corrige lo distinto y borra lo que sobra", async () => {
-    const res = await app.inject({ method: "POST", url: "/admin/reconciliar" });
+    const res = await app.inject({ method: "POST", url: "/admin/reconciliar", headers: conAdmin(app) });
     expect(res.statusCode).toBe(200);
     const r = res.json();
 
@@ -64,13 +71,13 @@ describe("POST /admin/reconciliar", () => {
   });
 
   it("correrla otra vez no cambia nada", async () => {
-    const r = (await app.inject({ method: "POST", url: "/admin/reconciliar" })).json();
+    const r = (await app.inject({ method: "POST", url: "/admin/reconciliar", headers: conAdmin(app) })).json();
     expect(r.incidentes.copiados).toEqual([]);
     expect(r.incidentes.borradosDelGrafo).toEqual([]);
   });
 
   it("avisa si todavía no existen las tablas de PostgreSQL", async () => {
-    const r = (await app.inject({ method: "POST", url: "/admin/reconciliar" })).json();
+    const r = (await app.inject({ method: "POST", url: "/admin/reconciliar", headers: conAdmin(app) })).json();
     if (r.ciudades === null) expect(r.avisos).toEqual(expect.arrayContaining([expect.stringMatching(/tabla ciudad/)]));
     if (r.vehiculos === null) expect(r.avisos).toEqual(expect.arrayContaining([expect.stringMatching(/tabla vehiculo/)]));
   });

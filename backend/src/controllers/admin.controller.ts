@@ -1,16 +1,16 @@
 import type { FastifyInstance } from "fastify";
 import { reconciliar } from "../services/reconciliacion.service.js";
-import { respuestasError } from "../schemas/comunes.js";
+import { conToken, respuestasError } from "../schemas/comunes.js";
 
 const lista = { type: "array", items: { type: "string" } } as const;
-
-// Pendiente: cuando exista el login, llevará preHandler: requiereRol("administrador").
 
 export async function rutasAdmin(app: FastifyInstance): Promise<void> {
   app.post(
     "/admin/reconciliar",
     {
+      preHandler: app.requiereRol("administrador"),
       schema: {
+        security: conToken,
         tags: ["Administración"],
         summary: "Compara las réplicas del grafo contra su fuente de verdad y corrige las diferencias",
         description:
@@ -36,7 +36,7 @@ export async function rutasAdmin(app: FastifyInstance): Promise<void> {
               duracionMs: { type: "integer" },
             },
           },
-          ...respuestasError(503),
+          ...respuestasError(401, 403, 503),
         },
       },
     },

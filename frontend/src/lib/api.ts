@@ -14,7 +14,7 @@ export class ErrorApi extends Error {
   }
 }
 
-// Cuando exista el login, el token se guarda aquí y viaja en cada petición
+// El token de la sesión (lo guarda $lib/sesion.svelte al iniciar sesión) viaja en cada petición
 function token(): string | null {
   try {
     return localStorage.getItem("hopwright.token");
@@ -41,7 +41,11 @@ async function pedir<T>(metodo: string, ruta: string, cuerpo?: unknown): Promise
   const texto = await res.text();
   const datos = texto ? JSON.parse(texto) : null;
   if (!res.ok && !(res.status === 503 && ruta === "/health")) {
-    throw new ErrorApi(res.status, datos?.mensaje ?? `La API respondió ${res.status}`, datos?.detalles);
+    // Token vencido o inválido: se avisa para cerrar la sesión y pedir que entre de nuevo
+    if (res.status === 401 && t) window.dispatchEvent(new CustomEvent("hopwright:sesion-vencida"));
+    const mensaje =
+      res.status === 401 && ruta !== "/auth/login" ? "Necesitas iniciar sesión para hacer esto." : res.status === 403 ? "Tu usuario no tiene permiso para hacer esto." : (datos?.mensaje ?? `La API respondió ${res.status}`);
+    throw new ErrorApi(res.status, mensaje, datos?.detalles);
   }
   return { status: res.status, datos: datos as T };
 }
@@ -184,6 +188,60 @@ export type Reconciliacion = {
   duracionMs: number;
 };
 
+export type EstadoEnvio = "Pendiente" | "Asignado" | "En camino" | "Entregado" | "Cancelado";
+export type Envio = {
+  idEnvio: string;
+  idCliente: number;
+  idCiudadOrigen: string;
+  idCiudadDestino: string;
+  pesoKg: number;
+  prioridad: "Normal" | "Urgente";
+  estado: EstadoEnvio;
+  fechaSalida: string | null;
+  creadoEn: string;
+};
+export type NuevoEnvio = Omit<Envio, "estado" | "fechaSalida" | "creadoEn">;
+export type Cliente = { idCliente: number; razonSocial: string; rfc: string; telefono: string | null; correo: string | null };
+export type Ciudad = { idCiudad: string; nombre: string; estado: string };
+export type Vehiculo = { placa: string; tipo: "Camión" | "Tráiler" | "Tren"; capacidadKg: number; estado: string; idConductor: number | null };
+export type TipoCarga = "general" | "refrigerada" | "peligrosa";
+export type Articulo = { descripcion: string; cantidad: number; pesoKg: number };
+export type Manifiesto = {
+  idEnvio: string;
+  tipoCarga: TipoCarga;
+  articulos: Articulo[];
+  tempMinC?: number;
+  tempMaxC?: number;
+  tiempoMaxMin?: number;
+  claseUN?: number;
+  numeroONU?: string;
+  hojaSeguridad?: string;
+  telefonoEmergencia?: string;
+  restriccionesRuta?: { evitarTerraceria: boolean; tiempoMaxMin: number | null };
+  creadoEn: string;
+};
+export type Bitacora = { idEnvio: string; eventos: { tipo: string; fecha: string; detalle: Record<string, unknown> }[] };
+export type RutaEnvio = {
+  idEnvio: string;
+  estado: EstadoEnvio;
+  origen: string;
+  destino: string;
+  pesoKg: number;
+  tipoCarga: TipoCarga | null;
+  criterio: Criterio;
+  restricciones: { evitarTerraceria: boolean; tiempoMaxMin: number | null };
+  candidatos: string[];
+  encontrada: boolean;
+  ruta: Punto[];
+  tramos: TramoRuta[];
+  minutos: number;
+  kilometros: number;
+  costoCasetas: number;
+  vehiculoSugerido: { placa: string; minutosAlOrigen: number } | null;
+  avisos: string[];
+  fuentes: { postgresql: string; mongodb: string; neo4j: string };
+};
+
 // ---------- Llamadas ----------
 
 export const api = {
@@ -217,6 +275,24 @@ export const api = {
   moverVehiculo: async (placa: string, idPunto: string) => (await pedir<unknown>("PATCH", `/vehiculos/${encodeURIComponent(placa)}/ubicacion`, { idPunto })).datos,
 
   reconciliar: async () => (await pedir<Reconciliacion>("POST", "/admin/reconciliar")).datos,
+
+  login: async (correo: string, password: string) => (await pedir<{ token: string }>("POST", "/auth/login", { correo, password })).datos,
+
+  clientes: () => get<Cliente[]>("/clientes"),
+  ciudades: () => get<Ciudad[]>("/ciudades"),
+  vehiculos: () => get<Vehiculo[]>("/vehiculos"),
+
+  envios: (estado?: EstadoEnvio) => get<Envio[]>(`/envios${consulta({ estado })}`),
+  envio: (id: string) => get<Envio>(`/envios/${encodeURIComponent(id)}`),
+  registrarEnvio: async (cuerpo: NuevoEnvio) => (await pedir<Envio>("POST", "/envios", cuerpo)).datos,
+  manifiesto: (id: string) => get<Manifiesto>(`/envios/${encodeURIComponent(id)}/manifiesto`),
+  guardarManifiesto: async (id: string, cuerpo: Record<string, unknown>) => (await pedir<Manifiesto>("POST", `/envios/${encodeURIComponent(id)}/manifiesto`, cuerpo)).datos,
+  bitacora: (id: string) => get<Bitacora>(`/envios/${encodeURIComponent(id)}/bitacora`),
+  rutaEnvio: (id: string, criterio: Criterio) => get<RutaEnvio>(`/envios/${encodeURIComponent(id)}/ruta${consulta({ criterio })}`),
+  asignar: async (id: string, placa: string) => (await pedir<unknown>("POST", `/envios/${encodeURIComponent(id)}/asignacion`, { placa })).datos,
+  // Salida, entrega o cancelación: cambian el estado y regresan el envío actualizado
+  cambiarEstado: async (id: string, accion: "salida" | "entrega" | "cancelacion") =>
+    (await pedir<Envio>("POST", `/envios/${encodeURIComponent(id)}/${accion}`)).datos,
 };
 
 // ---------- Formato ----------

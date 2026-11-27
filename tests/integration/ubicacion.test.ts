@@ -2,6 +2,7 @@
 // Requiere los contenedores arriba: docker compose up -d
 import type { FastifyInstance } from "fastify";
 import { construirApp } from "../../backend/src/server.js";
+import { conAdmin } from "../token.js";
 
 const SAN_CRISTOBAL = "07078";
 const TEOPISCA = "07094";
@@ -12,11 +13,11 @@ beforeAll(async () => {
 });
 afterAll(async () => {
   // Deja el vehículo donde estaba para no afectar las otras pruebas
-  await app.inject({ method: "PATCH", url: "/vehiculos/CHP-1005/ubicacion", payload: { idPunto: SAN_CRISTOBAL } });
+  await app.inject({ method: "PATCH", url: "/vehiculos/CHP-1005/ubicacion", headers: conAdmin(app), payload: { idPunto: SAN_CRISTOBAL } });
   await app.close();
 });
 
-const mover = (placa: string, idPunto: string) => app.inject({ method: "PATCH", url: `/vehiculos/${placa}/ubicacion`, payload: { idPunto } });
+const mover = (placa: string, idPunto: string) => app.inject({ method: "PATCH", url: `/vehiculos/${placa}/ubicacion`, headers: conAdmin(app), payload: { idPunto } });
 
 describe("ubicación de vehículos", () => {
   it("consulta dónde está un vehículo", async () => {
@@ -53,8 +54,13 @@ describe("ubicación de vehículos", () => {
     expect((await app.inject({ url: "/vehiculos/XXX-0000/ubicacion" })).statusCode).toBe(404);
   });
 
+  it("401 sin sesión: mover un vehículo requiere despachador o administrador", async () => {
+    const res = await app.inject({ method: "PATCH", url: "/vehiculos/CHP-1005/ubicacion", payload: { idPunto: TEOPISCA } });
+    expect(res.statusCode).toBe(401);
+  });
+
   it("400 si falta el punto o la placa tiene un formato inválido", async () => {
-    expect((await app.inject({ method: "PATCH", url: "/vehiculos/CHP-1005/ubicacion", payload: {} })).statusCode).toBe(400);
+    expect((await app.inject({ method: "PATCH", url: "/vehiculos/CHP-1005/ubicacion", headers: conAdmin(app), payload: {} })).statusCode).toBe(400);
     expect((await app.inject({ url: "/vehiculos/chp%201005/ubicacion" })).statusCode).toBe(400);
   });
 });

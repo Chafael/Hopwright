@@ -7,9 +7,10 @@ import { construirApp } from "../../backend/src/server.js";
 import { mongoDb } from "../../backend/src/db/mongo.js";
 import { escribir } from "../../backend/src/db/neo4j.js";
 import { leerIncidenteEnGrafo } from "../../backend/src/repositories/graph/incidentes.repository.js";
+import { conAdmin } from "../token.js";
 
 const TUXTLA = "07101";
-const ARRIAGA = "07009";
+const SAN_CRISTOBAL = "07078";
 
 let app: FastifyInstance;
 const creados: string[] = [];
@@ -28,23 +29,22 @@ afterAll(async () => {
 
 const bloqueoAlta = {
   tipo: "Bloqueo",
-  idPunto: "INT-CRU",
+  idPunto: "INT-CHC",
   gravedad: "Alta",
-  descripcion: "Manifestación que cierra el Entronque Las Cruces en los dos sentidos",
+  descripcion: "Manifestación que cierra la caseta de Chiapa de Corzo en los dos sentidos",
   detalle: { causa: "Manifestación", carrilesCerrados: 2, pasoAlternado: false },
   evidencias: [{ tipo: "Testimonio", texto: "No dejan pasar ni a los de carga", autor: "Conductor de CHP-1004" }],
   reportadoPor: "Despacho Tuxtla",
 };
 
 const reportar = async (cuerpo: object) => {
-  const res = await app.inject({ method: "POST", url: "/incidentes", payload: cuerpo });
+  const res = await app.inject({ method: "POST", url: "/incidentes", headers: conAdmin(app), payload: cuerpo });
   const id = res.json().incidente?.idIncidente;
   if (id) creados.push(id);
   return res;
 };
 
-const minutosTuxtlaArriaga = async () =>
-  (await app.inject({ url: `/rutas?origen=${TUXTLA}&destino=${ARRIAGA}&evitarTerraceria=true` })).json().minutos;
+const minutosTuxtlaSanCristobal = async () => (await app.inject({ url: `/rutas?origen=${TUXTLA}&destino=${SAN_CRISTOBAL}` })).json().minutos;
 
 describe("consultar incidentes", () => {
   it("lista los reportes de ejemplo", async () => {
@@ -75,7 +75,7 @@ describe("consultar incidentes", () => {
 
 describe("reportar y cerrar un incidente", () => {
   it("un bloqueo de gravedad Alta queda en las dos bases y cambia la ruta", async () => {
-    expect(await minutosTuxtlaArriaga()).toBe(218);
+    expect(await minutosTuxtlaSanCristobal()).toBe(73);
 
     const res = await reportar(bloqueoAlta);
     expect(res.statusCode).toBe(201);
@@ -85,20 +85,20 @@ describe("reportar y cerrar un incidente", () => {
     expect(incidente.sincronizado).toBe(true);
 
     const enGrafo = await leerIncidenteEnGrafo(incidente.idIncidente);
-    expect(enGrafo).toEqual({ idIncidente: incidente.idIncidente, gravedad: "Alta", activo: true, idPunto: "INT-CRU" });
+    expect(enGrafo).toEqual({ idIncidente: incidente.idIncidente, gravedad: "Alta", activo: true, idPunto: "INT-CHC" });
 
-    // Con Las Cruces bloqueado, la ruta rodea por San Cristóbal, Comitán, Motozintla y la costa
-    expect(await minutosTuxtlaArriaga()).toBe(652);
+    // Con la caseta bloqueada, la ruta rodea por Chiapa de Corzo, Acala y Chiapilla
+    expect(await minutosTuxtlaSanCristobal()).toBe(176);
 
-    const cierre = await app.inject({ method: "PATCH", url: `/incidentes/${incidente.idIncidente}/cerrar`, payload: { motivoCierre: "Se retiraron los manifestantes" } });
+    const cierre = await app.inject({ method: "PATCH", url: `/incidentes/${incidente.idIncidente}/cerrar`, headers: conAdmin(app), payload: { motivoCierre: "Se retiraron los manifestantes" } });
     expect(cierre.statusCode).toBe(200);
     expect(cierre.json().incidente.activo).toBe(false);
     expect(cierre.json().incidente.fechaFin).toBeTruthy();
     expect((await leerIncidenteEnGrafo(incidente.idIncidente))?.activo).toBe(false);
-    expect(await minutosTuxtlaArriaga()).toBe(218);
+    expect(await minutosTuxtlaSanCristobal()).toBe(73);
 
     // Cerrarlo otra vez choca con su estado
-    expect((await app.inject({ method: "PATCH", url: `/incidentes/${incidente.idIncidente}/cerrar` })).statusCode).toBe(409);
+    expect((await app.inject({ method: "PATCH", url: `/incidentes/${incidente.idIncidente}/cerrar`, headers: conAdmin(app) })).statusCode).toBe(409);
   });
 
   it("dos reportes seguidos reciben números distintos", async () => {
@@ -112,6 +112,7 @@ describe("reportar y cerrar un incidente", () => {
     const res = await app.inject({
       method: "POST",
       url: `/incidentes/${incidente.idIncidente}/evidencias`,
+      headers: conAdmin(app),
       payload: { tipo: "Foto", url: "https://evidencias.hopwright.local/prueba.jpg", autor: "Prueba" },
     });
     expect(res.statusCode).toBe(201);
