@@ -1,0 +1,2467 @@
+{
+  "fecha": "2026-11-28T00:00:23.154Z",
+  "commit": "c2515d1",
+  "casos": [
+    {
+      "op": "OP-I05",
+      "id": "I05-N1",
+      "tipo": "normal",
+      "descripcion": "Las tres bases responden",
+      "solicitud": "GET /health",
+      "esperado": "200, estado ok en postgres, mongo y neo4j",
+      "obtenido": "200",
+      "extracto": {
+        "estado": "ok",
+        "bases": {
+          "postgres": {
+            "estado": "ok",
+            "ms": 13
+          },
+          "mongo": {
+            "estado": "ok",
+            "ms": 46
+          },
+          "neo4j": {
+            "estado": "ok",
+            "ms": 72
+          }
+        }
+      },
+      "ms": 134.3,
+      "cumple": true
+    },
+    {
+      "op": "OP-R01",
+      "id": "R01-N1",
+      "tipo": "normal",
+      "descripcion": "Despachador con credenciales correctas",
+      "solicitud": "POST /auth/login",
+      "cuerpo": {
+        "correo": "despacho@hopwright.local",
+        "password": "hopwright123"
+      },
+      "esperado": "200, regresa un token JWT",
+      "obtenido": "200",
+      "extracto": {
+        "token": "eyJhbGciOiJIUzI1NiIsInR5…"
+      },
+      "ms": 91.3,
+      "cumple": true
+    },
+    {
+      "op": "OP-R01",
+      "id": "R01-N2",
+      "tipo": "normal",
+      "descripcion": "Administrador con credenciales correctas",
+      "solicitud": "POST /auth/login",
+      "cuerpo": {
+        "correo": "admin@hopwright.local",
+        "password": "hopwright123"
+      },
+      "esperado": "200, regresa un token JWT",
+      "obtenido": "200",
+      "extracto": {
+        "token": "eyJhbGciOiJIUzI1NiIsInR5…"
+      },
+      "ms": 87.5,
+      "cumple": true
+    },
+    {
+      "op": "OP-R01",
+      "id": "R01-E1",
+      "tipo": "error",
+      "descripcion": "Contraseña incorrecta",
+      "solicitud": "POST /auth/login",
+      "cuerpo": {
+        "correo": "despacho@hopwright.local",
+        "password": "otra"
+      },
+      "esperado": "401",
+      "obtenido": "401",
+      "extracto": {
+        "error": "No autorizado",
+        "mensaje": "Correo o contraseña incorrectos",
+        "statusCode": 401
+      },
+      "ms": 81.8,
+      "cumple": true
+    },
+    {
+      "op": "OP-R01",
+      "id": "R01-E2",
+      "tipo": "error",
+      "descripcion": "Correo que no existe: mismo mensaje que la contraseña incorrecta",
+      "solicitud": "POST /auth/login",
+      "cuerpo": {
+        "correo": "nadie@hopwright.local",
+        "password": "hopwright123"
+      },
+      "esperado": "401, mismo mensaje que R01-E1",
+      "obtenido": "401",
+      "extracto": {
+        "error": "No autorizado",
+        "mensaje": "Correo o contraseña incorrectos",
+        "statusCode": 401
+      },
+      "ms": 3.8,
+      "cumple": true
+    },
+    {
+      "op": "OP-R01",
+      "id": "R01-E3",
+      "tipo": "error",
+      "descripcion": "Falta la contraseña",
+      "solicitud": "POST /auth/login",
+      "cuerpo": {
+        "correo": "despacho@hopwright.local"
+      },
+      "esperado": "400",
+      "obtenido": "400",
+      "extracto": {
+        "error": "Datos inválidos",
+        "mensaje": "body must have required property 'password'",
+        "statusCode": 400
+      },
+      "ms": 2.5,
+      "cumple": true
+    },
+    {
+      "op": "OP-R01",
+      "id": "R01-L1",
+      "tipo": "límite",
+      "descripcion": "Token válido de despachador en una operación solo de administrador",
+      "solicitud": "POST /ciudades",
+      "cuerpo": {
+        "idCiudad": "07908",
+        "nombre": "No se debe crear",
+        "estado": "Chiapas"
+      },
+      "esperado": "403",
+      "obtenido": "403",
+      "extracto": {
+        "error": "Prohibido",
+        "mensaje": "No tienes permisos para esta operación",
+        "statusCode": 403
+      },
+      "ms": 5.1,
+      "cumple": true
+    },
+    {
+      "op": "OP-R01",
+      "id": "R01-L2",
+      "tipo": "límite",
+      "descripcion": "Escritura sin token",
+      "solicitud": "POST /envios",
+      "cuerpo": {
+        "idEnvio": "E-7018278",
+        "idCliente": 1,
+        "idCiudadOrigen": "07101",
+        "idCiudadDestino": "07019",
+        "pesoKg": 10,
+        "prioridad": "Normal"
+      },
+      "esperado": "401",
+      "obtenido": "401",
+      "extracto": {
+        "error": "No autorizado",
+        "mensaje": "Token inválido o ausente",
+        "statusCode": 401
+      },
+      "ms": 3.2,
+      "cumple": true
+    },
+    {
+      "op": "OP-G01",
+      "id": "G01-N1",
+      "tipo": "normal",
+      "descripcion": "Tuxtla a San Cristóbal por tiempo",
+      "solicitud": "GET /rutas?origen=07101&destino=07078&criterio=tiempo",
+      "esperado": "200, 73 min por la autopista, 230 de casetas",
+      "obtenido": "200",
+      "extracto": {
+        "encontrada": true,
+        "ruta": [
+          "Tuxtla Gutiérrez",
+          "Caseta Chiapa de Corzo",
+          "San Cristóbal de las Casas"
+        ],
+        "minutos": 73,
+        "kilometros": 64.5,
+        "costoCasetas": 230,
+        "avisos": []
+      },
+      "ms": 79.7,
+      "cumple": true
+    },
+    {
+      "op": "OP-G01",
+      "id": "G01-N2",
+      "tipo": "normal",
+      "descripcion": "Mismo viaje por costo",
+      "solicitud": "GET /rutas?origen=07101&destino=07078&criterio=costo",
+      "esperado": "200, 0 de casetas por la libre, 140 min",
+      "obtenido": "200",
+      "extracto": {
+        "encontrada": true,
+        "ruta": [
+          "Tuxtla Gutiérrez",
+          "Caseta Chiapa de Corzo",
+          "Ixtapa",
+          "Zinacantán",
+          "San Cristóbal de las Casas"
+        ],
+        "minutos": 140,
+        "kilometros": 93.3,
+        "costoCasetas": 0,
+        "avisos": []
+      },
+      "ms": 65.8,
+      "cumple": true
+    },
+    {
+      "op": "OP-G01",
+      "id": "G01-L1",
+      "tipo": "límite",
+      "descripcion": "San Cristóbal a Totolapa sin terracería (la más rápida sí usa terracería)",
+      "solicitud": "GET /rutas?origen=07078&destino=07098&evitarTerraceria=true",
+      "esperado": "200, 108 min y ningún tramo de terracería",
+      "obtenido": "200",
+      "extracto": {
+        "encontrada": true,
+        "ruta": [
+          "San Cristóbal de las Casas",
+          "Chiapilla",
+          "Acala",
+          "Totolapa"
+        ],
+        "minutos": 108,
+        "kilometros": 64.3,
+        "costoCasetas": 0,
+        "avisos": []
+      },
+      "ms": 74.9,
+      "cumple": true
+    },
+    {
+      "op": "OP-G01",
+      "id": "G01-L2",
+      "tipo": "límite",
+      "descripcion": "Tiempo máximo que ninguna ruta cumple",
+      "solicitud": "GET /rutas?origen=07101&destino=07009&tiempoMaxMin=100",
+      "esperado": "200, encontrada: false con el motivo",
+      "obtenido": "200",
+      "extracto": {
+        "encontrada": false,
+        "ruta": [],
+        "minutos": 0,
+        "kilometros": 0,
+        "costoCasetas": 0,
+        "avisos": [
+          "No hay una ruta por carretera que cumpla las condiciones. Se pidió llegar en máximo 100 minutos. También se excluyen los tramos cerrados y los puntos con incidentes activos de gravedad Alta."
+        ]
+      },
+      "ms": 407,
+      "cumple": true
+    },
+    {
+      "op": "OP-G01",
+      "id": "G01-E1",
+      "tipo": "error",
+      "descripcion": "Ciudad que no existe en la red",
+      "solicitud": "GET /rutas?origen=07101&destino=07999",
+      "esperado": "404",
+      "obtenido": "404",
+      "extracto": {
+        "error": "No encontrado",
+        "mensaje": "La ciudad 07999 (destino) no existe en la red",
+        "statusCode": 404
+      },
+      "ms": 14.3,
+      "cumple": true
+    },
+    {
+      "op": "OP-G01",
+      "id": "G01-E2",
+      "tipo": "error",
+      "descripcion": "Origen igual al destino",
+      "solicitud": "GET /rutas?origen=07101&destino=07101",
+      "esperado": "400",
+      "obtenido": "400",
+      "extracto": {
+        "error": "Datos inválidos",
+        "mensaje": "El origen y el destino deben ser ciudades distintas",
+        "statusCode": 400
+      },
+      "ms": 1.1,
+      "cumple": true
+    },
+    {
+      "op": "OP-G01",
+      "id": "G01-E3",
+      "tipo": "error",
+      "descripcion": "Clave de ciudad con formato inválido",
+      "solicitud": "GET /rutas?origen=tuxtla&destino=07078",
+      "esperado": "400",
+      "obtenido": "400",
+      "extracto": {
+        "error": "Datos inválidos",
+        "mensaje": "querystring/origen must match pattern \"^[0-9]{5}$\"",
+        "statusCode": 400
+      },
+      "ms": 0.9,
+      "cumple": true
+    },
+    {
+      "op": "OP-G02",
+      "id": "G02-N1",
+      "tipo": "normal",
+      "descripcion": "Dijkstra paso a paso de Tuxtla a San Cristóbal",
+      "solicitud": "GET /rutas/exploracion?origen=07101&destino=07078",
+      "esperado": "200, coincide: true con Neo4j, 73 min",
+      "obtenido": "200",
+      "extracto": {
+        "algoritmo": "dijkstra",
+        "minutos": 73,
+        "coincide": true,
+        "neo4j": 73,
+        "pasos": 79,
+        "ruta": [
+          "07101",
+          "INT-CHC",
+          "07078"
+        ]
+      },
+      "ms": 68.6,
+      "cumple": true
+    },
+    {
+      "op": "OP-G02",
+      "id": "G02-L1",
+      "tipo": "límite",
+      "descripcion": "Búsqueda bidireccional de Tuxtla a Tapachula",
+      "solicitud": "GET /rutas/exploracion?origen=07101&destino=07089&algoritmo=bidireccional",
+      "esperado": "200, coincide: true",
+      "obtenido": "200",
+      "extracto": {
+        "algoritmo": "bidireccional",
+        "minutos": 353,
+        "coincide": true,
+        "neo4j": 353,
+        "pasos": 345,
+        "ruta": [
+          "07101",
+          "07061",
+          "07009",
+          "07097",
+          "07069",
+          "07071",
+          "07040",
+          "07089"
+        ]
+      },
+      "ms": 67.5,
+      "cumple": true
+    },
+    {
+      "op": "OP-G02",
+      "id": "G02-E1",
+      "tipo": "error",
+      "descripcion": "Algoritmo desconocido",
+      "solicitud": "GET /rutas/exploracion?origen=07101&destino=07078&algoritmo=a-estrella",
+      "esperado": "400",
+      "obtenido": "400",
+      "extracto": {
+        "error": "Datos inválidos",
+        "mensaje": "querystring/algoritmo must be equal to one of the allowed values",
+        "statusCode": 400
+      },
+      "ms": 0.9,
+      "cumple": true
+    },
+    {
+      "op": "OP-G03",
+      "id": "G03-N1",
+      "tipo": "normal",
+      "descripcion": "20 toneladas de Tuxtla a Tapachula",
+      "solicitud": "GET /rutas/camion-tren?origen=07101&destino=07089&pesoKg=20000",
+      "esperado": "200, el tren sale más barato y el camión más rápido",
+      "obtenido": "200",
+      "extracto": {
+        "soloCamion": {
+          "minutos": 353,
+          "costo": 10032.5
+        },
+        "camionTren": {
+          "minutos": 612,
+          "costo": 6557.5,
+          "subida": "Estación Arriaga",
+          "bajada": "Estación Tapachula"
+        },
+        "masBarata": "camion-tren",
+        "masRapida": "camion"
+      },
+      "ms": 571.8,
+      "cumple": true
+    },
+    {
+      "op": "OP-G03",
+      "id": "G03-L1",
+      "tipo": "límite",
+      "descripcion": "Peso de 0 kg",
+      "solicitud": "GET /rutas/camion-tren?origen=07101&destino=07089&pesoKg=0",
+      "esperado": "400",
+      "obtenido": "400",
+      "extracto": {
+        "error": "Datos inválidos",
+        "mensaje": "querystring/pesoKg must be > 0",
+        "statusCode": 400
+      },
+      "ms": 0.8,
+      "cumple": true
+    },
+    {
+      "op": "OP-G03",
+      "id": "G03-E1",
+      "tipo": "error",
+      "descripcion": "Destino que no existe en la red",
+      "solicitud": "GET /rutas/camion-tren?origen=07101&destino=07999&pesoKg=1000",
+      "esperado": "404",
+      "obtenido": "404",
+      "extracto": {
+        "error": "No encontrado",
+        "mensaje": "La ciudad 07999 (destino) no existe en la red",
+        "statusCode": 404
+      },
+      "ms": 9.5,
+      "cumple": true
+    },
+    {
+      "op": "OP-G04",
+      "id": "G04-N1",
+      "tipo": "normal",
+      "descripcion": "Se cierra Tapachula",
+      "solicitud": "GET /red/ciudades-aisladas?punto=07089",
+      "esperado": "200, 6 municipios del Soconusco sin camino a Tuxtla",
+      "obtenido": "200",
+      "extracto": {
+        "puntoCerrado": "Tapachula",
+        "aisladas": [
+          "Cacahoatán",
+          "Frontera Hidalgo",
+          "Metapa",
+          "Suchiate",
+          "Tuxtla Chico",
+          "Unión Juárez"
+        ]
+      },
+      "ms": 18.2,
+      "cumple": true
+    },
+    {
+      "op": "OP-G04",
+      "id": "G04-L1",
+      "tipo": "límite",
+      "descripcion": "Se cierra un entronque con caminos alternos",
+      "solicitud": "GET /red/ciudades-aisladas?punto=INT-OXC",
+      "esperado": "200, lista vacía",
+      "obtenido": "200",
+      "extracto": {
+        "puntoCerrado": {
+          "idPunto": "INT-OXC",
+          "nombre": "Entronque Oxchuc",
+          "tipo": "Interseccion"
+        },
+        "destino": {
+          "idPunto": "07101",
+          "nombre": "Tuxtla Gutiérrez",
+          "tipo": "Ciudad"
+        },
+        "aisladas": []
+      },
+      "ms": 17.7,
+      "cumple": true
+    },
+    {
+      "op": "OP-G04",
+      "id": "G04-E1",
+      "tipo": "error",
+      "descripcion": "Punto que no existe",
+      "solicitud": "GET /red/ciudades-aisladas?punto=INT-NOEXISTE",
+      "esperado": "404",
+      "obtenido": "404",
+      "extracto": {
+        "error": "No encontrado",
+        "mensaje": "El punto INT-NOEXISTE no existe en la red de carreteras",
+        "statusCode": 404
+      },
+      "ms": 6.8,
+      "cumple": true
+    },
+    {
+      "op": "OP-G05",
+      "id": "G05-N1",
+      "tipo": "normal",
+      "descripcion": "Todo lo que dibuja el mapa",
+      "solicitud": "GET /red/mapa",
+      "esperado": "200, 138 puntos con coordenadas",
+      "obtenido": "200",
+      "extracto": {
+        "puntos": 138,
+        "tramos": 337,
+        "incidentes": 1,
+        "vehiculos": 7
+      },
+      "ms": 59.4,
+      "cumple": true
+    },
+    {
+      "op": "OP-R02",
+      "id": "R02-N1",
+      "tipo": "normal",
+      "descripcion": "Cliente nuevo",
+      "solicitud": "POST /clientes",
+      "cuerpo": {
+        "razonSocial": "Cliente de prueba 018278",
+        "rfc": "PRU018278AB1",
+        "telefono": "9610000000",
+        "correo": "prueba@hopwright.local"
+      },
+      "esperado": "201",
+      "obtenido": "201",
+      "extracto": {
+        "idCliente": 11,
+        "razonSocial": "Cliente de prueba 018278",
+        "rfc": "PRU018278AB1",
+        "telefono": "9610000000",
+        "correo": "prueba@hopwright.local"
+      },
+      "ms": 8.9,
+      "cumple": true
+    },
+    {
+      "op": "OP-R02",
+      "id": "R02-L1",
+      "tipo": "límite",
+      "descripcion": "RFC de 5 caracteres (el mínimo) escrito en minúsculas",
+      "solicitud": "POST /clientes",
+      "cuerpo": {
+        "razonSocial": "Cliente corto 018278",
+        "rfc": "p8278"
+      },
+      "esperado": "201, se guarda en mayúsculas",
+      "obtenido": "201",
+      "extracto": {
+        "idCliente": 12,
+        "razonSocial": "Cliente corto 018278",
+        "rfc": "P8278",
+        "telefono": null,
+        "correo": null
+      },
+      "ms": 4.5,
+      "cumple": true
+    },
+    {
+      "op": "OP-R02",
+      "id": "R02-E1",
+      "tipo": "error",
+      "descripcion": "RFC repetido (escrito en minúsculas)",
+      "solicitud": "POST /clientes",
+      "cuerpo": {
+        "razonSocial": "Otro",
+        "rfc": "pru018278ab1"
+      },
+      "esperado": "409",
+      "obtenido": "409",
+      "extracto": {
+        "error": "Conflicto",
+        "mensaje": "Ya existe un cliente con ese RFC",
+        "statusCode": 409
+      },
+      "ms": 7.2,
+      "cumple": true
+    },
+    {
+      "op": "OP-R02",
+      "id": "R02-E2",
+      "tipo": "error",
+      "descripcion": "RFC de 4 caracteres",
+      "solicitud": "POST /clientes",
+      "cuerpo": {
+        "razonSocial": "Otro",
+        "rfc": "ABCD"
+      },
+      "esperado": "400",
+      "obtenido": "400",
+      "extracto": {
+        "error": "Datos inválidos",
+        "mensaje": "body/rfc must NOT have fewer than 5 characters",
+        "statusCode": 400
+      },
+      "ms": 1.6,
+      "cumple": true
+    },
+    {
+      "op": "OP-I03",
+      "id": "I03-N1",
+      "tipo": "normal",
+      "descripcion": "Ciudad nueva",
+      "solicitud": "POST /ciudades",
+      "cuerpo": {
+        "idCiudad": "07908",
+        "nombre": "Ciudad de prueba 018278",
+        "estado": "Chiapas"
+      },
+      "esperado": "201",
+      "obtenido": "201",
+      "extracto": {
+        "idCiudad": "07908",
+        "nombre": "Ciudad de prueba 018278",
+        "estado": "Chiapas"
+      },
+      "ms": 22.2,
+      "cumple": true
+    },
+    {
+      "op": "OP-I03",
+      "id": "I03-V1",
+      "tipo": "verificación",
+      "descripcion": "Antes de aplicar el evento la ciudad todavía no está en Neo4j",
+      "solicitud": "MATCH (c:Ciudad {idCiudad: '07908'})",
+      "esperado": "0 nodos y 1 evento pendiente",
+      "obtenido": "coincide",
+      "extracto": {
+        "nodosEnNeo4j": 0,
+        "eventos": [
+          {
+            "tipo": "CIUDAD_GUARDADA",
+            "estado": "pendiente"
+          }
+        ]
+      },
+      "ms": 43.4,
+      "cumple": true
+    },
+    {
+      "op": "OP-I03",
+      "id": "I03-V2",
+      "tipo": "verificación",
+      "descripcion": "Después del procesador de eventos la ciudad está en Neo4j con el mismo nombre",
+      "solicitud": "MATCH (c:Ciudad {idCiudad: '07908'})",
+      "esperado": "1 nodo y evento aplicado",
+      "obtenido": "coincide",
+      "extracto": {
+        "nodosEnNeo4j": [
+          {
+            "nombre": "Ciudad de prueba 018278"
+          }
+        ],
+        "eventos": [
+          {
+            "tipo": "CIUDAD_GUARDADA",
+            "estado": "aplicado"
+          }
+        ]
+      },
+      "ms": 5.1,
+      "cumple": true
+    },
+    {
+      "op": "OP-I03",
+      "id": "I03-L1",
+      "tipo": "límite",
+      "descripcion": "Clave INEGI de 4 dígitos",
+      "solicitud": "POST /ciudades",
+      "cuerpo": {
+        "idCiudad": "7101",
+        "nombre": "Tuxtla",
+        "estado": "Chiapas"
+      },
+      "esperado": "400",
+      "obtenido": "400",
+      "extracto": {
+        "error": "Datos inválidos",
+        "mensaje": "body/idCiudad must match pattern \"^[0-9]{5}$\"",
+        "statusCode": 400
+      },
+      "ms": 1.4,
+      "cumple": true
+    },
+    {
+      "op": "OP-I03",
+      "id": "I03-E1",
+      "tipo": "error",
+      "descripcion": "Ciudad que ya existe",
+      "solicitud": "POST /ciudades",
+      "cuerpo": {
+        "idCiudad": "07101",
+        "nombre": "Tuxtla Gutiérrez",
+        "estado": "Chiapas"
+      },
+      "esperado": "409",
+      "obtenido": "409",
+      "extracto": {
+        "error": "Conflicto",
+        "mensaje": "La ciudad 07101 ya existe",
+        "statusCode": 409
+      },
+      "ms": 3.4,
+      "cumple": true
+    },
+    {
+      "op": "OP-R03",
+      "id": "R03-N1",
+      "tipo": "normal",
+      "descripcion": "Camión de 9,000 kg",
+      "solicitud": "POST /vehiculos",
+      "cuerpo": {
+        "placa": "PRU-018278",
+        "tipo": "Camión",
+        "capacidadKg": 9000,
+        "estado": "Disponible"
+      },
+      "esperado": "201",
+      "obtenido": "201",
+      "extracto": {
+        "placa": "PRU-018278",
+        "tipo": "Camión",
+        "capacidadKg": 9000,
+        "estado": "Disponible",
+        "idConductor": null
+      },
+      "ms": 11.1,
+      "cumple": true
+    },
+    {
+      "op": "OP-R03",
+      "id": "R03-V1",
+      "tipo": "verificación",
+      "descripcion": "Antes de aplicar VEHICULO_GUARDADO el grafo no conoce la placa",
+      "solicitud": "GET /vehiculos/PRU-018278/ubicacion",
+      "esperado": "404",
+      "obtenido": "404",
+      "extracto": {
+        "error": "No encontrado",
+        "mensaje": "El vehículo PRU-018278 no existe en la red",
+        "statusCode": 404
+      },
+      "ms": 6.5,
+      "cumple": true
+    },
+    {
+      "op": "OP-R03",
+      "id": "R03-V2",
+      "tipo": "verificación",
+      "descripcion": "Después del procesador la placa ya está en Neo4j, todavía sin ubicación",
+      "solicitud": "GET /vehiculos/PRU-018278/ubicacion",
+      "esperado": "200, punto: null",
+      "obtenido": "200",
+      "extracto": {
+        "placa": "PRU-018278",
+        "punto": null,
+        "fechaHora": null
+      },
+      "ms": 5.6,
+      "cumple": true
+    },
+    {
+      "op": "OP-R03",
+      "id": "R03-L1",
+      "tipo": "límite",
+      "descripcion": "Capacidad de 0 kg",
+      "solicitud": "POST /vehiculos",
+      "cuerpo": {
+        "placa": "PRU-018278X",
+        "tipo": "Camión",
+        "capacidadKg": 0,
+        "estado": "Disponible"
+      },
+      "esperado": "400",
+      "obtenido": "400",
+      "extracto": {
+        "error": "Datos inválidos",
+        "mensaje": "body/capacidadKg must be > 0",
+        "statusCode": 400
+      },
+      "ms": 1.4,
+      "cumple": true
+    },
+    {
+      "op": "OP-R03",
+      "id": "R03-E1",
+      "tipo": "error",
+      "descripcion": "Placa repetida",
+      "solicitud": "POST /vehiculos",
+      "cuerpo": {
+        "placa": "CHP-1001",
+        "tipo": "Camión",
+        "capacidadKg": 8000,
+        "estado": "Disponible"
+      },
+      "esperado": "409",
+      "obtenido": "409",
+      "extracto": {
+        "error": "Conflicto",
+        "mensaje": "El vehículo CHP-1001 ya existe",
+        "statusCode": 409
+      },
+      "ms": 3.6,
+      "cumple": true
+    },
+    {
+      "op": "OP-R03",
+      "id": "R03-E2",
+      "tipo": "error",
+      "descripcion": "Tipo de vehículo que no existe",
+      "solicitud": "POST /vehiculos",
+      "cuerpo": {
+        "placa": "PRU-018278X",
+        "tipo": "Avión",
+        "capacidadKg": 1000,
+        "estado": "Disponible"
+      },
+      "esperado": "400",
+      "obtenido": "400",
+      "extracto": {
+        "error": "Datos inválidos",
+        "mensaje": "body/tipo must be equal to one of the allowed values",
+        "statusCode": 400
+      },
+      "ms": 1.2,
+      "cumple": true
+    },
+    {
+      "op": "OP-G06",
+      "id": "G06-N1",
+      "tipo": "normal",
+      "descripcion": "Poner el camión de prueba en Tuxtla",
+      "solicitud": "PATCH /vehiculos/PRU-018278/ubicacion",
+      "cuerpo": {
+        "idPunto": "07101"
+      },
+      "esperado": "200, actual: Tuxtla",
+      "obtenido": "200",
+      "extracto": {
+        "placa": "PRU-018278",
+        "anterior": null,
+        "actual": {
+          "idPunto": "07101",
+          "nombre": "Tuxtla Gutiérrez",
+          "tipo": "Ciudad"
+        },
+        "fechaHora": "2026-11-28T00:00:21.289Z",
+        "avisos": []
+      },
+      "ms": 19.3,
+      "cumple": true
+    },
+    {
+      "op": "OP-G06",
+      "id": "G06-N2",
+      "tipo": "normal",
+      "descripcion": "Consultar dónde está",
+      "solicitud": "GET /vehiculos/PRU-018278/ubicacion",
+      "esperado": "200",
+      "obtenido": "200",
+      "extracto": {
+        "placa": "PRU-018278",
+        "punto": {
+          "idPunto": "07101",
+          "nombre": "Tuxtla Gutiérrez",
+          "tipo": "Ciudad"
+        },
+        "fechaHora": "2026-11-28T00:00:21.289Z"
+      },
+      "ms": 6.3,
+      "cumple": true
+    },
+    {
+      "op": "OP-G06",
+      "id": "G06-L1",
+      "tipo": "límite",
+      "descripcion": "Un camión no puede quedar en una estación de tren (R11)",
+      "solicitud": "PATCH /vehiculos/PRU-018278/ubicacion",
+      "cuerpo": {
+        "idPunto": "EST-TAP"
+      },
+      "esperado": "400",
+      "obtenido": "400",
+      "extracto": {
+        "error": "Datos inválidos",
+        "mensaje": "Un vehículo de tipo Camión solo puede estar en una ciudad o intersección (R11)",
+        "statusCode": 400
+      },
+      "ms": 6.9,
+      "cumple": true
+    },
+    {
+      "op": "OP-G06",
+      "id": "G06-E1",
+      "tipo": "error",
+      "descripcion": "Vehículo que no existe",
+      "solicitud": "PATCH /vehiculos/XXX-0000/ubicacion",
+      "cuerpo": {
+        "idPunto": "07101"
+      },
+      "esperado": "404",
+      "obtenido": "404",
+      "extracto": {
+        "error": "No encontrado",
+        "mensaje": "El vehículo XXX-0000 no existe en la red",
+        "statusCode": 404
+      },
+      "ms": 6.3,
+      "cumple": true
+    },
+    {
+      "op": "OP-G06",
+      "id": "G06-E2",
+      "tipo": "error",
+      "descripcion": "Sin token",
+      "solicitud": "PATCH /vehiculos/PRU-018278/ubicacion",
+      "cuerpo": {
+        "idPunto": "07101"
+      },
+      "esperado": "401",
+      "obtenido": "401",
+      "extracto": {
+        "error": "No autorizado",
+        "mensaje": "Token inválido o ausente",
+        "statusCode": 401
+      },
+      "ms": 1.2,
+      "cumple": true
+    },
+    {
+      "op": "OP-R04",
+      "id": "R04-N1",
+      "tipo": "normal",
+      "descripcion": "Envío de 9,000 kg de Tuxtla a Comitán",
+      "solicitud": "POST /envios",
+      "cuerpo": {
+        "idEnvio": "E-7018278",
+        "idCliente": 11,
+        "idCiudadOrigen": "07101",
+        "idCiudadDestino": "07019",
+        "pesoKg": 9000,
+        "prioridad": "Urgente"
+      },
+      "esperado": "201, estado Pendiente",
+      "obtenido": "201",
+      "extracto": {
+        "idEnvio": "E-7018278",
+        "idCliente": 11,
+        "idCiudadOrigen": "07101",
+        "idCiudadDestino": "07019",
+        "pesoKg": 9000,
+        "prioridad": "Urgente",
+        "estado": "Pendiente",
+        "fechaSalida": null,
+        "creadoEn": "2026-11-28T00:00:21.324Z"
+      },
+      "ms": 23.3,
+      "cumple": true
+    },
+    {
+      "op": "OP-R04",
+      "id": "R04-L1",
+      "tipo": "límite",
+      "descripcion": "Origen igual al destino",
+      "solicitud": "POST /envios",
+      "cuerpo": {
+        "idEnvio": "E-6018278",
+        "idCliente": 11,
+        "idCiudadOrigen": "07101",
+        "idCiudadDestino": "07101",
+        "pesoKg": 10,
+        "prioridad": "Normal"
+      },
+      "esperado": "400",
+      "obtenido": "400",
+      "extracto": {
+        "error": "Datos inválidos",
+        "mensaje": "El origen y destino deben ser distintos",
+        "statusCode": 400
+      },
+      "ms": 1.2,
+      "cumple": true
+    },
+    {
+      "op": "OP-R04",
+      "id": "R04-L2",
+      "tipo": "límite",
+      "descripcion": "Peso de 0 kg",
+      "solicitud": "POST /envios",
+      "cuerpo": {
+        "idEnvio": "E-6018278",
+        "idCliente": 11,
+        "idCiudadOrigen": "07101",
+        "idCiudadDestino": "07019",
+        "pesoKg": 0,
+        "prioridad": "Normal"
+      },
+      "esperado": "400",
+      "obtenido": "400",
+      "extracto": {
+        "error": "Datos inválidos",
+        "mensaje": "body/pesoKg must be > 0",
+        "statusCode": 400
+      },
+      "ms": 1.1,
+      "cumple": true
+    },
+    {
+      "op": "OP-R04",
+      "id": "R04-E1",
+      "tipo": "error",
+      "descripcion": "Cliente que no existe",
+      "solicitud": "POST /envios",
+      "cuerpo": {
+        "idEnvio": "E-6018278",
+        "idCliente": 999999,
+        "idCiudadOrigen": "07101",
+        "idCiudadDestino": "07019",
+        "pesoKg": 10,
+        "prioridad": "Normal"
+      },
+      "esperado": "400",
+      "obtenido": "400",
+      "extracto": {
+        "error": "Datos inválidos",
+        "mensaje": "El cliente indicado no existe",
+        "statusCode": 400
+      },
+      "ms": 3.3,
+      "cumple": true
+    },
+    {
+      "op": "OP-R04",
+      "id": "R04-E2",
+      "tipo": "error",
+      "descripcion": "Identificador repetido",
+      "solicitud": "POST /envios",
+      "cuerpo": {
+        "idEnvio": "E-7018278",
+        "idCliente": 11,
+        "idCiudadOrigen": "07101",
+        "idCiudadDestino": "07019",
+        "pesoKg": 10,
+        "prioridad": "Normal"
+      },
+      "esperado": "409",
+      "obtenido": "409",
+      "extracto": {
+        "error": "Conflicto",
+        "mensaje": "El envío E-7018278 ya existe",
+        "statusCode": 409
+      },
+      "ms": 6.1,
+      "cumple": true
+    },
+    {
+      "op": "OP-R04",
+      "id": "R04-E3",
+      "tipo": "error",
+      "descripcion": "Identificador sin el formato E-número",
+      "solicitud": "POST /envios",
+      "cuerpo": {
+        "idEnvio": "ENVIO-1",
+        "idCliente": 11,
+        "idCiudadOrigen": "07101",
+        "idCiudadDestino": "07019",
+        "pesoKg": 10,
+        "prioridad": "Normal"
+      },
+      "esperado": "400",
+      "obtenido": "400",
+      "extracto": {
+        "error": "Datos inválidos",
+        "mensaje": "body/idEnvio must match pattern \"^E-[0-9]+$\"",
+        "statusCode": 400
+      },
+      "ms": 1.6,
+      "cumple": true
+    },
+    {
+      "op": "OP-D01",
+      "id": "D01-L1",
+      "tipo": "límite",
+      "descripcion": "Clase UN 10 (el rango es de 1 a 9)",
+      "solicitud": "POST /envios/E-7018278/manifiesto",
+      "cuerpo": {
+        "tipoCarga": "peligrosa",
+        "articulos": [
+          {
+            "descripcion": "Solvente industrial",
+            "cantidad": 40,
+            "pesoKg": 200
+          },
+          {
+            "descripcion": "Pintura base aceite",
+            "cantidad": 30,
+            "pesoKg": 100
+          }
+        ],
+        "claseUN": 10,
+        "numeroONU": "UN1263",
+        "hojaSeguridad": "https://docs.hopwright.local/hs-solvente.pdf",
+        "telefonoEmergencia": "9615550000"
+      },
+      "esperado": "400",
+      "obtenido": "400",
+      "extracto": {
+        "error": "Datos inválidos",
+        "mensaje": "body/claseUN must be <= 9",
+        "statusCode": 400
+      },
+      "ms": 1.6,
+      "cumple": true
+    },
+    {
+      "op": "OP-D01",
+      "id": "D01-E1",
+      "tipo": "error",
+      "descripcion": "Carga peligrosa sin número ONU",
+      "solicitud": "POST /envios/E-7018278/manifiesto",
+      "cuerpo": {
+        "tipoCarga": "peligrosa",
+        "articulos": [
+          {
+            "descripcion": "Solvente industrial",
+            "cantidad": 40,
+            "pesoKg": 200
+          },
+          {
+            "descripcion": "Pintura base aceite",
+            "cantidad": 30,
+            "pesoKg": 100
+          }
+        ],
+        "claseUN": 3,
+        "hojaSeguridad": "https://docs.hopwright.local/hs-solvente.pdf",
+        "telefonoEmergencia": "9615550000"
+      },
+      "esperado": "400",
+      "obtenido": "400",
+      "extracto": {
+        "error": "Datos inválidos",
+        "mensaje": "La carga peligrosa requiere claseUN (1-9), numeroONU, hojaSeguridad y telefonoEmergencia",
+        "statusCode": 400
+      },
+      "ms": 14.3,
+      "cumple": true
+    },
+    {
+      "op": "OP-D01",
+      "id": "D01-E2",
+      "tipo": "error",
+      "descripcion": "Envío que no existe en PostgreSQL",
+      "solicitud": "POST /envios/E-999999/manifiesto",
+      "cuerpo": {
+        "tipoCarga": "peligrosa",
+        "articulos": [
+          {
+            "descripcion": "Solvente industrial",
+            "cantidad": 40,
+            "pesoKg": 200
+          },
+          {
+            "descripcion": "Pintura base aceite",
+            "cantidad": 30,
+            "pesoKg": 100
+          }
+        ],
+        "claseUN": 3,
+        "numeroONU": "UN1263",
+        "hojaSeguridad": "https://docs.hopwright.local/hs-solvente.pdf",
+        "telefonoEmergencia": "9615550000"
+      },
+      "esperado": "404",
+      "obtenido": "404",
+      "extracto": {
+        "error": "No encontrado",
+        "mensaje": "El envío E-999999 no existe",
+        "statusCode": 404
+      },
+      "ms": 3.7,
+      "cumple": true
+    },
+    {
+      "op": "OP-D01",
+      "id": "D01-N1",
+      "tipo": "normal",
+      "descripcion": "Manifiesto de carga peligrosa clase 3",
+      "solicitud": "POST /envios/E-7018278/manifiesto",
+      "cuerpo": {
+        "tipoCarga": "peligrosa",
+        "articulos": [
+          {
+            "descripcion": "Solvente industrial",
+            "cantidad": 40,
+            "pesoKg": 200
+          },
+          {
+            "descripcion": "Pintura base aceite",
+            "cantidad": 30,
+            "pesoKg": 100
+          }
+        ],
+        "claseUN": 3,
+        "numeroONU": "UN1263",
+        "hojaSeguridad": "https://docs.hopwright.local/hs-solvente.pdf",
+        "telefonoEmergencia": "9615550000"
+      },
+      "esperado": "201",
+      "obtenido": "201",
+      "extracto": {
+        "idEnvio": "E-7018278",
+        "tipoCarga": "peligrosa",
+        "articulos": [
+          {
+            "descripcion": "Solvente industrial",
+            "cantidad": 40,
+            "pesoKg": 200
+          },
+          {
+            "descripcion": "Pintura base aceite",
+            "cantidad": 30,
+            "pesoKg": 100
+          }
+        ],
+        "creadoEn": "2026-11-28T00:00:21.389Z",
+        "claseUN": 3,
+        "numeroONU": "UN1263",
+        "hojaSeguridad": "https://docs.hopwright.local/hs-solvente.pdf",
+        "telefonoEmergencia": "9615550000",
+        "restriccionesRuta": {
+          "evitarTerraceria": true,
+          "tiempoMaxMin": null
+        }
+      },
+      "ms": 22.6,
+      "cumple": true
+    },
+    {
+      "op": "OP-D01",
+      "id": "D01-E3",
+      "tipo": "error",
+      "descripcion": "Segundo manifiesto para el mismo envío",
+      "solicitud": "POST /envios/E-7018278/manifiesto",
+      "cuerpo": {
+        "tipoCarga": "peligrosa",
+        "articulos": [
+          {
+            "descripcion": "Solvente industrial",
+            "cantidad": 40,
+            "pesoKg": 200
+          },
+          {
+            "descripcion": "Pintura base aceite",
+            "cantidad": 30,
+            "pesoKg": 100
+          }
+        ],
+        "claseUN": 3,
+        "numeroONU": "UN1263",
+        "hojaSeguridad": "https://docs.hopwright.local/hs-solvente.pdf",
+        "telefonoEmergencia": "9615550000"
+      },
+      "esperado": "409",
+      "obtenido": "409",
+      "extracto": {
+        "error": "Conflicto",
+        "mensaje": "El envío E-7018278 ya tiene manifiesto",
+        "statusCode": 409
+      },
+      "ms": 6,
+      "cumple": true
+    },
+    {
+      "op": "OP-D01",
+      "id": "D01-V1",
+      "tipo": "verificación",
+      "descripcion": "El validador $jsonSchema de MongoDB rechaza un manifiesto inválido aunque no pase por la API",
+      "solicitud": "db.manifiestos.insertOne({ idEnvio, tipoCarga: 'peligrosa', articulos: [] })",
+      "esperado": "error 121 (Document failed validation)",
+      "obtenido": "coincide",
+      "extracto": {
+        "code": 121,
+        "mensaje": "Document failed validation"
+      },
+      "ms": 7,
+      "cumple": true
+    },
+    {
+      "op": "OP-D02",
+      "id": "D02-N1",
+      "tipo": "normal",
+      "descripcion": "Manifiesto recién guardado",
+      "solicitud": "GET /envios/E-7018278/manifiesto",
+      "esperado": "200",
+      "obtenido": "200",
+      "extracto": {
+        "idEnvio": "E-7018278",
+        "tipoCarga": "peligrosa",
+        "articulos": [
+          {
+            "descripcion": "Solvente industrial",
+            "cantidad": 40,
+            "pesoKg": 200
+          },
+          {
+            "descripcion": "Pintura base aceite",
+            "cantidad": 30,
+            "pesoKg": 100
+          }
+        ],
+        "creadoEn": "2026-11-28T00:00:21.389Z",
+        "claseUN": 3,
+        "numeroONU": "UN1263",
+        "hojaSeguridad": "https://docs.hopwright.local/hs-solvente.pdf",
+        "telefonoEmergencia": "9615550000",
+        "restriccionesRuta": {
+          "evitarTerraceria": true,
+          "tiempoMaxMin": null
+        }
+      },
+      "ms": 4.7,
+      "cumple": true
+    },
+    {
+      "op": "OP-D02",
+      "id": "D02-L1",
+      "tipo": "límite",
+      "descripcion": "Envío que existe pero no tiene manifiesto (E-105)",
+      "solicitud": "GET /envios/E-105/manifiesto",
+      "esperado": "404",
+      "obtenido": "404",
+      "extracto": {
+        "error": "No encontrado",
+        "mensaje": "El envío E-105 no tiene manifiesto",
+        "statusCode": 404
+      },
+      "ms": 4.5,
+      "cumple": true
+    },
+    {
+      "op": "OP-D02",
+      "id": "D02-E1",
+      "tipo": "error",
+      "descripcion": "Envío que no existe",
+      "solicitud": "GET /envios/E-999999/manifiesto",
+      "esperado": "404",
+      "obtenido": "404",
+      "extracto": {
+        "error": "No encontrado",
+        "mensaje": "El envío E-999999 no existe",
+        "statusCode": 404
+      },
+      "ms": 2,
+      "cumple": true
+    },
+    {
+      "op": "OP-I01",
+      "id": "I01-N1",
+      "tipo": "normal",
+      "descripcion": "E-103: carga peligrosa de Tuxtla a Comitán",
+      "solicitud": "GET /envios/E-103/ruta",
+      "esperado": "200, evita terracería y sugiere un vehículo que aguanta 3,000 kg",
+      "obtenido": "200",
+      "extracto": "{\"tipoCarga\":\"peligrosa\",\"restricciones\":{\"evitarTerraceria\":true,\"tiempoMaxMin\":null},\"candidatos\":[\"CHP-1006\",\"PRU-018278\",\"CHP-1002\",\"TREN-01\"],\"encontrada\":true,\"ruta\":[\"Tuxtla Gutiérrez\",\"Caseta Chiapa de Corzo\",\"San Cristóbal de las Casas\",\"Teopisca\",\"Amatenango del Valle\",\"Entronque Amatenango\",\"Comitán de Domínguez\"],\"minutos\":173,\"kilometros\":152.3,\"costoCasetas\":230,\"vehiculoSugerido\":{\"placa\":\"PRU-018278\",\"minutosAlOrigen\":0},\"avisos\":[\"La ruta pasa por Teopisca, donde hay un incidente activo de gravedad Media (INC-0001)\"],\"fuentes\":{\"postgresql\":\"origen, destino, peso, estado y vehículos candidatos\",\"mongodb\":\"manifiesto (peligrosa)\",\"neo4j\":\"ruta, incidentes en el camino y ubica …",
+      "ms": 127.2,
+      "cumple": true
+    },
+    {
+      "op": "OP-I01",
+      "id": "I01-N2",
+      "tipo": "normal",
+      "descripcion": "El envío de prueba: el camión que acaba de llegar a Tuxtla es candidato y está en el origen",
+      "solicitud": "GET /envios/E-7018278/ruta",
+      "esperado": "200, candidatos incluye PRU-018278; el sugerido está a 0 min del origen",
+      "obtenido": "200",
+      "extracto": "{\"tipoCarga\":\"peligrosa\",\"restricciones\":{\"evitarTerraceria\":true,\"tiempoMaxMin\":null},\"candidatos\":[\"PRU-018278\",\"CHP-1002\",\"TREN-01\"],\"encontrada\":true,\"ruta\":[\"Tuxtla Gutiérrez\",\"Caseta Chiapa de Corzo\",\"San Cristóbal de las Casas\",\"Teopisca\",\"Amatenango del Valle\",\"Entronque Amatenango\",\"Comitán de Domínguez\"],\"minutos\":173,\"kilometros\":152.3,\"costoCasetas\":230,\"vehiculoSugerido\":{\"placa\":\"PRU-018278\",\"minutosAlOrigen\":0},\"avisos\":[\"La ruta pasa por Teopisca, donde hay un incidente activo de gravedad Media (INC-0001)\"],\"fuentes\":{\"postgresql\":\"origen, destino, peso, estado y vehículos candidatos\",\"mongodb\":\"manifiesto (peligrosa)\",\"neo4j\":\"ruta, incidentes en el camino y ubicación de los …",
+      "ms": 73.9,
+      "cumple": true
+    },
+    {
+      "op": "OP-I01",
+      "id": "I01-L1",
+      "tipo": "límite",
+      "descripcion": "Envío ya entregado (E-105): se puede consultar con aviso",
+      "solicitud": "GET /envios/E-105/ruta",
+      "esperado": "200",
+      "obtenido": "200",
+      "extracto": {
+        "tipoCarga": null,
+        "restricciones": {
+          "evitarTerraceria": false,
+          "tiempoMaxMin": null
+        },
+        "candidatos": [
+          "CHP-1006",
+          "PRU-018278",
+          "CHP-1002",
+          "TREN-01"
+        ],
+        "encontrada": true,
+        "ruta": [
+          "Palenque",
+          "Ocosingo",
+          "Oxchuc",
+          "Huixtán",
+          "San Cristóbal de las Casas",
+          "Caseta Chiapa de Corzo",
+          "Tuxtla Gutiérrez"
+        ],
+        "minutos": 312,
+        "kilometros": 277,
+        "costoCasetas": 230,
+        "vehiculoSugerido": {
+          "placa": "CHP-1006",
+          "minutosAlOrigen": 311
+        },
+        "avisos": [
+          "El envío no tiene manifiesto",
+          "El envío está entregado; la ruta es solo de consulta"
+        ],
+        "fuentes": {
+          "postgresql": "origen, destino, peso, estado y vehículos candidatos",
+          "mongodb": "sin manifiesto",
+          "neo4j": "ruta, incidentes en el camino y ubicación de los vehículos"
+        }
+      },
+      "ms": 212.9,
+      "cumple": true
+    },
+    {
+      "op": "OP-I01",
+      "id": "I01-E1",
+      "tipo": "error",
+      "descripcion": "Envío que no existe",
+      "solicitud": "GET /envios/E-999999/ruta",
+      "esperado": "404",
+      "obtenido": "404",
+      "extracto": {
+        "error": "No encontrado",
+        "mensaje": "El envío E-999999 no existe",
+        "statusCode": 404
+      },
+      "ms": 2.1,
+      "cumple": true
+    },
+    {
+      "op": "OP-I01",
+      "id": "I01-E2",
+      "tipo": "error",
+      "descripcion": "Criterio inválido",
+      "solicitud": "GET /envios/E-103/ruta?criterio=barata",
+      "esperado": "400",
+      "obtenido": "400",
+      "extracto": {
+        "error": "Datos inválidos",
+        "mensaje": "querystring/criterio must be equal to one of the allowed values",
+        "statusCode": 400
+      },
+      "ms": 0.7,
+      "cumple": true
+    },
+    {
+      "op": "OP-R05",
+      "id": "R05-E1",
+      "tipo": "error",
+      "descripcion": "Vehículo disponible pero de 8,000 kg para un envío de 9,000 kg",
+      "solicitud": "POST /envios/E-7018278/asignacion",
+      "cuerpo": {
+        "placa": "CHP-1006"
+      },
+      "esperado": "409",
+      "obtenido": "409",
+      "extracto": {
+        "error": "Conflicto",
+        "mensaje": "El vehículo no tiene capacidad suficiente",
+        "statusCode": 409
+      },
+      "ms": 4.8,
+      "cumple": true
+    },
+    {
+      "op": "OP-R05",
+      "id": "R05-E2",
+      "tipo": "error",
+      "descripcion": "Vehículo en taller",
+      "solicitud": "POST /envios/E-7018278/asignacion",
+      "cuerpo": {
+        "placa": "CHP-1004"
+      },
+      "esperado": "409",
+      "obtenido": "409",
+      "extracto": {
+        "error": "Conflicto",
+        "mensaje": "El vehículo no está disponible",
+        "statusCode": 409
+      },
+      "ms": 5.1,
+      "cumple": true
+    },
+    {
+      "op": "OP-R05",
+      "id": "R05-E3",
+      "tipo": "error",
+      "descripcion": "Vehículo que no existe",
+      "solicitud": "POST /envios/E-7018278/asignacion",
+      "cuerpo": {
+        "placa": "XXX-0000"
+      },
+      "esperado": "404",
+      "obtenido": "404",
+      "extracto": {
+        "error": "No encontrado",
+        "mensaje": "El vehículo XXX-0000 no existe",
+        "statusCode": 404
+      },
+      "ms": 4.8,
+      "cumple": true
+    },
+    {
+      "op": "OP-R05",
+      "id": "R05-L1",
+      "tipo": "límite",
+      "descripcion": "Capacidad exactamente igual al peso (9,000 kg)",
+      "solicitud": "POST /envios/E-7018278/asignacion",
+      "cuerpo": {
+        "placa": "PRU-018278"
+      },
+      "esperado": "201",
+      "obtenido": "201",
+      "extracto": {
+        "idAsignacion": 11,
+        "idEnvio": "E-7018278",
+        "placa": "PRU-018278",
+        "fechaAsignacion": "2026-11-28T00:00:21.868Z",
+        "fechaFin": null,
+        "activa": true
+      },
+      "ms": 15.2,
+      "cumple": true
+    },
+    {
+      "op": "OP-R05",
+      "id": "R05-E4",
+      "tipo": "error",
+      "descripcion": "Asignar otra vez el mismo envío",
+      "solicitud": "POST /envios/E-7018278/asignacion",
+      "cuerpo": {
+        "placa": "CHP-1002"
+      },
+      "esperado": "409",
+      "obtenido": "409",
+      "extracto": {
+        "error": "Conflicto",
+        "mensaje": "Solo se pueden asignar envíos pendientes",
+        "statusCode": 409
+      },
+      "ms": 3.1,
+      "cumple": true
+    },
+    {
+      "op": "OP-R05",
+      "id": "R05-V1",
+      "tipo": "verificación",
+      "descripcion": "La transacción cambió los dos estados y dejó el evento",
+      "solicitud": "SELECT estado FROM envio / vehiculo / eventos_pendientes",
+      "esperado": "envío Asignado, vehículo En ruta, evento ASIGNACION_CREADA",
+      "obtenido": "coincide",
+      "extracto": {
+        "envio": "Asignado",
+        "vehiculo": "En ruta",
+        "eventos": [
+          {
+            "tipo": "ASIGNACION_CREADA",
+            "estado": "pendiente"
+          }
+        ]
+      },
+      "ms": 2.4,
+      "cumple": true
+    },
+    {
+      "op": "OP-R06",
+      "id": "R06-N1",
+      "tipo": "normal",
+      "descripcion": "Salida del envío",
+      "solicitud": "POST /envios/E-7018278/salida",
+      "esperado": "200, estado En camino",
+      "obtenido": "200",
+      "extracto": {
+        "idEnvio": "E-7018278",
+        "idCliente": 11,
+        "idCiudadOrigen": "07101",
+        "idCiudadDestino": "07019",
+        "pesoKg": 9000,
+        "prioridad": "Urgente",
+        "estado": "En camino",
+        "fechaSalida": "2026-11-28T00:00:21.888Z",
+        "creadoEn": "2026-11-28T00:00:21.324Z"
+      },
+      "ms": 6.8,
+      "cumple": true
+    },
+    {
+      "op": "OP-D04",
+      "id": "D04-N1",
+      "tipo": "normal",
+      "descripcion": "Bloqueo de gravedad Alta en la caseta de Chiapa de Corzo",
+      "solicitud": "POST /incidentes",
+      "cuerpo": {
+        "tipo": "Bloqueo",
+        "idPunto": "INT-CHC",
+        "gravedad": "Alta",
+        "descripcion": "Manifestación que cierra la caseta de Chiapa de Corzo en los dos sentidos",
+        "detalle": {
+          "causa": "Manifestación",
+          "carrilesCerrados": 2,
+          "pasoAlternado": false
+        },
+        "evidencias": [
+          {
+            "tipo": "Testimonio",
+            "texto": "No dejan pasar a los de carga",
+            "autor": "Conductor de prueba"
+          }
+        ],
+        "reportadoPor": "Evidencia del catálogo"
+      },
+      "esperado": "201, sincronizado: true",
+      "obtenido": "201",
+      "extracto": {
+        "incidente": {
+          "idIncidente": "INC-0217",
+          "tipo": "Bloqueo",
+          "idPunto": "INT-CHC",
+          "tipoPunto": "Interseccion",
+          "gravedad": "Alta",
+          "descripcion": "Manifestación que cierra la caseta de Chiapa de Corzo en los dos sentidos",
+          "fechaInicio": "2026-11-28T00:00:21.895Z",
+          "detalle": {
+            "causa": "Manifestación",
+            "carrilesCerrados": 2,
+            "pasoAlternado": false
+          },
+          "evidencias": [
+            {
+              "tipo": "Testimonio",
+              "texto": "No dejan pasar a los de carga",
+              "autor": "Conductor de prueba",
+              "fecha": "2026-11-28T00:00:21.895Z"
+            }
+          ],
+          "activo": true,
+          "sincronizado": true,
+          "reportadoPor": "Evidencia del catálogo",
+          "creadoEn": "2026-11-28T00:00:21.895Z"
+        }
+      },
+      "ms": 30.7,
+      "cumple": true
+    },
+    {
+      "op": "OP-D04",
+      "id": "D04-V1",
+      "tipo": "verificación",
+      "descripcion": "La réplica en Neo4j tiene el mismo estado que el reporte",
+      "solicitud": "MATCH (i:Incidente {idIncidente: 'INC-0217'})-[:BLOQUEA]->(p)",
+      "esperado": "activo, gravedad Alta, punto INT-CHC",
+      "obtenido": "coincide",
+      "extracto": [
+        {
+          "gravedad": "Alta",
+          "activo": true,
+          "punto": "INT-CHC"
+        }
+      ],
+      "ms": 31.6,
+      "cumple": true
+    },
+    {
+      "op": "OP-D04",
+      "id": "D04-L1",
+      "tipo": "límite",
+      "descripcion": "Punto que existe pero es una estación de tren",
+      "solicitud": "POST /incidentes",
+      "cuerpo": {
+        "tipo": "Bloqueo",
+        "idPunto": "EST-TAP",
+        "gravedad": "Alta",
+        "descripcion": "Manifestación que cierra la caseta de Chiapa de Corzo en los dos sentidos",
+        "detalle": {
+          "causa": "Manifestación",
+          "carrilesCerrados": 2,
+          "pasoAlternado": false
+        },
+        "evidencias": [
+          {
+            "tipo": "Testimonio",
+            "texto": "No dejan pasar a los de carga",
+            "autor": "Conductor de prueba"
+          }
+        ],
+        "reportadoPor": "Evidencia del catálogo"
+      },
+      "esperado": "400",
+      "obtenido": "400",
+      "extracto": {
+        "error": "Datos inválidos",
+        "mensaje": "idPunto debe ser la clave INEGI de una ciudad (5 dígitos) o el id de una intersección (INT-...)",
+        "statusCode": 400
+      },
+      "ms": 1.4,
+      "cumple": true
+    },
+    {
+      "op": "OP-D04",
+      "id": "D04-E1",
+      "tipo": "error",
+      "descripcion": "Detalle que no corresponde al tipo",
+      "solicitud": "POST /incidentes",
+      "cuerpo": {
+        "tipo": "Bloqueo",
+        "idPunto": "INT-CHC",
+        "gravedad": "Alta",
+        "descripcion": "Manifestación que cierra la caseta de Chiapa de Corzo en los dos sentidos",
+        "detalle": {
+          "volumenEstimadoM3": 50,
+          "requiereMaquinaria": true
+        },
+        "evidencias": [
+          {
+            "tipo": "Testimonio",
+            "texto": "No dejan pasar a los de carga",
+            "autor": "Conductor de prueba"
+          }
+        ],
+        "reportadoPor": "Evidencia del catálogo"
+      },
+      "esperado": "400",
+      "obtenido": "400",
+      "extracto": {
+        "error": "Datos inválidos",
+        "mensaje": "El reporte de tipo Bloqueo tiene datos incompletos o inválidos",
+        "statusCode": 400,
+        "detalles": [
+          "El campo volumenEstimadoM3 no corresponde a un incidente de tipo Bloqueo",
+          "El campo requiereMaquinaria no corresponde a un incidente de tipo Bloqueo",
+          "Falta causa, obligatorio para un incidente de tipo Bloqueo",
+          "Falta carrilesCerrados, obligatorio para un incidente de tipo Bloqueo"
+        ]
+      },
+      "ms": 1.1,
+      "cumple": true
+    },
+    {
+      "op": "OP-D04",
+      "id": "D04-E2",
+      "tipo": "error",
+      "descripcion": "Punto que no existe en la red",
+      "solicitud": "POST /incidentes",
+      "cuerpo": {
+        "tipo": "Bloqueo",
+        "idPunto": "INT-NOEXISTE",
+        "gravedad": "Alta",
+        "descripcion": "Manifestación que cierra la caseta de Chiapa de Corzo en los dos sentidos",
+        "detalle": {
+          "causa": "Manifestación",
+          "carrilesCerrados": 2,
+          "pasoAlternado": false
+        },
+        "evidencias": [
+          {
+            "tipo": "Testimonio",
+            "texto": "No dejan pasar a los de carga",
+            "autor": "Conductor de prueba"
+          }
+        ],
+        "reportadoPor": "Evidencia del catálogo"
+      },
+      "esperado": "404",
+      "obtenido": "404",
+      "extracto": {
+        "error": "No encontrado",
+        "mensaje": "El punto INT-NOEXISTE no existe en la red",
+        "statusCode": 404
+      },
+      "ms": 4.9,
+      "cumple": true
+    },
+    {
+      "op": "OP-D04",
+      "id": "D04-E3",
+      "tipo": "error",
+      "descripcion": "Gravedad que no existe",
+      "solicitud": "POST /incidentes",
+      "cuerpo": {
+        "tipo": "Bloqueo",
+        "idPunto": "INT-CHC",
+        "gravedad": "Extrema",
+        "descripcion": "Manifestación que cierra la caseta de Chiapa de Corzo en los dos sentidos",
+        "detalle": {
+          "causa": "Manifestación",
+          "carrilesCerrados": 2,
+          "pasoAlternado": false
+        },
+        "evidencias": [
+          {
+            "tipo": "Testimonio",
+            "texto": "No dejan pasar a los de carga",
+            "autor": "Conductor de prueba"
+          }
+        ],
+        "reportadoPor": "Evidencia del catálogo"
+      },
+      "esperado": "400",
+      "obtenido": "400",
+      "extracto": {
+        "error": "Datos inválidos",
+        "mensaje": "body/gravedad must be equal to one of the allowed values",
+        "statusCode": 400
+      },
+      "ms": 1.2,
+      "cumple": true
+    },
+    {
+      "op": "OP-G01",
+      "id": "G01-L3",
+      "tipo": "límite",
+      "descripcion": "Tuxtla a San Cristóbal con la caseta bloqueada por el incidente Alta",
+      "solicitud": "GET /rutas?origen=07101&destino=07078",
+      "esperado": "200, rodea por Chiapa de Corzo y Acala, 176 min",
+      "obtenido": "200",
+      "extracto": {
+        "encontrada": true,
+        "ruta": [
+          "Tuxtla Gutiérrez",
+          "Chiapa de Corzo",
+          "Emiliano Zapata",
+          "Acala",
+          "Chiapilla",
+          "San Cristóbal de las Casas"
+        ],
+        "minutos": 176,
+        "kilometros": 119.7,
+        "costoCasetas": 0,
+        "avisos": []
+      },
+      "ms": 112.8,
+      "cumple": true
+    },
+    {
+      "op": "OP-I02",
+      "id": "I02-N1",
+      "tipo": "normal",
+      "descripcion": "El bloqueo nuevo contra los envíos en camino",
+      "solicitud": "GET /incidentes/INC-0217/envios-afectados",
+      "esperado": "200, E-7018278 aparece con su desvío y los minutos extra",
+      "obtenido": "200",
+      "extracto": {
+        "incidente": "INC-0217",
+        "revisados": 2,
+        "afectados": [
+          {
+            "idEnvio": "E-7018278",
+            "placa": "PRU-018278",
+            "partida": "07101",
+            "destino": "07019",
+            "sinIncidente": 173,
+            "desvio": 228,
+            "minutosExtra": 55
+          }
+        ],
+        "avisos": []
+      },
+      "ms": 562.1,
+      "cumple": true
+    },
+    {
+      "op": "OP-I02",
+      "id": "I02-L1",
+      "tipo": "límite",
+      "descripcion": "Incidente cerrado (INC-0002)",
+      "solicitud": "GET /incidentes/INC-0002/envios-afectados",
+      "esperado": "200, afectados vacío con aviso",
+      "obtenido": "200",
+      "extracto": {
+        "revisados": 0,
+        "afectados": [],
+        "avisos": [
+          "El incidente ya está cerrado; no afecta a ningún envío"
+        ]
+      },
+      "ms": 6.1,
+      "cumple": true
+    },
+    {
+      "op": "OP-I02",
+      "id": "I02-E1",
+      "tipo": "error",
+      "descripcion": "Incidente que no existe",
+      "solicitud": "GET /incidentes/INC-9999/envios-afectados",
+      "esperado": "404",
+      "obtenido": "404",
+      "extracto": {
+        "error": "No encontrado",
+        "mensaje": "El incidente INC-9999 no existe",
+        "statusCode": 404
+      },
+      "ms": 2.5,
+      "cumple": true
+    },
+    {
+      "op": "OP-D05",
+      "id": "D05-N1",
+      "tipo": "normal",
+      "descripcion": "Foto con su URL",
+      "solicitud": "POST /incidentes/INC-0217/evidencias",
+      "cuerpo": {
+        "tipo": "Foto",
+        "url": "https://evidencias.hopwright.local/prueba.jpg",
+        "autor": "Despacho Tuxtla"
+      },
+      "esperado": "201",
+      "obtenido": "201",
+      "extracto": "{\"idIncidente\":\"INC-0217\",\"tipo\":\"Bloqueo\",\"idPunto\":\"INT-CHC\",\"tipoPunto\":\"Interseccion\",\"gravedad\":\"Alta\",\"descripcion\":\"Manifestación que cierra la caseta de Chiapa de Corzo en los dos sentidos\",\"fechaInicio\":\"2026-11-28T00:00:21.895Z\",\"detalle\":{\"causa\":\"Manifestación\",\"carrilesCerrados\":2,\"pasoAlternado\":false},\"evidencias\":[{\"tipo\":\"Testimonio\",\"texto\":\"No dejan pasar a los de carga\",\"autor\":\"Conductor de prueba\",\"fecha\":\"2026-11-28T00:00:21.895Z\"},{\"tipo\":\"Foto\",\"url\":\"https://evidencias.hopwright.local/prueba.jpg\",\"autor\":\"Despacho Tuxtla\",\"fecha\":\"2026-11-28T00:00:22.650Z\"}],\"activo\":true,\"sincronizado\":true,\"reportadoPor\":\"Evidencia del catálogo\",\"creadoEn\":\"2026-11-28T00:00:21.895 …",
+      "ms": 4.5,
+      "cumple": true
+    },
+    {
+      "op": "OP-D05",
+      "id": "D05-L1",
+      "tipo": "límite",
+      "descripcion": "Testimonio de 2 caracteres (el mínimo)",
+      "solicitud": "POST /incidentes/INC-0217/evidencias",
+      "cuerpo": {
+        "tipo": "Testimonio",
+        "texto": "Ok",
+        "autor": "Despacho Tuxtla"
+      },
+      "esperado": "201",
+      "obtenido": "201",
+      "extracto": "{\"idIncidente\":\"INC-0217\",\"tipo\":\"Bloqueo\",\"idPunto\":\"INT-CHC\",\"tipoPunto\":\"Interseccion\",\"gravedad\":\"Alta\",\"descripcion\":\"Manifestación que cierra la caseta de Chiapa de Corzo en los dos sentidos\",\"fechaInicio\":\"2026-11-28T00:00:21.895Z\",\"detalle\":{\"causa\":\"Manifestación\",\"carrilesCerrados\":2,\"pasoAlternado\":false},\"evidencias\":[{\"tipo\":\"Testimonio\",\"texto\":\"No dejan pasar a los de carga\",\"autor\":\"Conductor de prueba\",\"fecha\":\"2026-11-28T00:00:21.895Z\"},{\"tipo\":\"Foto\",\"url\":\"https://evidencias.hopwright.local/prueba.jpg\",\"autor\":\"Despacho Tuxtla\",\"fecha\":\"2026-11-28T00:00:22.650Z\"},{\"tipo\":\"Testimonio\",\"texto\":\"Ok\",\"autor\":\"Despacho Tuxtla\",\"fecha\":\"2026-11-28T00:00:22.654Z\"}],\"activo\":true …",
+      "ms": 3.1,
+      "cumple": true
+    },
+    {
+      "op": "OP-D05",
+      "id": "D05-E1",
+      "tipo": "error",
+      "descripcion": "Foto sin URL",
+      "solicitud": "POST /incidentes/INC-0217/evidencias",
+      "cuerpo": {
+        "tipo": "Foto",
+        "autor": "Despacho Tuxtla"
+      },
+      "esperado": "400",
+      "obtenido": "400",
+      "extracto": {
+        "error": "Datos inválidos",
+        "mensaje": "Una evidencia de tipo Foto necesita url",
+        "statusCode": 400
+      },
+      "ms": 1.3,
+      "cumple": true
+    },
+    {
+      "op": "OP-D05",
+      "id": "D05-E2",
+      "tipo": "error",
+      "descripcion": "Incidente que no existe",
+      "solicitud": "POST /incidentes/INC-9999/evidencias",
+      "cuerpo": {
+        "tipo": "Testimonio",
+        "texto": "Prueba",
+        "autor": "Despacho"
+      },
+      "esperado": "404",
+      "obtenido": "404",
+      "extracto": {
+        "error": "No encontrado",
+        "mensaje": "El incidente INC-9999 no existe",
+        "statusCode": 404
+      },
+      "ms": 2.7,
+      "cumple": true
+    },
+    {
+      "op": "OP-D06",
+      "id": "D06-N1",
+      "tipo": "normal",
+      "descripcion": "Solo los activos",
+      "solicitud": "GET /incidentes?activo=true",
+      "esperado": "200",
+      "obtenido": "200",
+      "extracto": [
+        {
+          "idIncidente": "INC-0217",
+          "tipo": "Bloqueo",
+          "idPunto": "INT-CHC",
+          "gravedad": "Alta",
+          "activo": true
+        },
+        {
+          "idIncidente": "INC-0001",
+          "tipo": "Obra",
+          "idPunto": "07094",
+          "gravedad": "Media",
+          "activo": true
+        }
+      ],
+      "ms": 6.2,
+      "cumple": true
+    },
+    {
+      "op": "OP-D06",
+      "id": "D06-N2",
+      "tipo": "normal",
+      "descripcion": "El reporte completo con sus evidencias",
+      "solicitud": "GET /incidentes/INC-0217",
+      "esperado": "200, 3 evidencias (la del alta y las dos agregadas)",
+      "obtenido": "200",
+      "extracto": "{\"idIncidente\":\"INC-0217\",\"tipo\":\"Bloqueo\",\"idPunto\":\"INT-CHC\",\"tipoPunto\":\"Interseccion\",\"gravedad\":\"Alta\",\"descripcion\":\"Manifestación que cierra la caseta de Chiapa de Corzo en los dos sentidos\",\"fechaInicio\":\"2026-11-28T00:00:21.895Z\",\"detalle\":{\"causa\":\"Manifestación\",\"carrilesCerrados\":2,\"pasoAlternado\":false},\"evidencias\":[{\"tipo\":\"Testimonio\",\"texto\":\"No dejan pasar a los de carga\",\"autor\":\"Conductor de prueba\",\"fecha\":\"2026-11-28T00:00:21.895Z\"},{\"tipo\":\"Foto\",\"url\":\"https://evidencias.hopwright.local/prueba.jpg\",\"autor\":\"Despacho Tuxtla\",\"fecha\":\"2026-11-28T00:00:22.650Z\"},{\"tipo\":\"Testimonio\",\"texto\":\"Ok\",\"autor\":\"Despacho Tuxtla\",\"fecha\":\"2026-11-28T00:00:22.654Z\"}],\"activo\":true …",
+      "ms": 3.2,
+      "cumple": true
+    },
+    {
+      "op": "OP-D06",
+      "id": "D06-L1",
+      "tipo": "límite",
+      "descripcion": "Filtro sin resultados",
+      "solicitud": "GET /incidentes?activo=true&gravedad=Baja&tipo=Derrumbe",
+      "esperado": "200, lista vacía",
+      "obtenido": "200",
+      "extracto": [],
+      "ms": 2.6,
+      "cumple": true
+    },
+    {
+      "op": "OP-D06",
+      "id": "D06-E1",
+      "tipo": "error",
+      "descripcion": "Incidente que no existe",
+      "solicitud": "GET /incidentes/INC-9999",
+      "esperado": "404",
+      "obtenido": "404",
+      "extracto": {
+        "error": "No encontrado",
+        "mensaje": "El incidente INC-9999 no existe",
+        "statusCode": 404
+      },
+      "ms": 2.3,
+      "cumple": true
+    },
+    {
+      "op": "OP-D06",
+      "id": "D06-E2",
+      "tipo": "error",
+      "descripcion": "Identificador mal escrito",
+      "solicitud": "GET /incidentes/incidente1",
+      "esperado": "400",
+      "obtenido": "400",
+      "extracto": {
+        "error": "Datos inválidos",
+        "mensaje": "params/id must match pattern \"^INC-[0-9]{4,}$\"",
+        "statusCode": 400
+      },
+      "ms": 1.4,
+      "cumple": true
+    },
+    {
+      "op": "OP-D07",
+      "id": "D07-N1",
+      "tipo": "normal",
+      "descripcion": "Cerrar el bloqueo",
+      "solicitud": "PATCH /incidentes/INC-0217/cerrar",
+      "cuerpo": {
+        "motivoCierre": "Se retiraron los manifestantes"
+      },
+      "esperado": "200, activo: false",
+      "obtenido": "200",
+      "extracto": "{\"incidente\":{\"idIncidente\":\"INC-0217\",\"tipo\":\"Bloqueo\",\"idPunto\":\"INT-CHC\",\"tipoPunto\":\"Interseccion\",\"gravedad\":\"Alta\",\"descripcion\":\"Manifestación que cierra la caseta de Chiapa de Corzo en los dos sentidos\",\"fechaInicio\":\"2026-11-28T00:00:21.895Z\",\"fechaFin\":\"2026-11-28T00:00:22.682Z\",\"motivoCierre\":\"Se retiraron los manifestantes\",\"detalle\":{\"causa\":\"Manifestación\",\"carrilesCerrados\":2,\"pasoAlternado\":false},\"evidencias\":[{\"tipo\":\"Testimonio\",\"texto\":\"No dejan pasar a los de carga\",\"autor\":\"Conductor de prueba\",\"fecha\":\"2026-11-28T00:00:21.895Z\"},{\"tipo\":\"Foto\",\"url\":\"https://evidencias.hopwright.local/prueba.jpg\",\"autor\":\"Despacho Tuxtla\",\"fecha\":\"2026-11-28T00:00:22.650Z\"},{\"tipo\":\"Te …",
+      "ms": 18.6,
+      "cumple": true
+    },
+    {
+      "op": "OP-G01",
+      "id": "G01-L4",
+      "tipo": "límite",
+      "descripcion": "Con el incidente cerrado la ruta regresa a la autopista",
+      "solicitud": "GET /rutas?origen=07101&destino=07078",
+      "esperado": "200, 73 min",
+      "obtenido": "200",
+      "extracto": {
+        "encontrada": true,
+        "ruta": [
+          "Tuxtla Gutiérrez",
+          "Caseta Chiapa de Corzo",
+          "San Cristóbal de las Casas"
+        ],
+        "minutos": 73,
+        "kilometros": 64.5,
+        "costoCasetas": 230,
+        "avisos": []
+      },
+      "ms": 58.7,
+      "cumple": true
+    },
+    {
+      "op": "OP-D07",
+      "id": "D07-E1",
+      "tipo": "error",
+      "descripcion": "Cerrar otra vez",
+      "solicitud": "PATCH /incidentes/INC-0217/cerrar",
+      "cuerpo": {
+        "motivoCierre": "Otra vez"
+      },
+      "esperado": "409",
+      "obtenido": "409",
+      "extracto": {
+        "error": "Conflicto",
+        "mensaje": "El incidente INC-0217 ya estaba cerrado",
+        "statusCode": 409
+      },
+      "ms": 2.9,
+      "cumple": true
+    },
+    {
+      "op": "OP-R06",
+      "id": "R06-N2",
+      "tipo": "normal",
+      "descripcion": "Entrega del envío",
+      "solicitud": "POST /envios/E-7018278/entrega",
+      "esperado": "200, estado Entregado",
+      "obtenido": "200",
+      "extracto": {
+        "idEnvio": "E-7018278",
+        "idCliente": 11,
+        "idCiudadOrigen": "07101",
+        "idCiudadDestino": "07019",
+        "pesoKg": 9000,
+        "prioridad": "Urgente",
+        "estado": "Entregado",
+        "fechaSalida": "2026-11-28T00:00:21.888Z",
+        "creadoEn": "2026-11-28T00:00:21.324Z"
+      },
+      "ms": 7.9,
+      "cumple": true
+    },
+    {
+      "op": "OP-R06",
+      "id": "R06-L1",
+      "tipo": "límite",
+      "descripcion": "Entregar dos veces",
+      "solicitud": "POST /envios/E-7018278/entrega",
+      "esperado": "409",
+      "obtenido": "409",
+      "extracto": {
+        "error": "Conflicto",
+        "mensaje": "Solo se puede entregar un envío en camino",
+        "statusCode": 409
+      },
+      "ms": 2.8,
+      "cumple": true
+    },
+    {
+      "op": "OP-R06",
+      "id": "R06-E1",
+      "tipo": "error",
+      "descripcion": "Cancelar un envío ya entregado",
+      "solicitud": "POST /envios/E-7018278/cancelacion",
+      "esperado": "409",
+      "obtenido": "409",
+      "extracto": {
+        "error": "Conflicto",
+        "mensaje": "Solo se pueden cancelar envíos pendientes o asignados",
+        "statusCode": 409
+      },
+      "ms": 3.3,
+      "cumple": true
+    },
+    {
+      "op": "OP-R06",
+      "id": "R06-E2",
+      "tipo": "error",
+      "descripcion": "Dar salida a un envío que no existe",
+      "solicitud": "POST /envios/E-999999/salida",
+      "esperado": "404",
+      "obtenido": "404",
+      "extracto": {
+        "error": "No encontrado",
+        "mensaje": "El envío E-999999 no existe",
+        "statusCode": 404
+      },
+      "ms": 3.5,
+      "cumple": true
+    },
+    {
+      "op": "OP-R06",
+      "id": "R06-V1",
+      "tipo": "verificación",
+      "descripcion": "Al aplicar ENVIO_ENTREGADO el camión quedó en Comitán (Neo4j)",
+      "solicitud": "GET /vehiculos/PRU-018278/ubicacion",
+      "esperado": "200, punto Comitán",
+      "obtenido": "200",
+      "extracto": {
+        "placa": "PRU-018278",
+        "punto": {
+          "idPunto": "07019",
+          "nombre": "Comitán de Domínguez",
+          "tipo": "Ciudad"
+        },
+        "fechaHora": "2026-11-28T00:00:22.794Z"
+      },
+      "ms": 4.9,
+      "cumple": true
+    },
+    {
+      "op": "OP-D03",
+      "id": "D03-N1",
+      "tipo": "normal",
+      "descripcion": "Bitácora del envío de prueba",
+      "solicitud": "GET /envios/E-7018278/bitacora",
+      "esperado": "200, ASIGNACION_CREADA, ENVIO_SALIO y ENVIO_ENTREGADO en orden",
+      "obtenido": "200",
+      "extracto": {
+        "idEnvio": "E-7018278",
+        "eventos": [
+          {
+            "tipo": "ASIGNACION_CREADA",
+            "fecha": "2026-11-28T00:00:21.868Z"
+          },
+          {
+            "tipo": "ENVIO_SALIO",
+            "fecha": "2026-11-28T00:00:21.888Z"
+          },
+          {
+            "tipo": "ENVIO_ENTREGADO",
+            "fecha": "2026-11-28T00:00:22.764Z"
+          }
+        ]
+      },
+      "ms": 3.7,
+      "cumple": true
+    },
+    {
+      "op": "OP-D03",
+      "id": "D03-L1",
+      "tipo": "límite",
+      "descripcion": "Envío sin eventos todavía (E-101)",
+      "solicitud": "GET /envios/E-101/bitacora",
+      "esperado": "200, eventos: []",
+      "obtenido": "200",
+      "extracto": {
+        "idEnvio": "E-101",
+        "eventos": []
+      },
+      "ms": 3.3,
+      "cumple": true
+    },
+    {
+      "op": "OP-D03",
+      "id": "D03-E1",
+      "tipo": "error",
+      "descripcion": "Envío que no existe",
+      "solicitud": "GET /envios/E-999999/bitacora",
+      "esperado": "404",
+      "obtenido": "404",
+      "extracto": {
+        "error": "No encontrado",
+        "mensaje": "El envío E-999999 no existe",
+        "statusCode": 404
+      },
+      "ms": 1.8,
+      "cumple": true
+    },
+    {
+      "op": "OP-R07",
+      "id": "R07-N1",
+      "tipo": "normal",
+      "descripcion": "Envíos pendientes",
+      "solicitud": "GET /envios?estado=Pendiente",
+      "esperado": "200",
+      "obtenido": "200",
+      "extracto": [
+        {
+          "idEnvio": "E-106",
+          "estado": "Pendiente",
+          "pesoKg": 1500
+        },
+        {
+          "idEnvio": "E-103",
+          "estado": "Pendiente",
+          "pesoKg": 3000
+        },
+        {
+          "idEnvio": "E-101",
+          "estado": "Pendiente",
+          "pesoKg": 1200
+        }
+      ],
+      "ms": 2.4,
+      "cumple": true
+    },
+    {
+      "op": "OP-R07",
+      "id": "R07-N2",
+      "tipo": "normal",
+      "descripcion": "Detalle del envío de prueba",
+      "solicitud": "GET /envios/E-7018278",
+      "esperado": "200",
+      "obtenido": "200",
+      "extracto": {
+        "idEnvio": "E-7018278",
+        "idCliente": 11,
+        "idCiudadOrigen": "07101",
+        "idCiudadDestino": "07019",
+        "pesoKg": 9000,
+        "prioridad": "Urgente",
+        "estado": "Entregado",
+        "fechaSalida": "2026-11-28T00:00:21.888Z",
+        "creadoEn": "2026-11-28T00:00:21.324Z"
+      },
+      "ms": 2.2,
+      "cumple": true
+    },
+    {
+      "op": "OP-R07",
+      "id": "R07-L1",
+      "tipo": "límite",
+      "descripcion": "Filtro por un estado que nadie tiene",
+      "solicitud": "GET /envios?estado=Extraviado",
+      "esperado": "200, lista vacía",
+      "obtenido": "200",
+      "extracto": [],
+      "ms": 2,
+      "cumple": true
+    },
+    {
+      "op": "OP-R07",
+      "id": "R07-E1",
+      "tipo": "error",
+      "descripcion": "Envío que no existe",
+      "solicitud": "GET /envios/E-999999",
+      "esperado": "404",
+      "obtenido": "404",
+      "extracto": {
+        "error": "No encontrado",
+        "mensaje": "El envío E-999999 no existe",
+        "statusCode": 404
+      },
+      "ms": 2,
+      "cumple": true
+    },
+    {
+      "op": "OP-R07",
+      "id": "R07-E2",
+      "tipo": "error",
+      "descripcion": "Identificador con formato inválido",
+      "solicitud": "GET /envios/X1",
+      "esperado": "400",
+      "obtenido": "400",
+      "extracto": {
+        "error": "Datos inválidos",
+        "mensaje": "params/id must match pattern \"^E-[0-9]+$\"",
+        "statusCode": 400
+      },
+      "ms": 0.9,
+      "cumple": true
+    },
+    {
+      "op": "OP-I04",
+      "id": "I04-E1",
+      "tipo": "error",
+      "descripcion": "Sin token",
+      "solicitud": "POST /admin/reconciliar",
+      "esperado": "401",
+      "obtenido": "401",
+      "extracto": {
+        "error": "No autorizado",
+        "mensaje": "Token inválido o ausente",
+        "statusCode": 401
+      },
+      "ms": 1.2,
+      "cumple": true
+    },
+    {
+      "op": "OP-I04",
+      "id": "I04-E2",
+      "tipo": "error",
+      "descripcion": "Con token de despachador",
+      "solicitud": "POST /admin/reconciliar",
+      "esperado": "403",
+      "obtenido": "403",
+      "extracto": {
+        "error": "Prohibido",
+        "mensaje": "No tienes permisos para esta operación",
+        "statusCode": 403
+      },
+      "ms": 1.1,
+      "cumple": true
+    },
+    {
+      "op": "OP-I04",
+      "id": "I04-N1",
+      "tipo": "normal",
+      "descripcion": "Reconciliar como administrador",
+      "solicitud": "POST /admin/reconciliar",
+      "esperado": "200",
+      "obtenido": "200",
+      "extracto": {
+        "incidentes": {
+          "revisados": 3,
+          "copiados": [],
+          "borradosDelGrafo": []
+        },
+        "ciudades": {
+          "revisadas": 125,
+          "copiadas": []
+        },
+        "vehiculos": {
+          "revisados": 8,
+          "copiados": [],
+          "borradosDelGrafo": []
+        },
+        "avisos": [
+          "Estas ciudades no tienen tramos de carretera y no se puede llegar a ellas: 07908"
+        ]
+      },
+      "ms": 18.3,
+      "cumple": true
+    },
+    {
+      "op": "OP-I04",
+      "id": "I04-L1",
+      "tipo": "límite",
+      "descripcion": "Reconciliar otra vez enseguida",
+      "solicitud": "POST /admin/reconciliar",
+      "esperado": "200, no copia ni borra nada (idempotente)",
+      "obtenido": "200",
+      "extracto": {
+        "incidentes": {
+          "revisados": 3,
+          "copiados": [],
+          "borradosDelGrafo": []
+        },
+        "ciudades": {
+          "revisadas": 125,
+          "copiadas": []
+        },
+        "vehiculos": {
+          "revisados": 8,
+          "copiados": [],
+          "borradosDelGrafo": []
+        },
+        "avisos": [
+          "Estas ciudades no tienen tramos de carretera y no se puede llegar a ellas: 07908"
+        ]
+      },
+      "ms": 16,
+      "cumple": true
+    }
+  ]
+}
