@@ -12,7 +12,7 @@ Todo vive en `database/`, una carpeta por base, y cada una tiene la misma forma:
 | Consultas | `queries/consultas.sql` | `queries/01_consultas_incidentes.js`, `02_consultas_manifiestos.js`, `03_consultas_bitacora.js` | `queries/01_consultas_rutas.cypher` |
 | Pruebas | `tests/01_integridad.sql` | `tests/01_validacion.js` | `tests/00_humo.cypher`, `tests/01_integridad.cypher` |
 
-La evidencia de que todo esto corre está en [pruebas/implementacion-evidencia.md](pruebas/implementacion-evidencia.md). La genera `npm run bases -- --desde-cero` (desde `backend/`): borra los volúmenes, construye las tres bases desde cero con estos scripts y después corre dentro de cada contenedor las consultas y las pruebas, guardando su salida tal cual.
+La evidencia de que todo esto corre está en [pruebas/implementacion-evidencia.md](pruebas/implementacion-evidencia.md). La genera `npm run bases:desde-cero` (desde `backend/`): borra los volúmenes, construye las tres bases desde cero con estos scripts y después corre dentro de cada contenedor las consultas y las pruebas, guardando su salida tal cual.
 
 ## 1. Construir las bases desde cero
 

@@ -8,7 +8,7 @@
 //   npm run bases
 // Para comprobar además que las tres bases se construyen desde cero (BORRA los volúmenes y los vuelve a crear
 // con los scripts de database/, igual que la primera vez):
-//   npm run bases -- --desde-cero
+//   npm run bases:desde-cero
 
 import { execFileSync } from "node:child_process";
 import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
@@ -184,7 +184,7 @@ const md = [
   "",
   `Generado por \`npm run bases${desdeCero ? " -- --desde-cero" : ""}\` (tests/implementacion/evidencia.mts) el ${fecha}, commit \`${commit}\`. Cada sección es la salida tal cual de un script de \`database/\` corrido dentro de su contenedor.`,
   "",
-  desdeCero ? "Antes de correr las pruebas se borraron los volúmenes y las tres bases se construyeron desde cero con los scripts del repositorio." : "Las pruebas corrieron sobre las bases como estaban; para construirlas desde cero antes, se usa `npm run bases -- --desde-cero`.",
+  desdeCero ? "Antes de correr las pruebas se borraron los volúmenes y las tres bases se construyeron desde cero con los scripts del repositorio." : "Las pruebas corrieron sobre las bases como estaban; para construirlas desde cero antes, se usa `npm run bases:desde-cero`.",
   "",
   "## Resumen",
   "",

@@ -15,7 +15,8 @@
     "test:consistencia": "vitest run -c vitest.consistencia.config.ts",
     "rendimiento": "tsx ../tests/rendimiento/rendimiento.mts",
     "catalogo": "tsx ../tests/catalogo/evidencia.mts",
-    "bases": "tsx ../tests/implementacion/evidencia.mts"
+    "bases": "tsx ../tests/implementacion/evidencia.mts",
+    "bases:desde-cero": "tsx ../tests/implementacion/evidencia.mts --desde-cero"
   },
   "engines": {
     "node": ">=22"

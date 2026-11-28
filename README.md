@@ -43,7 +43,7 @@ La propuesta completa, la matriz de responsabilidades y la fuente de verdad de c
 
 4. Abre la documentación de la API en http://localhost:3000/docs y prueba `GET /health`. Si las tres bases están arriba, responde `"estado": "ok"`.
 
-Para empezar desde cero (borra todos los datos): `docker compose down -v` y luego `docker compose up -d`. Con `npm run bases -- --desde-cero` (desde `backend/`) se hace lo mismo y además se corren las pruebas de cada base; el detalle de los scripts está en `docs/implementacion.md`.
+Para empezar desde cero (borra todos los datos): `docker compose down -v` y luego `docker compose up -d`. Con `npm run bases:desde-cero` (desde `backend/`) se hace lo mismo y además se corren las pruebas de cada base; el detalle de los scripts está en `docs/implementacion.md`.
 
 ### Usuarios de prueba
 
