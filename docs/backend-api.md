@@ -33,21 +33,21 @@ Todas las consultas son parametrizadas: `$1`, `$2` en SQL, `$origen`, `$placa` e
 
 ## 3. Rutas
 
-Son 36 rutas en 11 grupos. Las marcadas con candado piden sesión.
+Son 36 rutas en 11 grupos. Las marcadas con (sesión) piden token.
 
 | Grupo | Rutas |
 |---|---|
 | Salud | `GET /health` |
 | Autenticación | `POST /auth/login` |
-| Clientes | `GET /clientes`, `GET /clientes/{id}`, `POST` 🔒, `PUT` 🔒, `DELETE` 🔒 |
-| Conductores | `GET /conductores`, `GET /conductores/{id}`, `POST` 🔒, `PUT` 🔒, `DELETE` 🔒 |
-| Ciudades | `GET /ciudades`, `POST /ciudades` 🔒 |
-| Vehículos | `GET /vehiculos`, `GET /vehiculos/{placa}`, `POST` 🔒, `PATCH` 🔒, `GET` y `PATCH /vehiculos/{placa}/ubicacion` 🔒 |
-| Envíos | `GET /envios`, `GET /envios/{id}`, `POST /envios` 🔒, `/asignacion` 🔒, `/salida` 🔒, `/entrega` 🔒, `/cancelacion` 🔒, `GET` y `POST /manifiesto` 🔒, `GET /bitacora`, `GET /datos-ruta`, `GET /ruta` |
-| Red | `GET /red/puntos`, `GET /red/mapa`, `GET /red/ciudades-aisladas`, `POST` y `DELETE /red/intersecciones` 🔒, `POST /red/estaciones` 🔒, `POST`, `PATCH` y `DELETE /red/tramos` 🔒 |
+| Clientes | `GET /clientes`, `GET /clientes/{id}`, `POST` (sesión), `PUT` (sesión), `DELETE` (sesión) |
+| Conductores | `GET /conductores`, `GET /conductores/{id}`, `POST` (sesión), `PUT` (sesión), `DELETE` (sesión) |
+| Ciudades | `GET /ciudades`, `POST /ciudades` (sesión) |
+| Vehículos | `GET /vehiculos`, `GET /vehiculos/{placa}`, `POST` (sesión), `PATCH` (sesión), `GET` y `PATCH /vehiculos/{placa}/ubicacion` (sesión) |
+| Envíos | `GET /envios`, `GET /envios/{id}`, `POST /envios` (sesión), `/asignacion` (sesión), `/salida` (sesión), `/entrega` (sesión), `/cancelacion` (sesión), `GET` y `POST /manifiesto` (sesión), `GET /bitacora`, `GET /datos-ruta`, `GET /ruta` |
+| Red | `GET /red/puntos`, `GET /red/mapa`, `GET /red/ciudades-aisladas`, `POST` y `DELETE /red/intersecciones` (sesión), `POST /red/estaciones` (sesión), `POST`, `PATCH` y `DELETE /red/tramos` (sesión) |
 | Rutas | `GET /rutas`, `GET /rutas/camion-tren`, `GET /rutas/exploracion` |
-| Incidentes | `GET /incidentes`, `GET /incidentes/{id}`, `POST /incidentes` 🔒, `PATCH /incidentes/{id}/cerrar` 🔒, `POST /incidentes/{id}/evidencias` 🔒, `GET /incidentes/{id}/envios-afectados` |
-| Administración | `POST /admin/reconciliar` 🔒 |
+| Incidentes | `GET /incidentes`, `GET /incidentes/{id}`, `POST /incidentes` (sesión), `PATCH /incidentes/{id}/cerrar` (sesión), `POST /incidentes/{id}/evidencias` (sesión), `GET /incidentes/{id}/envios-afectados` |
+| Administración | `POST /admin/reconciliar` (sesión) |
 
 El detalle de cada una, con sus casos normales, límite y de error, está en el [catálogo de operaciones](catalogo-operaciones.md).
 

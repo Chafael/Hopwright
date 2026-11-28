@@ -10,7 +10,7 @@ Este documento junta cómo se instala y se corre Hopwright, qué pruebas tiene y
 - Node.js 22 o superior, para el backend y la interfaz.
 - Git, para clonar el repositorio.
 
-El proyecto se probó en Windows 11 con PowerShell y en Linux.
+Se probó en Windows 11 con PowerShell.
 
 ### 1.2 Pasos
 
@@ -123,7 +123,7 @@ Cada escenario mandó 200 peticiones con 10 clientes a la vez, después de 10 de
 | `GET /envios/{id}/ruta` (flujo integrado) | las tres | 68.7 | 138.6 | 176.5 | 0 |
 | `PATCH /vehiculos/{placa}/ubicacion` | PostgreSQL y Neo4j | 167.6 | 56.5 | 83.1 | 0 |
 
-Lo más lento es camión o tren (C2), porque calcula dos rutas completas y la combinación con cada par de estaciones; aun así responde en poco más de medio segundo. El flujo integrado, que consulta las tres bases, queda por debajo de 200 ms en el 95 % de las peticiones. Son los datos de prueba, no un volumen de producción: sirven para comparar los flujos entre sí y para detectar si un cambio los vuelve más lentos.
+Lo más lento es camión o tren (C2), porque calcula la ruta solo por carretera y la que combina camión y tren con sus transbordos; aun así responde en poco más de medio segundo. El flujo integrado, que consulta las tres bases, queda por debajo de 200 ms en el 95 % de las peticiones. Son los datos de prueba, no un volumen de producción: sirven para comparar los flujos entre sí y para detectar si un cambio los vuelve más lentos.
 
 ## 3. Documentación
 
