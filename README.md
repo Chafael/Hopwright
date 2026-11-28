@@ -124,9 +124,9 @@ docker compose up -d mongo
 | 3. Arquitectura y selección tecnológica | [docs/arquitectura.md](docs/arquitectura.md) y [docs/decisiones-tecnologicas.md](docs/decisiones-tecnologicas.md) |
 | 4. Implementación de las tres bases | [docs/implementacion.md](docs/implementacion.md) y los scripts de [database/](database/) |
 | 5. Catálogo de operaciones | [docs/catalogo-operaciones.md](docs/catalogo-operaciones.md) |
-| 6. Backend y API | `backend/`, el contrato en Swagger (`http://localhost:3000/docs`) y en [docs/api/openapi.json](docs/api/openapi.json), y la decisión REST en [docs/decisiones-tecnologicas.md](docs/decisiones-tecnologicas.md#31-rest-o-graphql) |
-| 7. Aplicación e integración | `frontend/` y el flujo integrado en [docs/arquitectura.md](docs/arquitectura.md#7-flujo-integrado-planear-la-ruta-de-un-envío) |
-| 8. Pruebas y despliegue | este README y las evidencias de [docs/pruebas/](docs/pruebas/) |
+| 6. Backend y API | [docs/backend-api.md](docs/backend-api.md), el contrato en Swagger (`http://localhost:3000/docs`) y en [docs/api/openapi.json](docs/api/openapi.json) |
+| 7. Aplicación e integración | [docs/aplicacion.md](docs/aplicacion.md) y `frontend/` |
+| 8. Pruebas y despliegue | [docs/pruebas-despliegue.md](docs/pruebas-despliegue.md), este README y las evidencias de [docs/pruebas/](docs/pruebas/) |
 
 ## Evidencias de pruebas
 
