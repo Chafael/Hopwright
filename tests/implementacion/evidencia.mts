@@ -182,7 +182,7 @@ const commit = correr("git", ["rev-parse", "--short", "HEAD"]).texto.trim() || "
 const md = [
   "# Evidencia de la implementación de las bases",
   "",
-  `Generado por \`npm run bases${desdeCero ? " -- --desde-cero" : ""}\` (tests/implementacion/evidencia.mts) el ${fecha}, commit \`${commit}\`. Cada sección es la salida tal cual de un script de \`database/\` corrido dentro de su contenedor.`,
+  `Generado por \`npm run bases${desdeCero ? ":desde-cero" : ""}\` (tests/implementacion/evidencia.mts) el ${fecha}, commit \`${commit}\`. Cada sección es la salida tal cual de un script de \`database/\` corrido dentro de su contenedor.`,
   "",
   desdeCero ? "Antes de correr las pruebas se borraron los volúmenes y las tres bases se construyeron desde cero con los scripts del repositorio." : "Las pruebas corrieron sobre las bases como estaban; para construirlas desde cero antes, se usa `npm run bases:desde-cero`.",
   "",
