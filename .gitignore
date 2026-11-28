@@ -8,3 +8,6 @@ coverage/
 # Interfaz (SvelteKit)
 frontend/.svelte-kit/
 frontend/build/
+
+# Reportes crudos de Vitest; el resumen va en docs/pruebas/pruebas-automatizadas.md
+docs/pruebas/vitest*.json

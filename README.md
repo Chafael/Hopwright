@@ -99,6 +99,8 @@ npm run test:consistencia # apaga y enciende Neo4j; tarda alrededor de un minuto
 npm run rendimiento       # mide los flujos principales y escribe docs/pruebas/rendimiento.md
 npm run catalogo          # corre los casos del catálogo y escribe docs/pruebas/catalogo-evidencia.md
 npm run bases             # corre las consultas y pruebas de database/ en cada contenedor (docs/pruebas/implementacion-evidencia.md)
+npm run pruebas:reporte   # todas las pruebas de Vitest, incluida la de consistencia, y escribe docs/pruebas/pruebas-automatizadas.md
+npm run openapi           # exporta el contrato de la API a docs/api/openapi.json (no necesita las bases)
 ```
 
 La prueba de rendimiento manda 200 peticiones por escenario con 10 clientes a la vez. Se puede cambiar con `PETICIONES=500 CONCURRENCIA=20 npm run rendimiento` (en PowerShell: `$env:PETICIONES=500; npm run rendimiento`). Lo que crea durante la prueba se borra al terminar.
@@ -122,7 +124,7 @@ docker compose up -d mongo
 | 3. Arquitectura y selección tecnológica | [docs/arquitectura.md](docs/arquitectura.md) y [docs/decisiones-tecnologicas.md](docs/decisiones-tecnologicas.md) |
 | 4. Implementación de las tres bases | [docs/implementacion.md](docs/implementacion.md) y los scripts de [database/](database/) |
 | 5. Catálogo de operaciones | [docs/catalogo-operaciones.md](docs/catalogo-operaciones.md) |
-| 6. Backend y API | `backend/`, el contrato en Swagger (`http://localhost:3000/docs`) y [docs/api/](docs/api/) |
+| 6. Backend y API | `backend/`, el contrato en Swagger (`http://localhost:3000/docs`) y en [docs/api/openapi.json](docs/api/openapi.json), y la decisión REST en [docs/decisiones-tecnologicas.md](docs/decisiones-tecnologicas.md#31-rest-o-graphql) |
 | 7. Aplicación e integración | `frontend/` y el flujo integrado en [docs/arquitectura.md](docs/arquitectura.md#7-flujo-integrado-planear-la-ruta-de-un-envío) |
 | 8. Pruebas y despliegue | este README y las evidencias de [docs/pruebas/](docs/pruebas/) |
 
@@ -130,6 +132,7 @@ docker compose up -d mongo
 
 Cada archivo de `docs/pruebas/` lo genera un comando, así que se puede volver a producir en otra máquina:
 
+- [pruebas-automatizadas.md](docs/pruebas/pruebas-automatizadas.md) (`npm run pruebas:reporte`): cada prueba unitaria, de integración, de extremo a extremo y de consistencia con su resultado.
 - [implementacion-evidencia.md](docs/pruebas/implementacion-evidencia.md) (`npm run bases:desde-cero`): las tres bases construidas desde cero y la salida de sus consultas y pruebas de humo, integridad, cardinalidad y transacciones.
 - [catalogo-evidencia.md](docs/pruebas/catalogo-evidencia.md) (`npm run catalogo`): 111 casos normales, límite y de error del catálogo como peticiones HTTP reales, con lo esperado y lo obtenido.
 - [rendimiento.md](docs/pruebas/rendimiento.md) (`npm run rendimiento`): tiempos de los flujos principales con el equipo, la concurrencia y el volumen de datos con que se midió.

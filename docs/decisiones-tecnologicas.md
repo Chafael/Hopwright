@@ -83,6 +83,20 @@ Se eligió Fastify con TypeScript. Cada ruta declara su JSON Schema, así que Fa
 
 Node.js tiene driver oficial para las tres bases (`pg`, `mongodb`, `neo4j-driver`), y eso pesó tanto como el framework: un solo lenguaje en el backend y en el frontend.
 
+### 3.1 REST o GraphQL
+
+Se eligió una API REST. Las operaciones de Hopwright son acciones con nombre propio (asignar, dar salida, entregar, reportar un incidente, reconciliar) que cambian estados y tienen reglas, y cada una tiene sus códigos de respuesta: 409 si el vehículo ya está ocupado, 202 si la réplica en Neo4j no se pudo escribir. En REST eso queda en el método, la ruta y el código HTTP, y el mismo JSON Schema que valida la entrada genera el contrato en OpenAPI.
+
+GraphQL convenía si la interfaz necesitara pedir combinaciones muy distintas de campos de las tres bases en una sola consulta. Aquí no pasa: las consultas que cruzan bases (la ruta de un envío, los envíos afectados) las arma el servicio en el backend, porque decidir qué base consultar y qué hacer si falla es lógica de negocio y no le toca al cliente. Con GraphQL además todo responde 200 y los errores van dentro del cuerpo, lo que haría menos claros los casos de error del catálogo.
+
+El contrato se publica de dos formas: Swagger en `http://localhost:3000/docs` con el backend corriendo, y el archivo [api/openapi.json](api/openapi.json), que se regenera con `npm run openapi` y se puede abrir en cualquier visor de OpenAPI sin levantar nada.
+
+### 3.2 Consultas parametrizadas y credenciales
+
+Ninguna consulta se arma pegando valores que vienen del usuario. En PostgreSQL todo va con `$1`, `$2` de `pg`; en Neo4j, con parámetros `$origen`, `$placa` del driver; en MongoDB, los filtros son objetos, no texto. En las consultas de Cypher sí se interpolan dos cosas, siempre desde el código y nunca desde la petición: el nombre de la propiedad que se usa como peso, que sale de un mapa fijo (`tiempo`, `distancia` o `costo`), y fragmentos de proyección con nombres de variables fijos.
+
+Las credenciales viven solo en `.env`, que está en `.gitignore`. El repositorio trae `.env.example` con valores de ejemplo y el backend se niega a arrancar si falta una variable obligatoria, con un mensaje que dice cuál. El mismo `.env` lo leen Docker Compose (para crear las bases) y el backend (para conectarse), así que no hay dos lugares donde cambiar una contraseña.
+
 ## 4. Frontend
 
 | Criterio (peso) | SvelteKit 2 con Svelte 5 | React 19 con Vite | Vue 3 con Vite |

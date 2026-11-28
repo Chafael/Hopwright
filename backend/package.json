@@ -16,7 +16,9 @@
     "rendimiento": "tsx ../tests/rendimiento/rendimiento.mts",
     "catalogo": "tsx ../tests/catalogo/evidencia.mts",
     "bases": "tsx ../tests/implementacion/evidencia.mts",
-    "bases:desde-cero": "tsx ../tests/implementacion/evidencia.mts --desde-cero"
+    "bases:desde-cero": "tsx ../tests/implementacion/evidencia.mts --desde-cero",
+    "openapi": "tsx scripts/exportar-openapi.mts",
+    "pruebas:reporte": "vitest run --reporter=default --reporter=json --outputFile.json=../docs/pruebas/vitest.json && vitest run -c vitest.consistencia.config.ts --reporter=default --reporter=json --outputFile.json=../docs/pruebas/vitest-consistencia.json && tsx ../tests/reporte/resumen-pruebas.mts"
   },
   "engines": {
     "node": ">=22"
