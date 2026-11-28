@@ -43,7 +43,7 @@ La propuesta completa, la matriz de responsabilidades y la fuente de verdad de c
 
 4. Abre la documentación de la API en http://localhost:3000/docs y prueba `GET /health`. Si las tres bases están arriba, responde `"estado": "ok"`.
 
-Para empezar desde cero (borra todos los datos): `docker compose down -v` y luego `docker compose up -d`.
+Para empezar desde cero (borra todos los datos): `docker compose down -v` y luego `docker compose up -d`. Con `npm run bases -- --desde-cero` (desde `backend/`) se hace lo mismo y además se corren las pruebas de cada base; el detalle de los scripts está en `docs/implementacion.md`.
 
 ### Usuarios de prueba
 
@@ -88,6 +88,7 @@ npm test                  # unitarias e integración
 npm run test:consistencia # apaga y enciende Neo4j; tarda alrededor de un minuto
 npm run rendimiento       # mide los flujos principales y escribe docs/pruebas/rendimiento.md
 npm run catalogo          # corre los casos del catálogo y escribe docs/pruebas/catalogo-evidencia.md
+npm run bases             # corre las consultas y pruebas de database/ en cada contenedor (docs/pruebas/implementacion-evidencia.md)
 ```
 
 La prueba de rendimiento manda 200 peticiones por escenario con 10 clientes a la vez. Se puede cambiar con `PETICIONES=500 CONCURRENCIA=20 npm run rendimiento` (en PowerShell: `$env:PETICIONES=500; npm run rendimiento`). Lo que crea durante la prueba se borra al terminar.
