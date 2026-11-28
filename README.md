@@ -8,7 +8,7 @@ Proyecto final de Bases de Datos en la Nube, Universidad Politécnica de Chiapas
 - MongoDB: manifiestos de carga, reportes de incidente y bitácora de seguimiento (documentos con estructura variable).
 - Neo4j: red de carreteras y vías de tren con pesos (rutas y recorridos).
 
-La propuesta completa, la matriz de responsabilidades y la fuente de verdad de cada dato están en `docs/`.
+La documentación de cada entregable está en `docs/` (ver [Documentación](#documentación)).
 
 ## Requisitos
 
@@ -66,7 +66,17 @@ npm run dev
 
 Se abre en http://localhost:5173. Si la API no está en `http://localhost:3000`, copia `frontend/.env.example` como `frontend/.env` y cambia `VITE_API_URL`.
 
-Pantallas: rutas (C1), camión o tren (C2), red y cierres (C4 y ubicación de vehículos), incidentes (alta, cierre, evidencias y envíos afectados, C5) y mantenimiento (reconciliación). El mapa necesita internet para el fondo; sin conexión cae a un fondo liso y la red se sigue viendo.
+Pantallas:
+
+- Entrar: inicio de sesión como despachador o administrador. Sin sesión se puede consultar todo, pero no cambiar datos.
+- Envíos: lista con filtro por estado, alta de envío, y el detalle de cada uno con su manifiesto, la ruta planeada (flujo integrado de las tres bases), la asignación de vehículo, la salida, la entrega, la cancelación y la bitácora.
+- Planear ruta: ruta entre dos ciudades por tiempo, distancia o costo (C1), con la animación paso a paso de Dijkstra.
+- Camión o tren: compara ir todo por carretera contra combinar camión y tren (C2).
+- Mapa y cierres: ciudades que se quedan sin camino si se cierra un punto (C4) y ubicación de los vehículos.
+- Incidentes: alta, cierre, evidencias y envíos afectados con su desvío (C5).
+- Sincronizar: reconciliación de las copias entre bases (solo administrador).
+
+El mapa necesita internet para el fondo; sin conexión cae a un fondo liso y la red se sigue viendo.
 
 Para que los tramos sigan el trazo real de la carretera y no se dibujen rectos, con el backend corriendo:
 
@@ -102,6 +112,53 @@ docker compose rm -sf mongo
 docker volume rm hopwright_mongo_data
 docker compose up -d mongo
 ```
+
+## Documentación
+
+| Entregable | Documento |
+|---|---|
+| 1. Propuesta | [docs/propuesta.md](docs/propuesta.md) |
+| 2. Modelado de datos | [docs/modelado.md](docs/modelado.md) y el detalle por base en [docs/modelos/](docs/modelos/) |
+| 3. Arquitectura y selección tecnológica | [docs/arquitectura.md](docs/arquitectura.md) y [docs/decisiones-tecnologicas.md](docs/decisiones-tecnologicas.md) |
+| 4. Implementación de las tres bases | [docs/implementacion.md](docs/implementacion.md) y los scripts de [database/](database/) |
+| 5. Catálogo de operaciones | [docs/catalogo-operaciones.md](docs/catalogo-operaciones.md) |
+| 6. Backend y API | `backend/`, el contrato en Swagger (`http://localhost:3000/docs`) y [docs/api/](docs/api/) |
+| 7. Aplicación e integración | `frontend/` y el flujo integrado en [docs/arquitectura.md](docs/arquitectura.md#7-flujo-integrado-planear-la-ruta-de-un-envío) |
+| 8. Pruebas y despliegue | este README y las evidencias de [docs/pruebas/](docs/pruebas/) |
+
+## Evidencias de pruebas
+
+Cada archivo de `docs/pruebas/` lo genera un comando, así que se puede volver a producir en otra máquina:
+
+- [implementacion-evidencia.md](docs/pruebas/implementacion-evidencia.md) (`npm run bases:desde-cero`): las tres bases construidas desde cero y la salida de sus consultas y pruebas de humo, integridad, cardinalidad y transacciones.
+- [catalogo-evidencia.md](docs/pruebas/catalogo-evidencia.md) (`npm run catalogo`): 111 casos normales, límite y de error del catálogo como peticiones HTTP reales, con lo esperado y lo obtenido.
+- [rendimiento.md](docs/pruebas/rendimiento.md) (`npm run rendimiento`): tiempos de los flujos principales con el equipo, la concurrencia y el volumen de datos con que se midió.
+
+Cómo se cubren las pruebas obligatorias de integración de la guía (sección 9):
+
+| Tipo | Dónde se verifica |
+|---|---|
+| Conectividad | `GET /health` y `tests/integration/salud.test.ts`; credenciales solo en `.env` |
+| Funcional | `tests/integration/` (rutas, envíos, incidentes, ubicación) y la evidencia del catálogo |
+| Integridad | `database/*/tests/`, `tests/integration/relacional.restricciones.test.ts` y `grafo-integridad.test.ts` |
+| Integración | `tests/e2e/ruta-envio.test.ts`: alta, manifiesto, ruta, asignación, salida y entrega pasando por las tres bases |
+| Consistencia | `tests/consistencia/`: apagan Neo4j a mitad de una escritura y comprueban que la cola de eventos y la reconciliación lo corrigen |
+| Errores | casos de error del catálogo (400, 401, 403, 404, 409), 503 cuando una base no responde y 202 cuando la réplica falla |
+| Rendimiento | `docs/pruebas/rendimiento.md` |
+
+Las pruebas unitarias (`tests/unit/`) cubren las reglas que no necesitan base: cálculo y exploración de rutas, validación de manifiestos, reglas de incidentes y de ubicación, envíos afectados y reconciliación.
+
+## Demostración
+
+Un recorrido que toca las tres bases en unos minutos, con los datos de prueba recién cargados:
+
+1. Entrar como `despacho@hopwright.local`.
+2. Envíos, E-103: el manifiesto es de carga peligrosa (MongoDB) y la ruta planeada evita terracería y sugiere un vehículo que aguanta los 3,000 kg (PostgreSQL y Neo4j).
+3. Asignar ese vehículo y dar salida al envío; la bitácora muestra los eventos.
+4. Incidentes: reportar un bloqueo de gravedad Alta en la Caseta Chiapa de Corzo y abrir "Envíos afectados": aparece E-103 con su desvío.
+5. Planear ruta de Tuxtla a San Cristóbal: ahora rodea la caseta. Cerrar el incidente y la ruta regresa a la autopista.
+6. Entregar el envío: en Mapa y cierres el camión aparece en Comitán.
+7. Entrar como administrador y correr Sincronizar: no hay nada que corregir.
 
 ## Estructura
 
